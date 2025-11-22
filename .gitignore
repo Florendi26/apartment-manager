@@ -22,3 +22,6 @@ npm-debug.log*
 *.tmp
 *.temp
 
+# Nested git repositories
+menaxhimi-i-banesave/
+
