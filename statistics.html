@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="overallStatistics">Statistics - Apartment Management</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="assets/favicon.svg" />
+    <link rel="manifest" href="site.webmanifest" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.1/lottie.min.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-main">
+        <h1 data-i18n="appTitle">Apartment Management</h1>
+        <p class="subtitle" data-i18n="appSubtitle">
+          Manage contracts, deposits, debts and payments with ease.
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="control">
+          <label for="languagePicker" data-i18n="languageLabel">Language</label>
+          <select id="languagePicker">
+            <option value="en">En</option>
+            <option value="sq">Sq</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="rolePicker" data-i18n="roleLabel">View As</label>
+          <select id="rolePicker">
+            <option value="admin" data-i18n="roleAdmin">Administrator</option>
+            <option value="tenant" data-i18n="roleTenant">Tenant</option>
+          </select>
+        </div>
+        <div class="control" id="authControls">
+          <a href="index.html" class="button-secondary" data-i18n="backToDashboard" style="text-decoration: none; display: inline-block; text-align: center; padding: 0.6rem 1rem; border: none; border-radius: 0.5rem; font-size: inherit; font-weight: inherit; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;">Back to Dashboard</a>
+          <span id="userEmail" class="user-email"></span>
+          <button type="button" id="logoutButton" class="button-secondary" data-i18n="logout">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="notificationArea" aria-live="polite"></section>
+      
+      <section id="adminView" class="view active">
+        <section id="adminSummary" class="card admin-summary">
+          <header>
+            <h3 data-i18n="overallStatistics">Overall Statistics</h3>
+          </header>
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label" data-i18n="statTenants">Tenants</span>
+              <span class="metric-value" id="statTenantsValue">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label" data-i18n="statApartments">Apartments</span>
+              <span class="metric-value" id="statApartmentsValue">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label" data-i18n="statContracts">Contracts</span>
+              <span class="metric-value" id="statContractsValue">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label" data-i18n="statExpenses">Expenses</span>
+              <span class="metric-value" id="statExpensesValue">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label" data-i18n="statPayments">Payments</span>
+              <span class="metric-value" id="statPaymentsValue">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label" data-i18n="statPdfGenerated">PDFs Generated</span>
+              <span class="metric-value" id="statPdfGeneratedValue">0</span>
+            </div>
+            <div class="metric-card metric-amount">
+              <span class="metric-label" data-i18n="statTotalExpenses">Total Expenses Amount</span>
+              <span class="metric-value" id="statTotalExpensesValue">€0.00</span>
+            </div>
+            <div class="metric-card metric-amount">
+              <span class="metric-label" data-i18n="statTotalPayments">Total Payments Amount</span>
+              <span class="metric-value" id="statTotalPaymentsValue">€0.00</span>
+            </div>
+            <div class="metric-card metric-amount">
+              <span class="metric-label" data-i18n="statTotalUnpaid">Total Unpaid Expenses</span>
+              <span class="metric-value" id="statTotalUnpaidValue">€0.00</span>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p data-i18n="footerNote">
+        Powered by Florend Ramusa. Built for property managers and tenants.
+      </p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/statistics.js"></script>
+  </body>
+</html>
+

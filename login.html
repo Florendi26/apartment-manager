@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="loginTitle">Login - Apartment Management</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="assets/favicon.svg" />
+    <link rel="manifest" href="site.webmanifest" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-main">
+        <h1 data-i18n="appTitle">Apartment Management</h1>
+        <p class="subtitle" data-i18n="appSubtitle">
+          Manage contracts, deposits, debts and payments with ease.
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="control">
+          <label for="languagePicker" data-i18n="languageLabel">Language</label>
+          <select id="languagePicker">
+            <option value="en">En</option>
+            <option value="sq">Sq</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Login Page -->
+    <section id="loginView" class="view active login-view">
+      <div class="login-container">
+        <div class="login-card card">
+          <h2 data-i18n="loginTitle">Login</h2>
+          <p class="login-subtitle" data-i18n="loginSubtitle">Enter your credentials to access the system</p>
+          <form id="loginForm" class="form-grid">
+            <div class="field">
+              <label for="loginEmail" data-i18n="email">Email</label>
+              <input
+                type="email"
+                id="loginEmail"
+                name="email"
+                required
+                placeholder="your@email.com"
+              />
+            </div>
+            <div class="field">
+              <label for="loginPassword" data-i18n="password">Password</label>
+              <input
+                type="password"
+                id="loginPassword"
+                name="password"
+                required
+                placeholder="Enter your password"
+              />
+            </div>
+            <div id="loginError" class="error-message" style="display: none;"></div>
+            <button type="submit" class="button-primary" data-i18n="loginButton">Login</button>
+            <div class="login-footer">
+              <p data-i18n="noAccount">Don't have an account?</p>
+              <button type="button" id="showSignup" class="button-link" data-i18n="signupLink">Sign Up</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Sign Up Card -->
+        <div class="login-card card" id="signupCard" style="display: none;">
+          <h2 data-i18n="signupTitle">Sign Up</h2>
+          <p class="login-subtitle" data-i18n="signupSubtitle">Create a new account to get started</p>
+          <form id="signupForm" class="form-grid">
+            <div class="field">
+              <label for="signupEmail" data-i18n="email">Email</label>
+              <input
+                type="email"
+                id="signupEmail"
+                name="email"
+                required
+                placeholder="your@email.com"
+              />
+            </div>
+            <div class="field">
+              <label for="signupPassword" data-i18n="password">Password</label>
+              <input
+                type="password"
+                id="signupPassword"
+                name="password"
+                required
+                placeholder="Create a password (min 6 characters)"
+                minlength="6"
+              />
+            </div>
+            <div class="field">
+              <label for="signupConfirmPassword" data-i18n="confirmPassword">Confirm Password</label>
+              <input
+                type="password"
+                id="signupConfirmPassword"
+                name="confirmPassword"
+                required
+                placeholder="Confirm your password"
+              />
+            </div>
+            <div id="signupError" class="error-message" style="display: none;"></div>
+            <button type="submit" class="button-primary" data-i18n="signupButton">Sign Up</button>
+            <div class="login-footer">
+              <p data-i18n="haveAccount">Already have an account?</p>
+              <button type="button" id="showLogin" class="button-link" data-i18n="loginLink">Login</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="notificationArea" aria-live="polite"></section>
+
+    <footer class="app-footer">
+      <p data-i18n="footerNote">
+        Powered by Florend Ramusa. Built for property managers and tenants.
+      </p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/auth.js"></script>
+  </body>
+</html>
+

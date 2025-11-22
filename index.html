@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="appTitle">Apartment Management</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="assets/favicon.svg" />
+    <link rel="manifest" href="site.webmanifest" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.1/lottie.min.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-main">
+        <h1 data-i18n="appTitle">Apartment Management</h1>
+        <p class="subtitle" data-i18n="appSubtitle">
+          Manage contracts, deposits, debts and payments with ease.
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="control">
+          <label for="languagePicker" data-i18n="languageLabel">Language</label>
+          <select id="languagePicker">
+            <option value="en">En</option>
+            <option value="sq">Sq</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="rolePicker" data-i18n="roleLabel">View As</label>
+          <select id="rolePicker">
+            <option value="admin" data-i18n="roleAdmin">Administrator</option>
+            <option value="tenant" data-i18n="roleTenant">Tenant</option>
+          </select>
+        </div>
+        <div class="control" id="authControls" style="display: none;">
+          <a href="statistics.html" class="button-secondary" data-i18n="statistics" style="text-decoration: none; display: inline-block; text-align: center; padding: 0.6rem 1rem; border: none; border-radius: 0.5rem; font-size: inherit; font-weight: inherit; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;">Statistics</a>
+          <span id="userEmail" class="user-email"></span>
+          <button type="button" id="logoutButton" class="button-secondary" data-i18n="logout">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="notificationArea" aria-live="polite"></section>
+      <div id="confirmationModal" class="confirmation-modal" style="display: none;">
+        <div class="confirmation-animation-container" id="confirmationAnimationContainer"></div>
+      </div>
+      
+      <!-- Mark Paid Payment Modal -->
+      <div id="markPaidModal" class="mark-paid-modal" style="display: none;">
+        <div class="mark-paid-modal-content">
+          <h3 data-i18n="markPaid">Mark Paid</h3>
+          <div class="mark-paid-form">
+            <div class="form-group">
+              <label data-i18n="amount">Amount</label>
+              <input type="number" id="markPaidAmount" step="0.01" readonly>
+            </div>
+            <div class="form-group">
+              <label data-i18n="paymentDate">Payment Date</label>
+              <input type="date" id="markPaidDate">
+            </div>
+            <div class="form-group">
+              <label data-i18n="paymentMethod">Payment Method</label>
+              <div class="payment-method-buttons">
+                <button type="button" class="payment-method-btn" data-method="Cash">Cash</button>
+                <button type="button" class="payment-method-btn" data-method="Bank transfer">Bank transfer</button>
+                <button type="button" class="payment-method-btn" data-method="custom">Custom</button>
+              </div>
+              <input type="text" id="markPaidMethod" placeholder="Enter payment method" style="display: none; margin-top: 0.5rem;">
+            </div>
+            <div class="form-actions">
+              <button type="button" class="button-secondary" id="markPaidCancel">Cancel</button>
+              <button type="button" class="button-primary" id="markPaidSubmit">Enter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section id="adminView" class="view">
+        <nav class="admin-nav" id="adminNav">
+          <button type="button" data-page="apartments" data-i18n="navApartments">
+            Apartments
+          </button>
+          <button type="button" data-page="tenants" data-i18n="navTenants">Tenants</button>
+          <button type="button" data-page="contracts" data-i18n="navContracts">Contracts</button>
+          <div class="nav-group">
+            <span class="nav-group-label" data-i18n="navExpensesGroup">Expenses</span>
+            <div class="nav-group-buttons">
+              <button type="button" data-page="expenses" data-expense-type="all" data-i18n="navExpensesAll">
+                All
+              </button>
+              <button
+                type="button"
+                data-page="expenses"
+                data-expense-type="rent"
+                class="active"
+                data-i18n="navExpensesRent"
+              >
+                Rent
+              </button>
+              <button
+                type="button"
+                data-page="expenses"
+                data-expense-type="garbage"
+                data-i18n="navExpensesGarbage"
+              >
+                Garbage
+              </button>
+              <button
+                type="button"
+                data-page="expenses"
+                data-expense-type="maintenance"
+                data-i18n="navExpensesMaintenance"
+              >
+                Maintenance
+              </button>
+              <button
+                type="button"
+                data-page="expenses"
+                data-expense-type="electricity"
+                data-i18n="navExpensesElectricity"
+              >
+                Electricity
+              </button>
+              <button
+                type="button"
+                data-page="expenses"
+                data-expense-type="water"
+                data-i18n="navExpensesWater"
+              >
+                Water
+              </button>
+              <button
+                type="button"
+                data-page="expenses"
+                data-expense-type="heating"
+                data-i18n="navExpensesHeating"
+              >
+                Heating
+              </button>
+            </div>
+          </div>
+          <button type="button" data-page="payments" data-i18n="navPayments">Payments</button>
+        </nav>
+
+        <section id="page-apartments" class="admin-page" data-page="apartments">
+          <article class="card" id="apartmentsCard">
+            <header>
+              <h3 data-i18n="apartmentsTitle">Apartments</h3>
+              <button id="refreshApartments" data-i18n="refresh">
+                Refresh
+              </button>
+            </header>
+            <form id="apartmentForm" class="form-grid">
+              <div class="field">
+                <label for="apartmentName" data-i18n="apartmentName"
+                  >Name</label
+                >
+                <input
+                  type="text"
+                  id="apartmentName"
+                  name="name"
+                  required
+                  placeholder="Ex: Apartment 4B"
+                />
+              </div>
+              <div class="field">
+                <label for="apartmentAddress" data-i18n="apartmentAddress"
+                  >Address</label
+                >
+                <input
+                  type="text"
+                  id="apartmentAddress"
+                  name="address"
+                  placeholder="Street, City"
+                />
+              </div>
+              <div class="field">
+                <label for="apartmentElectricityCode" data-i18n="apartmentElectricityCode"
+                  >Electricity Code</label
+                >
+                <input
+                  type="text"
+                  id="apartmentElectricityCode"
+                  name="electricity_code"
+                  placeholder="Electricity meter code"
+                />
+              </div>
+              <div class="field">
+                <label for="apartmentHeatingCode" data-i18n="apartmentHeatingCode"
+                  >Heating Code</label
+                >
+                <input
+                  type="text"
+                  id="apartmentHeatingCode"
+                  name="heating_code"
+                  placeholder="Heating account"
+                />
+              </div>
+              <div class="field">
+                <label for="apartmentWaterCode" data-i18n="apartmentWaterCode"
+                  >Water Code</label
+                >
+                <input
+                  type="text"
+                  id="apartmentWaterCode"
+                  name="water_code"
+                  placeholder="Water meter code"
+                />
+              </div>
+              <div class="field">
+                <label for="apartmentWasteCode" data-i18n="apartmentWasteCode"
+                  >Waste Code</label
+                >
+                <input
+                  type="text"
+                  id="apartmentWasteCode"
+                  name="waste_code"
+                  placeholder="Waste account"
+                />
+              </div>
+              <button type="submit" data-i18n="addApartment">
+                Add Apartment
+              </button>
+            </form>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="apartmentName">Name</th>
+                    <th data-i18n="apartmentAddress">Address</th>
+                    <th data-i18n="apartmentElectricityCode">Electricity Code</th>
+                    <th data-i18n="apartmentHeatingCode">Heating Code</th>
+                    <th data-i18n="apartmentWaterCode">Water Code</th>
+                    <th data-i18n="apartmentWasteCode">Waste Code</th>
+                    <th>ID</th>
+                  </tr>
+                </thead>
+                <tbody id="apartmentsTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="page-tenants" class="admin-page" data-page="tenants">
+          <article class="card" id="tenantsCard">
+            <header>
+              <h3 data-i18n="tenantsTitle">Tenants</h3>
+              <button id="refreshTenants" data-i18n="refresh">Refresh</button>
+            </header>
+            <form id="tenantForm" class="form-grid">
+              <div class="field">
+                <label for="tenantFullName" data-i18n="tenantFullName"
+                  >Full Name</label
+                >
+                <input
+                  type="text"
+                  id="tenantFullName"
+                  name="full_name"
+                  required
+                  placeholder="John Doe"
+                />
+              </div>
+              <div class="field">
+                <label for="tenantPhone" data-i18n="tenantPhone">Phone</label>
+                <input
+                  type="tel"
+                  id="tenantPhone"
+                  name="phone"
+                  placeholder="+383..."
+                />
+              </div>
+              <button type="submit" data-i18n="addTenant">Add Tenant</button>
+            </form>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="tenantFullName">Full Name</th>
+                    <th data-i18n="tenantPhone">Phone</th>
+                    <th>ID</th>
+                  </tr>
+                </thead>
+                <tbody id="tenantsTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="page-contracts" class="admin-page" data-page="contracts">
+          <article class="card" id="contractsCard">
+            <header>
+              <h3 data-i18n="contractsTitle">Contracts</h3>
+              <button id="refreshContracts" data-i18n="refresh">Refresh</button>
+            </header>
+            <form id="contractForm" class="form-grid">
+              <div class="field">
+                <label for="contractApartment" data-i18n="selectApartment"
+                  >Apartment</label
+                >
+                <select id="contractApartment" name="apartment_id" required></select>
+              </div>
+              <div class="field">
+                <label for="contractTenant" data-i18n="selectTenant"
+                  >Tenant</label
+                >
+                <select id="contractTenant" name="tenant_id" required></select>
+              </div>
+              <div class="field">
+                <label for="contractStartDate" data-i18n="startDate"
+                  >Start Date</label
+                >
+                <input type="date" id="contractStartDate" name="start_date" required />
+              </div>
+              <div class="field">
+                <label for="contractEndDate" data-i18n="endDate">End Date</label>
+                <input type="date" id="contractEndDate" name="end_date" min="2020-01-01" max="2030-12-31" />
+              </div>
+              <div class="field">
+                <label for="contractRent" data-i18n="monthlyRent"
+                  >Monthly Rent</label
+                >
+                <input
+                  type="number"
+                  id="contractRent"
+                  name="monthly_rent"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+              <div class="field">
+                <label for="contractGarbage" data-i18n="monthlyGarbage"
+                  >Monthly Garbage</label
+                >
+                <input
+                  type="number"
+                  id="contractGarbage"
+                  name="monthly_garbage"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                />
+              </div>
+              <div class="field">
+                <label for="contractMaintenance" data-i18n="monthlyMaintenance"
+                  >Monthly Maintenance</label
+                >
+                <input
+                  type="number"
+                  id="contractMaintenance"
+                  name="monthly_maintenance"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                />
+              </div>
+              <div class="field">
+                <label for="contractDeposit" data-i18n="contractDeposit"
+                  >Deposit</label
+                >
+                <input
+                  type="number"
+                  id="contractDeposit"
+                  name="deposit_amount"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div class="field checkbox">
+                <label for="contractActive" data-i18n="contractActive"
+                  >Active</label
+                >
+                <input type="checkbox" id="contractActive" name="is_active" checked />
+              </div>
+              <button type="submit" data-i18n="addContract">Add Contract</button>
+            </form>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="selectApartment">Apartment</th>
+                    <th data-i18n="selectTenant">Tenant</th>
+                    <th data-i18n="startDate">Start</th>
+                    <th data-i18n="endDate">End</th>
+                    <th data-i18n="monthlyRent">Rent</th>
+                    <th data-i18n="monthlyGarbage">Garbage</th>
+                    <th data-i18n="monthlyMaintenance">Maintenance</th>
+                    <th data-i18n="contractDeposit">Deposit</th>
+                    <th data-i18n="contractActive">Active</th>
+              <th data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="contractsTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="page-expenses" class="admin-page" data-page="expenses">
+          <article class="card" id="debtsPaymentsCard">
+            <header>
+              <div>
+                <h3 id="expensesHeading" data-i18n="expensesHeadingAll">All Expenses</h3>
+                <p id="expensesSubheading" data-i18n="debtsPaymentsSubtitle">
+                  Track rent, utilities, damages and more.
+                </p>
+              </div>
+              <button id="refreshDebts" data-i18n="refresh">Refresh</button>
+            </header>
+            <div class="form-toggle" id="expenseFormToggle">
+              <button
+                type="button"
+                class="active"
+                data-expense-form-mode="expense"
+                data-i18n="expenseFormToggleExpense"
+              >
+                Create Expense
+              </button>
+              <button
+                type="button"
+                data-expense-form-mode="payment"
+                data-i18n="expenseFormTogglePayment"
+              >
+                Record Payment
+              </button>
+            </div>
+            <div class="summary-controls">
+              <button id="toggleExpenseSummary" type="button" data-i18n="toggleExpenseSummary">
+                Tenant Summary
+              </button>
+            </div>
+            <div class="summary-panel hidden" id="expenseSummaryPanel">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="summaryTenant">Tenant</th>
+                    <th data-i18n="summaryExpensesCount">Open Expenses</th>
+                    <th data-i18n="summaryExpensesAmount">Open Amount</th>
+                    <th data-i18n="summaryPaymentsCount">Payments</th>
+                    <th data-i18n="summaryPaymentsAmount">Payments Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="expenseSummaryBody"></tbody>
+              </table>
+            </div>
+            <div class="flex-columns">
+              <form id="debtForm" class="form-grid" data-expense-mode="expense">
+                <h4 data-i18n="createDebt">Create Expense</h4>
+                <div class="field">
+                  <label for="debtContract" data-i18n="selectContract"
+                    >Contract</label
+                  >
+                  <select id="debtContract" name="contract_id" required></select>
+                </div>
+                <div class="field">
+                  <label for="debtTenant" data-i18n="selectTenant">Tenant</label>
+                  <select id="debtTenant" name="tenant_id" required></select>
+                </div>
+                <div class="field">
+                  <label for="debtType" data-i18n="debtType">Type</label>
+                  <select id="debtType" name="type" required>
+                    <option value="rent" data-i18n="debtRent">Rent</option>
+                    <option value="maintenance" data-i18n="debtMaintenance">
+                      Maintenance
+                    </option>
+                    <option value="garbage" data-i18n="debtGarbage">Garbage</option>
+                    <option value="thermos" data-i18n="debtThermos">Thermos</option>
+                    <option value="electricity" data-i18n="debtElectricity">
+                      Electricity
+                    </option>
+                    <option value="water" data-i18n="debtWater">Water</option>
+                    <option value="damage" data-i18n="debtDamage">Damage</option>
+                    <option value="other" data-i18n="debtOther">Other</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="debtAmount" data-i18n="amount">Amount</label>
+                  <input
+                    type="number"
+                    id="debtAmount"
+                    name="amount"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="field checkbox" id="debtElectricityCutWrapper">
+                  <label for="debtElectricityCut" data-i18n="electricityCutLabel"
+                    >Electricity cut / disconnection</label
+                  >
+                  <input type="checkbox" id="debtElectricityCut" />
+                </div>
+                <div class="field">
+                  <label for="debtDueDate" data-i18n="dueDate">Due Date</label>
+                  <input type="date" id="debtDueDate" name="due_date" min="2020-01-01" max="2030-12-31" required />
+                </div>
+                <div class="field">
+                  <label for="debtNotes" data-i18n="notes">Notes</label>
+                  <textarea id="debtNotes" name="notes" rows="2"></textarea>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" id="debtFormSubmit" data-i18n="createDebtButton">
+                    Create Debt
+                  </button>
+                  <button
+                    type="button"
+                    id="debtFormCancelEdit"
+                    class="button-muted hidden"
+                    data-i18n="cancelEdit"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+
+              <form id="paymentForm" class="form-grid" data-expense-mode="payment">
+                <h4 data-i18n="recordPayment">Record Payment</h4>
+                <div class="field">
+                  <label for="paymentDebt" data-i18n="selectDebt">Debt</label>
+                  <select id="paymentDebt" name="debt_id" required></select>
+                </div>
+                <p id="paymentDebtSummary" class="form-help" aria-live="polite"></p>
+                <div class="field">
+                  <label for="paymentAmount" data-i18n="amount">Amount</label>
+                  <input
+                    type="number"
+                    id="paymentAmount"
+                    name="amount"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="paymentDate" data-i18n="paymentDate"
+                    >Payment Date</label
+                  >
+                  <input
+                    type="date"
+                    id="paymentDate"
+                    name="payment_date"
+                    min="2020-01-01"
+                    max="2030-12-31"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="paymentMethod" data-i18n="paymentMethod"
+                    >Method</label
+                  >
+                  <div class="payment-method-buttons">
+                    <button type="button" class="payment-method-btn payment-form-method-btn" data-method="Cash">Cash</button>
+                    <button type="button" class="payment-method-btn payment-form-method-btn" data-method="Bank transfer">Bank transfer</button>
+                    <button type="button" class="payment-method-btn payment-form-method-btn" data-method="custom">Custom</button>
+                  </div>
+                  <input
+                    type="text"
+                    id="paymentMethod"
+                    name="method"
+                    placeholder="Enter payment method"
+                    style="display: none; margin-top: 0.5rem;"
+                  />
+                </div>
+                <div class="form-actions">
+                  <button type="submit" id="paymentFormSubmit" data-i18n="recordPaymentButton">
+                    Record Payment
+                  </button>
+                  <button
+                    type="button"
+                    id="paymentFormCancelEdit"
+                    class="button-muted hidden"
+                    data-i18n="cancelEdit"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div class="toolbar" data-expense-mode="expense">
+              <div>
+                <label for="debtsFilterStatus" data-i18n="filterStatus"
+                  >Status</label
+                >
+                <select id="debtsFilterStatus">
+                  <option value="all" data-i18n="statusAll">All</option>
+                  <option value="open_overdue" data-i18n="statusOpenOverdue">
+                    Open &amp; Overdue
+                  </option>
+                  <option value="paid" data-i18n="statusPaid">Paid</option>
+                </select>
+              </div>
+              <div>
+                <label for="debtsFilterType" data-i18n="filterType">Type</label>
+                <select id="debtsFilterType">
+                  <option value="all" data-i18n="typeAll">All</option>
+                  <option value="rent" data-i18n="debtRent">Rent</option>
+                  <option value="maintenance" data-i18n="debtMaintenance">
+                    Maintenance
+                  </option>
+                  <option value="garbage" data-i18n="debtGarbage">Garbage</option>
+                  <option value="thermos" data-i18n="debtThermos">Thermos</option>
+                  <option value="electricity" data-i18n="debtElectricity">
+                    Electricity
+                  </option>
+                  <option value="water" data-i18n="debtWater">Water</option>
+                  <option value="damage" data-i18n="debtDamage">Damage</option>
+                  <option value="other" data-i18n="debtOther">Other</option>
+                </select>
+              </div>
+              <div class="toolbar-actions">
+                <button id="exportDebtsPdf" data-i18n="exportPdf">
+                  Export Debts to PDF
+                </button>
+              </div>
+            </div>
+
+            <div id="totalPaymentSummary" class="total-payment-summary card" data-expense-mode="expense" style="display: none;">
+              <div class="total-payment-summary-content">
+                <h4 data-i18n="paymentSummary">Payment Summary</h4>
+                <div class="total-payment-summary-grid">
+                  <div class="total-payment-summary-item">
+                    <span class="total-payment-summary-label" data-i18n="paymentSummaryDebt">Expenses:</span>
+                    <span class="total-payment-summary-value" id="totalDebtAmount">€0.00</span>
+                  </div>
+                  <div class="total-payment-summary-item">
+                    <span class="total-payment-summary-label" data-i18n="paymentSummaryPaid">Paid:</span>
+                    <span class="total-payment-summary-value" id="totalPaidAmount">€0.00</span>
+                  </div>
+                  <div class="total-payment-summary-item">
+                    <span class="total-payment-summary-label" data-i18n="paymentSummaryRemaining">Remaining:</span>
+                    <span class="total-payment-summary-value" id="totalRemainingAmount">€0.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-wrapper" data-expense-mode="expense">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="selectTenant">Tenant</th>
+                    <th data-i18n="debtType">Type</th>
+                    <th data-i18n="amount">Amount</th>
+                    <th data-i18n="dueDate">Due</th>
+                    <th data-i18n="status">Status</th>
+                    <th data-i18n="paymentReference">Reference</th>
+                    <th data-i18n="notes">Notes</th>
+                    <th data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="debtsTableBody"></tbody>
+              </table>
+            </div>
+            <div class="table-wrapper hidden" data-expense-mode="payment">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="selectTenant">Tenant</th>
+                    <th data-i18n="debtType">Debt Type</th>
+                    <th data-i18n="amount">Amount</th>
+                    <th data-i18n="dueDate">Due Date</th>
+                    <th data-i18n="paymentDate">Payment Date</th>
+                    <th data-i18n="paymentMethod">Method</th>
+                    <th data-i18n="paymentReference">Reference</th>
+                    <th data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="expensesPaymentsTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="page-payments" class="admin-page" data-page="payments">
+          <article class="card" id="paymentsCard">
+            <header>
+              <h3 data-i18n="paymentsHistory">Payments History</h3>
+              <button id="refreshPayments" data-i18n="refresh">Refresh</button>
+            </header>
+            <div class="summary-controls">
+              <button
+                id="togglePaymentSummary"
+                type="button"
+                data-i18n="togglePaymentSummary"
+              >
+                Tenant Summary
+              </button>
+            </div>
+            <div class="summary-panel hidden" id="paymentSummaryPanel">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="summaryTenant">Tenant</th>
+                    <th data-i18n="summaryExpensesCount">Open Expenses</th>
+                    <th data-i18n="summaryExpensesAmount">Open Amount</th>
+                    <th data-i18n="summaryPaymentsCount">Payments</th>
+                    <th data-i18n="summaryPaymentsAmount">Payments Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentSummaryBody"></tbody>
+              </table>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="selectTenant">Tenant</th>
+                    <th data-i18n="debtType">Debt Type</th>
+                    <th data-i18n="amount">Amount</th>
+                    <th data-i18n="paymentDate">Payment Date</th>
+                    <th data-i18n="paymentMethod">Method</th>
+                    <th data-i18n="paymentReference">Reference</th>
+                    <th data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentsTableBody"></tbody>
+              </table>
+            </div>
+            <div class="table-wrapper">
+              <h4 data-i18n="openExpensesHeading">Open &amp; Overdue Expenses</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="selectTenant">Tenant</th>
+                    <th data-i18n="debtType">Type</th>
+                    <th data-i18n="amount">Amount</th>
+                    <th data-i18n="dueDate">Due</th>
+                    <th data-i18n="status">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="openExpensesTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <section id="tenantView" class="view">
+        <div class="card">
+          <form id="tenantSelector" class="form-grid small">
+            <div class="field">
+              <label for="tenantSelect" data-i18n="selectTenant"
+                >Select Tenant</label
+              >
+              <select id="tenantSelect"></select>
+            </div>
+            <button type="submit" data-i18n="loadTenant">Load Tenant</button>
+          </form>
+        </div>
+
+        <div id="tenantSummary" class="grid">
+          <article class="card">
+            <h3 data-i18n="tenantInfo">Tenant Info</h3>
+            <dl id="tenantInfoList"></dl>
+          </article>
+          <article class="card">
+            <h3 data-i18n="contractInfo">Contract Info</h3>
+            <dl id="tenantContractList"></dl>
+          </article>
+          <article class="card">
+            <h3 data-i18n="financialSummary">Financial Summary</h3>
+            <dl id="tenantFinancialList"></dl>
+          </article>
+        </div>
+
+        <article class="card">
+          <header>
+            <h3 data-i18n="tenantDebts">Unpaid Expenses</h3>
+            <div class="pdf-buttons">
+              <span data-i18n="pdfOptionsHeading">Export Tenant PDF</span>
+              <div class="pdf-format-selector">
+                <label>
+                  <input type="radio" name="pdfFormat" value="normal" checked>
+                  <span data-i18n="pdfFormatNormal">Normal</span>
+                </label>
+                <label>
+                  <input type="radio" name="pdfFormat" value="detailed">
+                  <span data-i18n="pdfFormatDetailed">Detailed</span>
+                </label>
+              </div>
+              <button id="exportTenantPdf" data-i18n="pdfOptionEnglish">
+                Download in English
+              </button>
+              <button id="exportTenantPdfSq" data-i18n="pdfOptionAlbanian">
+                Download in Albanian
+              </button>
+            </div>
+          </header>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="debtType">Type</th>
+                  <th data-i18n="amount">Amount</th>
+                  <th data-i18n="dueDate">Due Date</th>
+                  <th data-i18n="status">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tenantDebtsTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <h3 data-i18n="tenantPayments">Payments</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="amount">Amount</th>
+                  <th data-i18n="debtType">Type</th>
+                  <th data-i18n="paymentDate">Date</th>
+                  <th data-i18n="paymentMethod">Method</th>
+                  <th data-i18n="paymentReference">Reference</th>
+                </tr>
+              </thead>
+              <tbody id="tenantPaymentsTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <small data-i18n="footerNote">
+        Powered by Supabase. Built for property managers and tenants.
+      </small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
+
