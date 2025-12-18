@@ -645,10 +645,16 @@ async function init() {
     const applyTheme = (theme) => {
       if (theme === "dark") {
         document.body.classList.add("dark-theme");
-        themeToggleBtn.textContent = "Light";
+        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
+        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
+        if (lightIcon) lightIcon.style.display = "none";
+        if (darkIcon) darkIcon.style.display = "block";
       } else {
         document.body.classList.remove("dark-theme");
-        themeToggleBtn.textContent = "Dark";
+        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
+        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
+        if (lightIcon) lightIcon.style.display = "block";
+        if (darkIcon) darkIcon.style.display = "none";
         theme = "light";
       }
       try {
@@ -668,6 +674,9 @@ async function init() {
   }
 
   translateUI();
+  
+  // Update top navigation active state
+  updateTopNavActiveForStats();
   
   // Update back link for tenants after translation (in case translateUI overrides it)
   if (backLink) {
@@ -712,9 +721,18 @@ async function init() {
   await loadInitialData();
 }
 
-document.addEventListener("DOMContentLoaded", init);
+function updateTopNavActiveForStats() {
+  const statisticsBtn = document.getElementById("topNavStatistics");
+  const adminBtn = document.getElementById("topNavAdmin");
+  const tenantBtn = document.getElementById("topNavTenant");
+  const profileBtn = document.getElementById("topNavProfile");
 
+  [statisticsBtn, adminBtn, tenantBtn, profileBtn].forEach(btn => {
+    if (btn) btn.classList.remove("active");
+  });
 
+  if (statisticsBtn) statisticsBtn.classList.add("active");
+}
 
 document.addEventListener("DOMContentLoaded", init);
 

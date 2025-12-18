@@ -7,6 +7,24 @@
    TABLET STYLES (769px - 1024px)
    ============================================ */
 @media screen and (max-width: 1024px) {
+  /* Logo bar adjustments */
+  .logo-bar {
+    padding: 1rem 1.5rem;
+    gap: 1rem;
+  }
+
+  .logo-image {
+    height: 35px;
+  }
+
+  .logo-text-en {
+    font-size: 1.1rem;
+  }
+
+  .logo-text-sq {
+    font-size: 0.85rem;
+  }
+
   /* Header adjustments */
   .app-header {
     padding: 1.25rem 1.5rem;
@@ -73,6 +91,35 @@
    MOBILE STYLES (up to 768px)
    ============================================ */
 @media screen and (max-width: 768px) {
+  /* Logo bar - Stack vertically on mobile */
+  .logo-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .logo-link {
+    width: 100%;
+  }
+
+  .logo-image {
+    height: 32px;
+  }
+
+  .logo-text-en {
+    font-size: 1rem;
+  }
+
+  .logo-text-sq {
+    font-size: 0.8rem;
+  }
+
+  .logo-bar-controls {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
   /* Header - Stack vertically on mobile */
   .app-header {
     flex-direction: column;

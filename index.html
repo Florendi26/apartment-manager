@@ -12,59 +12,52 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.1/lottie.min.js" crossorigin="anonymous"></script>
   </head>
   <body>
-    <header class="app-header">
-      <div class="header-main">
-        <h1 data-i18n="appTitle">Apartment Management</h1>
-        <p class="subtitle" data-i18n="appSubtitle">
-          Manage contracts, deposits, debts and payments with ease.
-        </p>
-      </div>
-      <div class="header-controls">
-        <div class="control header-buttons">
-          <button
-            type="button"
-            id="themeToggleBtn"
-            class="button-secondary"
-          >
-            Dark
-          </button>
-          <button
-            type="button"
-            id="languageToggleBtn"
-            class="button-secondary"
-          >
-            En
-          </button>
+    <div class="logo-bar">
+      <a href="statistics.html" class="logo-link">
+        <img src="logo/logo.svg" alt="Logo" class="logo-image" />
+        <div class="logo-text">
+          <span class="logo-text-en" data-i18n="logoTextEn">Apartment for you</span>
+          <span class="logo-text-sq" data-i18n="logoTextSq">Banesë për Ty</span>
         </div>
-        <div class="control header-buttons" id="authControls" style="display: none;">
-          <a
-            href="statistics.html"
-            id="headerStatisticsBtn"
-            class="button-secondary"
-            data-i18n="statistics"
-            style="
-              text-decoration: none;
-              display: inline-block;
-              text-align: center;
-            "
-            >Statistics</a
-          >
-          <a
-            href="profile.html"
-            id="headerProfileBtn"
-            class="button-secondary"
-            data-i18n="profile"
-            style="
-              text-decoration: none;
-              display: inline-block;
-              text-align: center;
-            "
-            >Profile</a
-          >
-          
-        </div>
+      </a>
+      <div class="logo-bar-controls">
+        <button
+          type="button"
+          id="languageToggleBtn"
+          class="icon-button"
+          title="Language"
+          aria-label="Toggle Language"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </button>
+        <button
+          type="button"
+          id="themeToggleBtn"
+          class="icon-button"
+          title="Theme"
+          aria-label="Toggle Theme"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-light">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-dark" style="display: none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
       </div>
-    </header>
+    </div>
 
     <div class="administrator-option">
       <button
@@ -173,7 +166,8 @@
       </div>
 
       <section id="adminView" class="view">
-        <nav class="admin-nav" id="adminNav">
+        <div class="admin-nav-container">
+          <nav class="admin-nav" id="adminNav">
           <button type="button" data-page="apartments" data-i18n="navApartments">
             Apartments
           </button>
@@ -239,6 +233,7 @@
           </div>
           <button type="button" data-page="payments" data-i18n="navPayments">Payments</button>
         </nav>
+        </div>
 
         <!-- Global Contract Filter -->
         <div class="global-tenant-filter">
@@ -1198,6 +1193,24 @@
         Powered by Florend Ramusa. Built for property managers and tenants.
       </small>
     </footer>
+
+    <!-- Top Center Navigation Container -->
+    <div class="top-nav-container">
+      <button class="top-nav-btn" id="topNavStatistics" onclick="window.location.href='statistics.html'">
+        <span data-i18n="floatingNavStatistics">Statistics</span>
+      </button>
+      <div class="top-nav-divider"></div>
+      <button class="top-nav-btn" id="topNavAdmin" onclick="switchToAdminView()">
+        <span data-i18n="floatingNavAdmin">Administrator</span>
+      </button>
+      <button class="top-nav-btn" id="topNavTenant" onclick="switchToTenantView()">
+        <span data-i18n="floatingNavTenant">Tenant View</span>
+      </button>
+      <div class="top-nav-divider"></div>
+      <button class="top-nav-btn" id="topNavProfile" onclick="window.location.href='profile.html'">
+        <span data-i18n="floatingNavProfile">Profile</span>
+      </button>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>

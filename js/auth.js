@@ -380,10 +380,16 @@ async function init() {
     const applyTheme = (theme) => {
       if (theme === "dark") {
         document.body.classList.add("dark-theme");
-        themeToggleBtn.textContent = "Light";
+        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
+        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
+        if (lightIcon) lightIcon.style.display = "none";
+        if (darkIcon) darkIcon.style.display = "block";
       } else {
         document.body.classList.remove("dark-theme");
-        themeToggleBtn.textContent = "Dark";
+        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
+        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
+        if (lightIcon) lightIcon.style.display = "block";
+        if (darkIcon) darkIcon.style.display = "none";
         theme = "light";
       }
       try {

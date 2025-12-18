@@ -190,9 +190,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
   
-  // If authenticated, load data and show admin view
-  showAdminView();
-  setAdminPage(state.adminPage, state.expensesCategory);
+  // Check for view parameter in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("view") === "tenant") {
+    state.role = "tenant";
+    const roleToggleBtn = document.getElementById("roleToggleBtnBottom");
+    if (roleToggleBtn) roleToggleBtn.textContent = translate("roleTenant");
+  }
+
+  // If authenticated, load data and show appropriate view
+  if (state.role === "tenant") {
+    toggleViews();
+  } else {
+    showAdminView();
+    setAdminPage(state.adminPage, state.expensesCategory);
+  }
   loadInitialData();
 });
 
@@ -532,10 +544,20 @@ function attachEventListeners() {
     if (!body) return;
     if (theme === "dark") {
       body.classList.add("dark-theme");
-      if (themeToggleBtn) themeToggleBtn.textContent = "Light";
+      if (themeToggleBtn) {
+        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
+        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
+        if (lightIcon) lightIcon.style.display = "none";
+        if (darkIcon) darkIcon.style.display = "block";
+      }
     } else {
       body.classList.remove("dark-theme");
-      if (themeToggleBtn) themeToggleBtn.textContent = "Dark";
+      if (themeToggleBtn) {
+        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
+        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
+        if (lightIcon) lightIcon.style.display = "block";
+        if (darkIcon) darkIcon.style.display = "none";
+      }
       theme = "light";
     }
     try {
@@ -568,6 +590,9 @@ function attachEventListeners() {
       translateUI();
     });
   }
+
+  // Top Navigation Container
+  setupTopNavContainer();
 
   if (elements.adminNav) {
     elements.adminNav.addEventListener("click", handleAdminNavClick);
@@ -913,7 +938,70 @@ function toggleViews() {
       elements.adminNav.style.display = "none";
     }
   }
+  // Update top nav active state when view changes
+  updateTopNavActive();
 }
+
+// Top Navigation Container
+function setupTopNavContainer() {
+  updateTopNavActive();
+}
+
+function updateTopNavActive() {
+  const currentPath = window.location.pathname;
+  let activeView = "admin";
+  
+  if (currentPath.includes("statistics.html")) {
+    activeView = "statistics";
+  } else if (currentPath.includes("profile.html")) {
+    activeView = "profile";
+  } else if (state.role === "tenant") {
+    activeView = "tenant";
+  } else {
+    activeView = "admin";
+  }
+
+  // Update button active states
+  const statisticsBtn = document.getElementById("topNavStatistics");
+  const adminBtn = document.getElementById("topNavAdmin");
+  const tenantBtn = document.getElementById("topNavTenant");
+  const profileBtn = document.getElementById("topNavProfile");
+
+  [statisticsBtn, adminBtn, tenantBtn, profileBtn].forEach(btn => {
+    if (btn) btn.classList.remove("active");
+  });
+
+  if (activeView === "statistics" && statisticsBtn) {
+    statisticsBtn.classList.add("active");
+  } else if (activeView === "admin" && adminBtn) {
+    adminBtn.classList.add("active");
+  } else if (activeView === "tenant" && tenantBtn) {
+    tenantBtn.classList.add("active");
+  } else if (activeView === "profile" && profileBtn) {
+    profileBtn.classList.add("active");
+  }
+}
+
+// Global functions for onclick handlers
+window.switchToAdminView = function() {
+  if (state.role !== "admin") {
+    state.role = "admin";
+    const roleToggleBtn = document.getElementById("roleToggleBtnBottom");
+    if (roleToggleBtn) roleToggleBtn.textContent = translate("roleAdmin");
+    toggleViews();
+    updateTopNavActive();
+  }
+};
+
+window.switchToTenantView = function() {
+  if (state.role !== "tenant") {
+    state.role = "tenant";
+    const roleToggleBtn = document.getElementById("roleToggleBtnBottom");
+    if (roleToggleBtn) roleToggleBtn.textContent = translate("roleTenant");
+    toggleViews();
+    updateTopNavActive();
+  }
+};
 
 function setAdminPage(page, expenseCategory = state.expensesCategory) {
   state.adminPage = page;
@@ -1271,6 +1359,9 @@ function translateUI() {
   populateTenantSelects();
   populateContractSelects();
   populateDebtSelects();
+  
+  // Update top nav active state
+  updateTopNavActive();
   populateTenantSelector();
   populateGlobalContractFilter();
   // Always re-render tenant view if tenant is selected, regardless of which view is active

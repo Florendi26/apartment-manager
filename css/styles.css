@@ -70,6 +70,104 @@ body::after {
   gap: 2rem;
 }
 
+/* Logo Bar */
+.logo-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem clamp(1.5rem, 3vw, 3rem);
+  background: #08a88a;
+  color: #ffffff;
+  gap: 1.5rem;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: #ffffff;
+  transition: opacity 0.2s ease;
+}
+
+.logo-link:hover {
+  opacity: 0.9;
+}
+
+.logo-image {
+  height: 40px;
+  width: auto;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.logo-text-en {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.logo-text-sq {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.logo-bar-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.icon-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+body.dark-theme .logo-bar {
+  background: #1e293b;
+}
+
+body.dark-theme .icon-button {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-theme .icon-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Center admin navigation */
+.admin-nav-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
 .app-header {
   display: flex;
   flex-wrap: wrap;
@@ -1397,8 +1495,9 @@ body.dark-theme .button-danger:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .admin-nav button {
@@ -1428,6 +1527,7 @@ body.dark-theme .button-danger:hover {
 .admin-nav .nav-group {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   flex-wrap: wrap;
   width: 100%;
@@ -2564,6 +2664,87 @@ body.dark-theme .utility-summary-difference .utility-summary-value.zero {
   .utility-summary-totals {
     flex-direction: column;
     gap: 1rem;
+  }
+}
+
+/* Top Center Navigation Container */
+.top-nav-container {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(8, 168, 138, 0.2);
+  border-radius: 50px;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 4px 20px rgba(8, 168, 138, 0.15), 0 2px 8px rgba(8, 168, 138, 0.1);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.top-nav-btn {
+  background: transparent;
+  border: none;
+  color: #1f2933;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.top-nav-btn:hover {
+  background: rgba(8, 168, 138, 0.1);
+  color: #08a88a;
+}
+
+.top-nav-btn.active {
+  background: linear-gradient(135deg, #08a88a 0%, #06c9a3 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(8, 168, 138, 0.3);
+}
+
+.top-nav-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(8, 168, 138, 0.2);
+  margin: 0 0.25rem;
+}
+
+body.dark-theme .top-nav-container {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(8, 168, 138, 0.3);
+  box-shadow: 0 4px 20px rgba(8, 168, 138, 0.2), 0 2px 8px rgba(8, 168, 138, 0.15);
+}
+
+body.dark-theme .top-nav-btn {
+  color: #e2e8f0;
+}
+
+body.dark-theme .top-nav-btn:hover {
+  background: rgba(8, 168, 138, 0.2);
+  color: #06c9a3;
+}
+
+body.dark-theme .top-nav-btn.active {
+  background: linear-gradient(135deg, #08a88a 0%, #06c9a3 100%);
+  color: #ffffff;
+}
+
+body.dark-theme .top-nav-divider {
+  background: rgba(8, 168, 138, 0.3);
+}
+
+/* Hide on mobile */
+@media screen and (max-width: 768px) {
+  .top-nav-container {
+    display: none;
   }
 }
 
