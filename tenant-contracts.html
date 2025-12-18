@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tenant - Contracts</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-main">
+        <h1 data-i18n="tenantContractsTitle">My Contracts</h1>
+        <p class="subtitle" data-i18n="tenantContractsSubtitle">
+          View your active and past rental contracts.
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="control header-buttons tenant-header-grid">
+          <button
+            type="button"
+            id="tenantThemeToggleBtn"
+            class="button-secondary"
+          >
+            Dark
+          </button>
+          <a href="statistics.html" class="button-secondary" data-i18n="statistics" style="text-decoration: none; display: inline-block; text-align: center;">Statistics</a>
+          <button
+            type="button"
+            id="tenantLanguageToggleBtn"
+            class="button-secondary"
+          >
+            En
+          </button>
+          <a href="profile.html" class="button-secondary" data-i18n="tenantProfileNav" style="text-decoration: none; display: inline-block; text-align: center;">Profile</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="tenantNotificationArea" aria-live="polite"></section>
+
+      <nav class="tenant-main-nav">
+        <a href="tenant-apartments.html" class="button-secondary" data-i18n="tenantApartmentsNav">Apartments</a>
+        <a href="tenant-contracts.html" class="button-secondary" data-i18n="tenantContractsNav">Contracts</a>
+        <a href="tenant-expenses.html" class="button-secondary" data-i18n="tenantExpensesNav">My Expenses</a>
+      </nav>
+
+      <section class="view active">
+        <article class="card">
+          <header>
+            <h3 data-i18n="tenantActiveContracts">Active Contracts</h3>
+          </header>
+          <div id="tenantActiveContracts"></div>
+        </article>
+
+        <article class="card">
+          <header>
+            <h3 data-i18n="tenantPastContracts">Past Contracts</h3>
+          </header>
+          <div id="tenantPastContracts"></div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <small>
+        Powered by Florend Ramusa. Built for property managers and tenants.
+      </small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/languages.js"></script>
+    <script src="js/tenant-common.js"></script>
+    <script src="js/tenant-contracts.js"></script>
+  </body>
+  </html>
+
+

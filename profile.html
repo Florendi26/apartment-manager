@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="profileTitle">Profile - Apartment Management</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.1/lottie.min.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-main">
+        <h1 data-i18n="appTitle">Apartment Management</h1>
+        <p class="subtitle" data-i18n="appSubtitle">
+          Manage contracts, deposits, debts and payments with ease.
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="control header-buttons">
+          <button type="button" id="themeToggleBtn" class="button-secondary">
+            Dark
+          </button>
+          <button type="button" id="languageToggleBtn" class="button-secondary">
+            En
+          </button>
+        </div>
+        <div class="control header-buttons" id="authControls">
+          <a
+            href="index.html"
+            id="profileBackLink"
+            class="button-secondary"
+            data-i18n="backToDashboard"
+            style="
+              text-decoration: none;
+              display: inline-block;
+              text-align: center;
+            "
+            >Back to Dashboard</a
+          >
+          <a
+            href="statistics.html"
+            id="profileStatisticsLink"
+            class="button-secondary"
+            data-i18n="statistics"
+            style="
+              text-decoration: none;
+              display: inline-block;
+              text-align: center;
+            "
+            >Statistics</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="notificationArea" aria-live="polite"></section>
+
+      <section id="profileView" class="view active">
+        <article class="card">
+          <div class="profile-layout">
+            <section class="profile-main">
+              <div class="profile-header">
+                <div class="avatar-circle">
+                  <span id="profileAvatarInitials">U</span>
+                </div>
+                <div>
+                  <h2 id="profileName">User</h2>
+                  <p id="profileEmail" class="muted-text">user@example.com</p>
+                  <p id="profileRole" class="badge badge-secondary">
+                    Administrator
+                  </p>
+                </div>
+              </div>
+
+              <dl class="definition-list" id="profileDetails">
+                <div>
+                  <dt>Full name</dt>
+                  <dd id="profileFullName">Florend Ramusa</dd>
+                </div>
+                <div>
+                  <dt>Role</dt>
+                  <dd id="profileRoleDetail">Property Owner / Landlord</dd>
+                </div>
+                <div>
+                  <dt>Email</dt>
+                  <dd id="profileEmailDetail">florend@example.com</dd>
+                </div>
+                <div>
+                  <dt>Phone</dt>
+                  <dd id="profilePhone">+383 xx xxx xxx</dd>
+                </div>
+                <div>
+                  <dt>Date joined platform</dt>
+                  <dd id="profileSince">-</dd>
+                </div>
+                <div>
+                  <dt>UUID</dt>
+                  <dd id="profileTaxId">-</dd>
+                </div>
+                <div>
+                  <dt>Preferred currency</dt>
+                  <dd>
+                    <select id="profilePreferredCurrency" class="inline-edit-input">
+                      <option value="EUR">Euro (€)</option>
+                      <option value="USD">US Dollar ($)</option>
+                    </select>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Notification preferences</dt>
+                  <dd>
+                    <select id="profileNotifications" class="inline-edit-input">
+                      <option value="sms_email">SMS / Email</option>
+                      <option value="sms">SMS only</option>
+                      <option value="email">Email only</option>
+                      <option value="none">No notifications</option>
+                    </select>
+                  </dd>
+                </div>
+              </dl>
+
+              <div class="profile-actions">
+                <button type="button" id="profileEditButton" class="button-secondary">
+                  Edit Profile
+                </button>
+                <button type="button" id="profileChangePasswordButton" class="button-secondary">
+                  Change Password
+                </button>
+                <button
+                  type="button"
+                  id="profileLogoutButton"
+                  class="button-primary"
+                >
+                  Logout
+                </button>
+              </div>
+            </section>
+          </div>
+        </article>
+      </section>
+
+      <!-- Change Password Modal -->
+      <div id="changePasswordModal" class="change-password-modal" style="display: none;">
+        <div class="change-password-modal-content">
+          <button class="change-password-close" id="changePasswordClose">&times;</button>
+          <h3>Change Password</h3>
+          
+          <!-- Step 1: Verify Old Password -->
+          <div id="oldPasswordStep" class="password-step">
+            <div class="form-group">
+              <label for="oldPasswordInput">Current Password</label>
+              <div class="password-field">
+                <div class="password-input-wrapper">
+                  <input
+                    type="password"
+                    id="oldPasswordInput"
+                    class="form-input"
+                    placeholder="Enter your current password"
+                    autocomplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    class="password-toggle button-secondary button-small"
+                    data-target="oldPasswordInput"
+                    aria-label="Toggle password visibility"
+                  >
+                    <svg
+                      class="icon-eye-open"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
+                      />
+                    </svg>
+                    <svg
+                      class="icon-eye-closed"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M2.1 3.51 3.52 2.1l18.38 18.38-1.41 1.41-2.25-2.25C16.71 20.2 14.43 21 12 21 7 21 2.73 17.89 1 14c.73-1.64 1.9-3.12 3.36-4.35L2.1 3.51zM7.1 8.51 8.9 10.3A3.99 3.99 0 0 0 12 16c.36 0 .7-.05 1.03-.14l1.52 1.52A6 6 0 0 1 12 18a6 6 0 0 1-6-6c0-1.1.3-2.13.83-3.03l.27-.46zM12 5c5 0 9.27 3.11 11 7-.53 1.19-1.3 2.29-2.26 3.25l-1.42-1.42A9.02 9.02 0 0 0 20.99 12C19.27 8.11 15 5 12 5c-.87 0-1.72.12-2.54.34L8.01 4.89A10.96 10.96 0 0 1 12 5z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div id="oldPasswordError" class="error-message" style="display: none;"></div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="button-secondary" id="cancelOldPassword">Cancel</button>
+              <button type="button" class="button-primary" id="verifyOldPassword">Verify</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Enter New Password -->
+          <div id="newPasswordStep" class="password-step" style="display: none;">
+            <div class="form-group">
+              <label for="newPasswordInput">New Password</label>
+              <div class="password-field">
+                <div class="password-input-wrapper">
+                  <input
+                    type="password"
+                    id="newPasswordInput"
+                    class="form-input"
+                    placeholder="Enter new password (min 6 characters)"
+                    autocomplete="new-password"
+                    minlength="6"
+                  />
+                  <button
+                    type="button"
+                    class="password-toggle button-secondary button-small"
+                    data-target="newPasswordInput"
+                    aria-label="Toggle password visibility"
+                  >
+                    <svg
+                      class="icon-eye-open"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
+                      />
+                    </svg>
+                    <svg
+                      class="icon-eye-closed"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M2.1 3.51 3.52 2.1l18.38 18.38-1.41 1.41-2.25-2.25C16.71 20.2 14.43 21 12 21 7 21 2.73 17.89 1 14c.73-1.64 1.9-3.12 3.36-4.35L2.1 3.51zM7.1 8.51 8.9 10.3A3.99 3.99 0 0 0 12 16c.36 0 .7-.05 1.03-.14l1.52 1.52A6 6 0 0 1 12 18a6 6 0 0 1-6-6c0-1.1.3-2.13.83-3.03l.27-.46zM12 5c5 0 9.27 3.11 11 7-.53 1.19-1.3 2.29-2.26 3.25l-1.42-1.42A9.02 9.02 0 0 0 20.99 12C19.27 8.11 15 5 12 5c-.87 0-1.72.12-2.54.34L8.01 4.89A10.96 10.96 0 0 1 12 5z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="confirmPasswordInput">Confirm New Password</label>
+              <div class="password-field">
+                <div class="password-input-wrapper">
+                  <input
+                    type="password"
+                    id="confirmPasswordInput"
+                    class="form-input"
+                    placeholder="Confirm new password"
+                    autocomplete="new-password"
+                    minlength="6"
+                  />
+                  <button
+                    type="button"
+                    class="password-toggle button-secondary button-small"
+                    data-target="confirmPasswordInput"
+                    aria-label="Toggle password visibility"
+                  >
+                    <svg
+                      class="icon-eye-open"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
+                      />
+                    </svg>
+                    <svg
+                      class="icon-eye-closed"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M2.1 3.51 3.52 2.1l18.38 18.38-1.41 1.41-2.25-2.25C16.71 20.2 14.43 21 12 21 7 21 2.73 17.89 1 14c.73-1.64 1.9-3.12 3.36-4.35L2.1 3.51zM7.1 8.51 8.9 10.3A3.99 3.99 0 0 0 12 16c.36 0 .7-.05 1.03-.14l1.52 1.52A6 6 0 0 1 12 18a6 6 0 0 1-6-6c0-1.1.3-2.13.83-3.03l.27-.46zM12 5c5 0 9.27 3.11 11 7-.53 1.19-1.3 2.29-2.26 3.25l-1.42-1.42A9.02 9.02 0 0 0 20.99 12C19.27 8.11 15 5 12 5c-.87 0-1.72.12-2.54.34L8.01 4.89A10.96 10.96 0 0 1 12 5z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div id="newPasswordError" class="error-message" style="display: none;"></div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="button-secondary" id="cancelNewPassword">Cancel</button>
+              <button type="button" class="button-primary" id="saveNewPassword">Change Password</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <p data-i18n="footerNote">
+        Powered by Florend Ramusa. Built for property managers and tenants.
+      </p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+      // Simple profile bootstrap using existing auth.js helpers
+      document.addEventListener("DOMContentLoaded", async () => {
+        if (typeof checkAuth !== "function") return;
+
+        // Refresh user data from Supabase to get latest metadata
+        let user = await checkAuth();
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+
+        // Get fresh user data from Supabase
+        if (typeof supabase !== "undefined") {
+          const { data: { user: freshUser }, error } = await supabase.auth.getUser();
+          if (!error && freshUser) {
+            user = freshUser;
+          }
+        }
+
+        const email = user.email || "";
+        let meta = user.user_metadata || {};
+        let name = meta.full_name || email.split("@")[0] || "User";
+
+        const initials = name
+          .split(/[\\.\\s_-]+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((part) => part[0].toUpperCase())
+          .join("");
+
+        const profileNameEl = document.getElementById("profileName");
+        const profileEmailEl = document.getElementById("profileEmail");
+        const profileAvatarInitialsEl = document.getElementById("profileAvatarInitials");
+
+        if (profileNameEl) profileNameEl.textContent = name;
+        if (profileEmailEl) profileEmailEl.textContent = email;
+        if (profileAvatarInitialsEl) profileAvatarInitialsEl.textContent = initials || "U";
+
+        // Simple mapping into detailed fields (static placeholders for now)
+        const fullNameEl = document.getElementById("profileFullName");
+        if (fullNameEl) fullNameEl.textContent = name || "User";
+        const emailDetailEl = document.getElementById("profileEmailDetail");
+        if (emailDetailEl) emailDetailEl.textContent = email;
+
+        const roleEl = document.getElementById("profileRoleDetail");
+        const effectiveRole = meta.role || "Property Owner / Landlord";
+        if (roleEl) roleEl.textContent = effectiveRole;
+
+        // Adjust header links depending on role (landlord vs tenant)
+        const backLink = document.getElementById("profileBackLink");
+        const statsLink = document.getElementById("profileStatisticsLink");
+        if (effectiveRole === "Tenant") {
+          if (backLink) {
+            backLink.href = "tenant-apartments.html";
+            backLink.textContent = "Back to Tenant Portal";
+          }
+          // Statistics button is now visible for tenants
+        }
+
+        const phoneEl = document.getElementById("profilePhone");
+        if (phoneEl) {
+          // Get phone number from Supabase user metadata
+          const phoneNumber = meta.phone || user.phone || "+383 xx xxx xxx";
+          phoneEl.textContent = phoneNumber;
+        }
+
+        const sinceEl = document.getElementById("profileSince");
+        if (sinceEl && user.created_at) {
+          const date = new Date(user.created_at);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          sinceEl.textContent = `${day}.${month}.${year}`;
+        }
+
+        const taxIdEl = document.getElementById("profileTaxId");
+        if (taxIdEl) taxIdEl.textContent = user.id || "-";
+
+        // New interactive controls
+        const currencySelect = document.getElementById(
+          "profilePreferredCurrency"
+        );
+        const notificationsSelect = document.getElementById(
+          "profileNotifications"
+        );
+
+        // Initialise selects from metadata
+        if (currencySelect) {
+          currencySelect.value = meta.preferred_currency || "EUR";
+        }
+        if (notificationsSelect) {
+          notificationsSelect.value = meta.notifications || "sms_email";
+        }
+
+        // Wire logout button to existing logout handler if available
+        const profileLogoutButton = document.getElementById("profileLogoutButton");
+        if (profileLogoutButton && typeof handleLogout === "function") {
+          profileLogoutButton.addEventListener("click", handleLogout);
+        }
+
+        // Live handlers for currency / notifications
+        if (currencySelect && typeof supabase !== "undefined") {
+          currencySelect.addEventListener("change", async () => {
+            const value = currencySelect.value || "EUR";
+            try {
+              const { data, error } = await supabase.auth.updateUser({
+                data: { ...meta, preferred_currency: value },
+              });
+              if (error) throw error;
+              meta = { ...meta, preferred_currency: value };
+              if (typeof notify === "function") {
+                notify("success", "Currency preference updated.");
+              }
+            } catch (error) {
+              console.error("Currency update error:", error);
+              if (typeof notify === "function") {
+                notify("error", "Failed to update currency.");
+              }
+            }
+          });
+        }
+
+        if (notificationsSelect && typeof supabase !== "undefined") {
+          notificationsSelect.addEventListener("change", async () => {
+            const value = notificationsSelect.value || "sms_email";
+            try {
+              const { data, error } = await supabase.auth.updateUser({
+                data: { ...meta, notifications: value },
+              });
+              if (error) throw error;
+              meta = { ...meta, notifications: value };
+              if (typeof notify === "function") {
+                notify("success", "Notification preferences updated.");
+              }
+            } catch (error) {
+              console.error("Notifications update error:", error);
+              if (typeof notify === "function") {
+                notify("error", "Failed to update notifications.");
+              }
+            }
+          });
+        }
+
+        // Edit Profile: inline edit inside Profile main section
+        const profileEditButton = document.getElementById("profileEditButton");
+        const editableFieldIds = [
+          "profileFullName",
+          "profilePhone",
+        ];
+        const originalValues = {};
+        let isEditingProfile = false;
+
+        // Phone number formatting function: +383-xx-xxx-xxx
+        function formatPhoneNumber(value) {
+          // Remove all non-digit characters except the leading +
+          let cleaned = value.replace(/[^\d+]/g, '');
+          
+          // Ensure it starts with +383
+          if (!cleaned.startsWith('+383')) {
+            // If it starts with + but not +383, try to fix it
+            if (cleaned.startsWith('+') && !cleaned.startsWith('+383')) {
+              cleaned = '+383' + cleaned.substring(1);
+            } else if (!cleaned.startsWith('+')) {
+              // If no +, add +383
+              cleaned = '+383' + cleaned;
+            }
+          }
+          
+          // Remove the +383 prefix for formatting
+          let digits = cleaned.replace('+383', '');
+          
+          // Format as +383-xx-xxx-xxx
+          if (digits.length === 0) {
+            return '+383-';
+          } else if (digits.length <= 2) {
+            return '+383-' + digits;
+          } else if (digits.length <= 5) {
+            return '+383-' + digits.substring(0, 2) + '-' + digits.substring(2);
+          } else {
+            return '+383-' + digits.substring(0, 2) + '-' + digits.substring(2, 5) + '-' + digits.substring(5, 8);
+          }
+        }
+
+        function enterProfileEditMode() {
+          editableFieldIds.forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const currentValue = (el.textContent || "").trim();
+            originalValues[id] = currentValue;
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = currentValue;
+            input.id = `${id}Input`;
+            input.className = "inline-edit-input";
+            
+            // Add phone formatting if this is the phone field
+            if (id === "profilePhone") {
+              input.addEventListener('input', (e) => {
+                const cursorPosition = e.target.selectionStart;
+                const oldValue = e.target.value;
+                const newValue = formatPhoneNumber(e.target.value);
+                
+                e.target.value = newValue;
+                
+                // Restore cursor position (adjust for added dashes)
+                const addedChars = newValue.length - oldValue.length;
+                const newCursorPosition = Math.min(cursorPosition + addedChars, newValue.length);
+                e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+              });
+              
+              // Format on paste
+              input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                const formatted = formatPhoneNumber(pastedText);
+                input.value = formatted;
+              });
+            }
+            
+            el.innerHTML = "";
+            el.appendChild(input);
+          });
+        }
+
+        function exitProfileEditMode(save) {
+          editableFieldIds.forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const input = document.getElementById(`${id}Input`);
+            const value =
+              save && input ? input.value.trim() : originalValues[id] || "";
+            el.innerHTML = value || "-";
+          });
+        }
+
+        if (profileEditButton && typeof supabase !== "undefined") {
+          profileEditButton.addEventListener("click", async () => {
+            // First click: switch to edit mode
+            if (!isEditingProfile) {
+              enterProfileEditMode();
+              isEditingProfile = true;
+              profileEditButton.textContent = "Save Profile";
+              return;
+            }
+
+            // Second click: save changes
+            const updates = { ...meta };
+
+            const fullNameInput =
+              document.getElementById("profileFullNameInput");
+            const phoneInput = document.getElementById("profilePhoneInput");
+
+            if (fullNameInput && fullNameInput.value.trim()) {
+              updates.full_name = fullNameInput.value.trim();
+            }
+            if (phoneInput && phoneInput.value.trim()) {
+              updates.phone = phoneInput.value.trim();
+            }
+
+            try {
+              const { data, error } = await supabase.auth.updateUser({
+                data: updates,
+              });
+              if (error) throw error;
+
+              // Persist new meta + name locally
+              meta = { ...meta, ...updates };
+              if (updates.full_name) {
+                name = updates.full_name;
+              }
+
+              exitProfileEditMode(true);
+              isEditingProfile = false;
+              profileEditButton.textContent = "Edit Profile";
+
+              // Reflect updated name and initials in header/avatar
+              if (profileNameEl && meta.full_name) {
+                profileNameEl.textContent = meta.full_name;
+              }
+              if (fullNameEl && meta.full_name) {
+                fullNameEl.textContent = meta.full_name;
+              }
+              if (profileAvatarInitialsEl && meta.full_name) {
+                const newInitials = meta.full_name
+                  .split(/[\\.\\s_-]+/)
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((part) => part[0].toUpperCase())
+                  .join("");
+                profileAvatarInitialsEl.textContent = newInitials || "U";
+              }
+
+              if (typeof notify === "function") {
+                notify("success", "Profile updated successfully.");
+              }
+            } catch (error) {
+              console.error("Profile update error:", error);
+              exitProfileEditMode(false);
+              isEditingProfile = false;
+              profileEditButton.textContent = "Edit Profile";
+              if (typeof notify === "function") {
+                notify("error", "Failed to update profile.");
+              }
+            }
+          });
+        }
+
+        // Change Password: Modal with old password verification
+        const profileChangePasswordButton = document.getElementById(
+          "profileChangePasswordButton"
+        );
+        const changePasswordModal = document.getElementById("changePasswordModal");
+        const changePasswordClose = document.getElementById("changePasswordClose");
+        const oldPasswordStep = document.getElementById("oldPasswordStep");
+        const newPasswordStep = document.getElementById("newPasswordStep");
+        const oldPasswordInput = document.getElementById("oldPasswordInput");
+        const newPasswordInput = document.getElementById("newPasswordInput");
+        const confirmPasswordInput = document.getElementById("confirmPasswordInput");
+        const verifyOldPasswordBtn = document.getElementById("verifyOldPassword");
+        const saveNewPasswordBtn = document.getElementById("saveNewPassword");
+        const cancelOldPasswordBtn = document.getElementById("cancelOldPassword");
+        const cancelNewPasswordBtn = document.getElementById("cancelNewPassword");
+        const oldPasswordError = document.getElementById("oldPasswordError");
+        const newPasswordError = document.getElementById("newPasswordError");
+
+        // Password toggle functionality - setup once for all password toggles in modal
+        function setupPasswordTogglesInModal() {
+          if (!changePasswordModal) return;
+          const passwordToggles = changePasswordModal.querySelectorAll('.password-toggle');
+          passwordToggles.forEach((btn) => {
+            // Remove any existing listeners by replacing with a clone
+            const hasListener = btn.hasAttribute('data-toggle-listener');
+            if (hasListener) return; // Already has listener
+            
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const targetId = btn.getAttribute('data-target');
+              if (!targetId) return;
+              const input = document.getElementById(targetId);
+              if (!input) return;
+              const isPassword = input.type === 'password';
+              input.type = isPassword ? 'text' : 'password';
+              btn.setAttribute('aria-pressed', String(!isPassword));
+              btn.classList.toggle('is-visible', !isPassword);
+            });
+            
+            btn.setAttribute('data-toggle-listener', 'true');
+          });
+        }
+        
+        // Setup password toggles when page loads
+        setupPasswordTogglesInModal();
+
+        // Function to close modal and reset form
+        function closePasswordModal() {
+          changePasswordModal.style.display = "none";
+          oldPasswordStep.style.display = "block";
+          newPasswordStep.style.display = "none";
+          oldPasswordInput.value = "";
+          oldPasswordInput.type = "password";
+          newPasswordInput.value = "";
+          newPasswordInput.type = "password";
+          confirmPasswordInput.value = "";
+          confirmPasswordInput.type = "password";
+          // Reset toggle button states
+          const passwordToggles = changePasswordModal.querySelectorAll('.password-toggle');
+          passwordToggles.forEach((btn) => {
+            btn.classList.remove('is-visible');
+            btn.setAttribute('aria-pressed', 'false');
+          });
+          oldPasswordError.style.display = "none";
+          oldPasswordError.textContent = "";
+          newPasswordError.style.display = "none";
+          newPasswordError.textContent = "";
+          document.body.style.overflow = "";
+        }
+
+        // Open modal
+        if (profileChangePasswordButton) {
+          profileChangePasswordButton.addEventListener("click", () => {
+            changePasswordModal.style.display = "flex";
+            document.body.style.overflow = "hidden";
+            // Ensure password toggles are set up
+            setupPasswordTogglesInModal();
+            oldPasswordInput.focus();
+          });
+        }
+
+        // Close modal on X button
+        if (changePasswordClose) {
+          changePasswordClose.addEventListener("click", closePasswordModal);
+        }
+
+        // Cancel buttons
+        if (cancelOldPasswordBtn) {
+          cancelOldPasswordBtn.addEventListener("click", closePasswordModal);
+        }
+        if (cancelNewPasswordBtn) {
+          cancelNewPasswordBtn.addEventListener("click", closePasswordModal);
+        }
+
+        // Close modal on background click
+        if (changePasswordModal) {
+          changePasswordModal.addEventListener("click", (e) => {
+            if (e.target === changePasswordModal) {
+              closePasswordModal();
+            }
+          });
+        }
+
+        // Verify old password
+        if (verifyOldPasswordBtn && typeof supabase !== "undefined") {
+          verifyOldPasswordBtn.addEventListener("click", async () => {
+            const oldPassword = oldPasswordInput.value.trim();
+            if (!oldPassword) {
+              oldPasswordError.textContent = "Please enter your current password.";
+              oldPasswordError.style.display = "block";
+              return;
+            }
+
+            try {
+              // Get current user email
+              const { data: { user: currentUser } } = await supabase.auth.getUser();
+              if (!currentUser || !currentUser.email) {
+                throw new Error("User not found");
+              }
+
+              // Try to sign in with old password to verify
+              const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: currentUser.email,
+                password: oldPassword,
+              });
+
+              if (signInError) {
+                oldPasswordError.textContent = "Current password is incorrect.";
+                oldPasswordError.style.display = "block";
+                return;
+              }
+
+              // Password is correct, show new password step
+              oldPasswordStep.style.display = "none";
+              newPasswordStep.style.display = "block";
+              newPasswordInput.focus();
+            } catch (error) {
+              console.error("Password verification error:", error);
+              oldPasswordError.textContent = "Failed to verify password. Please try again.";
+              oldPasswordError.style.display = "block";
+            }
+          });
+              }
+
+        // Save new password
+        if (saveNewPasswordBtn && typeof supabase !== "undefined") {
+          saveNewPasswordBtn.addEventListener("click", async () => {
+            const newPassword = newPasswordInput.value.trim();
+            const confirmPassword = confirmPasswordInput.value.trim();
+
+            // Validation
+            if (!newPassword) {
+              newPasswordError.textContent = "Please enter a new password.";
+              newPasswordError.style.display = "block";
+              return;
+            }
+
+            if (newPassword.length < 6) {
+              newPasswordError.textContent = "Password must be at least 6 characters.";
+              newPasswordError.style.display = "block";
+              return;
+            }
+
+            if (newPassword !== confirmPassword) {
+              newPasswordError.textContent = "Passwords do not match.";
+              newPasswordError.style.display = "block";
+              return;
+            }
+
+            try {
+              const { data, error } = await supabase.auth.updateUser({
+                password: newPassword,
+              });
+              if (error) throw error;
+
+              if (typeof notify === "function") {
+                notify("success", "Password changed successfully.");
+              }
+              closePasswordModal();
+            } catch (error) {
+              console.error("Password change error:", error);
+              newPasswordError.textContent = "Failed to change password. Please try again.";
+              newPasswordError.style.display = "block";
+            }
+          });
+        }
+
+        // Allow Enter key to submit
+        if (oldPasswordInput) {
+          oldPasswordInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && verifyOldPasswordBtn) {
+              verifyOldPasswordBtn.click();
+            }
+          });
+        }
+
+        if (newPasswordInput) {
+          newPasswordInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && confirmPasswordInput) {
+              confirmPasswordInput.focus();
+            }
+          });
+        }
+
+        if (confirmPasswordInput) {
+          confirmPasswordInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && saveNewPasswordBtn) {
+              saveNewPasswordBtn.click();
+            }
+          });
+        }
+
+
+        // Reuse language preference
+        if (typeof translateUI === "function") {
+          translateUI();
+        }
+      });
+    </script>
+  </body>
+</html>
+
+

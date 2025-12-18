@@ -1,11 +1,12 @@
-const SUPABASE_URL = "https://krrhgslhvdfyvxayefqh.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtycmhnc2xodmRmeXZ4YXllZnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3MDAyODYsImV4cCI6MjA3ODI3NjI4Nn0.jil94otneKXn3GTiDLdx1A6yi_5Ktg4DU1_iem5ULbc";
+// Configuration is loaded from js/config.js
+const SUPABASE_URL = window.APP_CONFIG?.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = window.APP_CONFIG?.SUPABASE_ANON_KEY || "";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentLanguage = localStorage.getItem("language") || "en";
 let currentUser = null;
+let showOverallStats = false; // Toggle between personal and overall statistics
 
 // State
 const state = {
@@ -14,54 +15,45 @@ const state = {
   contracts: [],
   debts: [],
   payments: [],
+  utilityBills: [],
+  utilityPayments: [],
+  // Split tables
+  rentBills: [],
+  rentPayments: [],
+  garbageBills: [],
+  garbagePayments: [],
+  maintenanceBills: [],
+  maintenancePayments: [],
+  electricityBills: [],
+  electricityPayments: [],
+  waterBills: [],
+  waterPayments: [],
+  heatingBills: [],
+  heatingPayments: [],
   pdfGeneratedCount: 0,
 };
 
-// Translations (subset needed for statistics page)
-const translations = {
-  en: {
-    appTitle: "Apartment Management",
-    appSubtitle: "Manage contracts, deposits, debts and payments with ease.",
-    languageLabel: "Language",
-    roleLabel: "View As",
-    roleAdmin: "Administrator",
-    roleTenant: "Tenant",
-    overallStatistics: "Overall Statistics",
-    statTenants: "Tenants",
-    statApartments: "Apartments",
-    statContracts: "Contracts",
-    statExpenses: "Expenses",
-    statPayments: "Payments",
-    statTotalPayments: "Total Payments Amount",
-    statTotalExpenses: "Total Expenses Amount",
-    statTotalUnpaid: "Total Unpaid Expenses",
-    statPdfGenerated: "PDFs Generated",
-    logout: "Logout",
-    backToDashboard: "Back to Dashboard",
-    footerNote: "Powered by Florend Ramusa. Built for property managers and tenants.",
-  },
-  sq: {
-    appTitle: "Menaxhimi i Banesave",
-    appSubtitle: "Menaxhoni kontratat, depozitat, detyrimet dhe pagesat me lehtësi.",
-    languageLabel: "Gjuha",
-    roleLabel: "Shiko si",
-    roleAdmin: "Administrator",
-    roleTenant: "Qiramarrës",
-    overallStatistics: "Statistika e Përgjithshme",
-    statTenants: "Qiramarrësit",
-    statApartments: "Banesat",
-    statContracts: "Kontratat",
-    statExpenses: "Shpenzimet",
-    statPayments: "Pagesat",
-    statTotalPayments: "Shuma Totale e Pagesave",
-    statTotalExpenses: "Shuma Totale e Shpenzimeve",
-    statTotalUnpaid: "Shpenzimet e Papaguara",
-    statPdfGenerated: "PDF të Krijuara",
-    logout: "Dil",
-    backToDashboard: "Kthehu në Panel",
-    footerNote: "Krijuar nga Florend Ramusa. Ndërtuar për menaxherët e pronave dhe qiramarrësit.",
-  },
+// Table mapping for split tables
+const EXPENSE_TABLES = {
+  rent: { bills: "rent_bills", payments: "rent_payments", hasStatus: true },
+  garbage: { bills: "garbage_bills", payments: "garbage_payments", hasStatus: true },
+  maintenance: { bills: "maintenance_bills", payments: "maintenance_payments", hasStatus: true },
+  electricity: { bills: "electricity_bills", payments: "electricity_payments", hasStatus: false },
+  water: { bills: "water_bills", payments: "water_payments", hasStatus: false },
+  thermos: { bills: "heating_bills", payments: "heating_payments", hasStatus: false },
 };
+
+const EXPENSE_STATE_KEYS = {
+  rent: { bills: "rentBills", payments: "rentPayments" },
+  garbage: { bills: "garbageBills", payments: "garbagePayments" },
+  maintenance: { bills: "maintenanceBills", payments: "maintenancePayments" },
+  electricity: { bills: "electricityBills", payments: "electricityPayments" },
+  water: { bills: "waterBills", payments: "waterPayments" },
+  thermos: { bills: "heatingBills", payments: "heatingPayments" },
+};
+
+// Translations (loaded from central languages.js)
+const translations = window.STATS_TRANSLATIONS || {};
 
 function translate(key) {
   return translations[currentLanguage]?.[key] || translations.en[key] || key;
@@ -126,9 +118,32 @@ async function handleLogout() {
 }
 
 async function loadApartments() {
+  if (showOverallStats) {
+    // Load all apartments for overall statistics
+    const { data, error } = await supabase
+      .from("apartments")
+      .select("id")
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("loadApartments", error);
+      return;
+    }
+    state.apartments = data || [];
+    return;
+  }
+  
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    state.apartments = [];
+    return;
+  }
+  
   const { data, error } = await supabase
     .from("apartments")
     .select("id")
+    .eq("landlord_id", user.id) // Filter by current user
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -142,7 +157,7 @@ async function loadApartments() {
 async function loadTenants() {
   const { data, error } = await supabase
     .from("tenants")
-    .select("id")
+    .select("id, email")
     .order("full_name");
 
   if (error) {
@@ -154,9 +169,47 @@ async function loadTenants() {
 }
 
 async function loadContracts() {
+  if (showOverallStats) {
+    // Load all contracts for overall statistics
+    const { data, error } = await supabase
+      .from("contracts")
+      .select("id")
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("loadContracts", error);
+      return;
+    }
+    state.contracts = data || [];
+    return;
+  }
+  
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    state.contracts = [];
+    return;
+  }
+  
+  // First, get all apartment IDs for this landlord
+  const { data: landlordApartments, error: apartmentError } = await supabase
+    .from("apartments")
+    .select("id")
+    .eq("landlord_id", user.id);
+  
+  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
+    // No apartments for this landlord, clear contracts
+    state.contracts = [];
+    return;
+  }
+  
+  const apartmentIds = landlordApartments.map(a => a.id);
+  
+  // Filter contracts by apartment IDs
   const { data, error } = await supabase
     .from("contracts")
     .select("id")
+    .in("apartment_id", apartmentIds)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -168,31 +221,238 @@ async function loadContracts() {
 }
 
 async function loadDebts() {
-  const { data, error } = await supabase
-    .from("debts")
-    .select("id, amount, is_paid")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("loadDebts", error);
+  const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+  
+  if (showOverallStats) {
+    // Load all bills for overall statistics
+    for (const type of types) {
+      const tableInfo = EXPENSE_TABLES[type];
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      
+      const selectColumns = tableInfo.hasStatus ? "id, amount, is_paid" : "id, amount";
+      
+      const { data, error } = await supabase
+        .from(tableInfo.bills)
+        .select(selectColumns)
+        .order("bill_date", { ascending: false });
+      
+      if (error) {
+        console.log(`${type} bills not available:`, error.message);
+        state[stateKey.bills] = [];
+      } else {
+        state[stateKey.bills] = data || [];
+      }
+    }
+    
+    // Combine all bills into state.debts
+    state.debts = [
+      ...state.rentBills.map(b => ({ ...b, type: "rent" })),
+      ...state.garbageBills.map(b => ({ ...b, type: "garbage" })),
+      ...state.maintenanceBills.map(b => ({ ...b, type: "maintenance" })),
+      ...state.electricityBills.map(b => ({ ...b, type: "electricity", is_paid: false })),
+      ...state.waterBills.map(b => ({ ...b, type: "water", is_paid: false })),
+      ...state.heatingBills.map(b => ({ ...b, type: "thermos", is_paid: false })),
+    ];
     return;
   }
-
-  state.debts = data || [];
+  
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.bills] = [];
+    }
+    state.debts = [];
+    return;
+  }
+  
+  // First, get all apartment IDs for this landlord
+  const { data: landlordApartments, error: apartmentError } = await supabase
+    .from("apartments")
+    .select("id")
+    .eq("landlord_id", user.id);
+  
+  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
+    // No apartments for this landlord, clear all bills
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.bills] = [];
+    }
+    state.debts = [];
+    return;
+  }
+  
+  const apartmentIds = landlordApartments.map(a => a.id);
+  
+  // Then get all contract IDs for those apartments
+  const { data: landlordContracts, error: contractError } = await supabase
+    .from("contracts")
+    .select("id")
+    .in("apartment_id", apartmentIds);
+  
+  if (contractError || !landlordContracts || landlordContracts.length === 0) {
+    // No contracts for this landlord, clear all bills
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.bills] = [];
+    }
+    state.debts = [];
+    return;
+  }
+  
+  const contractIds = landlordContracts.map(c => c.id);
+  
+  // Load from all split bill tables
+  for (const type of types) {
+    const tableInfo = EXPENSE_TABLES[type];
+    const stateKey = EXPENSE_STATE_KEYS[type];
+    
+    // Select different columns based on whether table has is_paid column
+    const selectColumns = tableInfo.hasStatus ? "id, amount, is_paid" : "id, amount";
+    
+    const { data, error } = await supabase
+      .from(tableInfo.bills)
+      .select(selectColumns)
+      .in("contract_id", contractIds)
+      .order("bill_date", { ascending: false });
+    
+    if (error) {
+      console.log(`${type} bills not available:`, error.message);
+      state[stateKey.bills] = [];
+    } else {
+      state[stateKey.bills] = data || [];
+    }
+  }
+  
+  // Combine all bills into state.debts for backward compatibility
+  state.debts = [
+    ...state.rentBills.map(b => ({ ...b, type: "rent" })),
+    ...state.garbageBills.map(b => ({ ...b, type: "garbage" })),
+    ...state.maintenanceBills.map(b => ({ ...b, type: "maintenance" })),
+    ...state.electricityBills.map(b => ({ ...b, type: "electricity", is_paid: false })),
+    ...state.waterBills.map(b => ({ ...b, type: "water", is_paid: false })),
+    ...state.heatingBills.map(b => ({ ...b, type: "thermos", is_paid: false })),
+  ];
 }
 
 async function loadPayments() {
-  const { data, error } = await supabase
-    .from("payments")
-    .select("id, amount")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("loadPayments", error);
+  const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+  
+  if (showOverallStats) {
+    // Load all payments for overall statistics
+    for (const type of types) {
+      const tableInfo = EXPENSE_TABLES[type];
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      
+      const { data, error } = await supabase
+        .from(tableInfo.payments)
+        .select("id, bill_id, amount")
+        .order("payment_date", { ascending: false });
+      
+      if (error) {
+        console.log(`${type} payments not available:`, error.message);
+        state[stateKey.payments] = [];
+      } else {
+        state[stateKey.payments] = data || [];
+      }
+    }
+    
+    // Combine all payments into state.payments
+    state.payments = [
+      ...state.rentPayments.map(p => ({ ...p, type: "rent" })),
+      ...state.garbagePayments.map(p => ({ ...p, type: "garbage" })),
+      ...state.maintenancePayments.map(p => ({ ...p, type: "maintenance" })),
+      ...state.electricityPayments.map(p => ({ ...p, type: "electricity" })),
+      ...state.waterPayments.map(p => ({ ...p, type: "water" })),
+      ...state.heatingPayments.map(p => ({ ...p, type: "thermos" })),
+    ];
     return;
   }
+  
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.payments] = [];
+    }
+    state.payments = [];
+    return;
+  }
+  
+  // First, get all apartment IDs for this landlord
+  const { data: landlordApartments, error: apartmentError } = await supabase
+    .from("apartments")
+    .select("id")
+    .eq("landlord_id", user.id);
+  
+  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
+    // No apartments for this landlord, clear all payments
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.payments] = [];
+    }
+    state.payments = [];
+    return;
+  }
+  
+  const apartmentIds = landlordApartments.map(a => a.id);
+  
+  // Then get all contract IDs for those apartments
+  const { data: landlordContracts, error: contractError } = await supabase
+    .from("contracts")
+    .select("id")
+    .in("apartment_id", apartmentIds);
+  
+  if (contractError || !landlordContracts || landlordContracts.length === 0) {
+    // No contracts for this landlord, clear all payments
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.payments] = [];
+    }
+    state.payments = [];
+    return;
+  }
+  
+  const contractIds = landlordContracts.map(c => c.id);
+  
+  // Load from all split payment tables
+  for (const type of types) {
+    const tableInfo = EXPENSE_TABLES[type];
+    const stateKey = EXPENSE_STATE_KEYS[type];
+    
+    const { data, error } = await supabase
+      .from(tableInfo.payments)
+      .select("id, bill_id, amount")
+      .in("contract_id", contractIds)
+      .order("payment_date", { ascending: false });
+    
+    if (error) {
+      console.log(`${type} payments not available:`, error.message);
+      state[stateKey.payments] = [];
+    } else {
+      state[stateKey.payments] = data || [];
+    }
+  }
+  
+  // Combine all payments into state.payments for backward compatibility
+  state.payments = [
+    ...state.rentPayments.map(p => ({ ...p, type: "rent" })),
+    ...state.garbagePayments.map(p => ({ ...p, type: "garbage" })),
+    ...state.maintenancePayments.map(p => ({ ...p, type: "maintenance" })),
+    ...state.electricityPayments.map(p => ({ ...p, type: "electricity" })),
+    ...state.waterPayments.map(p => ({ ...p, type: "water" })),
+    ...state.heatingPayments.map(p => ({ ...p, type: "thermos" })),
+  ];
+}
 
-  state.payments = data || [];
+async function loadUtilityBills() {
+  // Now handled by loadDebts
+}
+
+async function loadUtilityPayments() {
+  // Now handled by loadPayments
 }
 
 function renderStatistics() {
@@ -203,18 +463,37 @@ function renderStatistics() {
   const expensesCount = state.debts.length;
   const paymentsCount = state.payments.length;
 
-  // Calculate amounts
+  // Helper function to calculate category stats using split tables
+  const getCategoryStats = (type) => {
+    const stateKey = EXPENSE_STATE_KEYS[type];
+    const bills = state[stateKey.bills] || [];
+    const payments = state[stateKey.payments] || [];
+    
+    const expenses = bills.reduce((sum, b) => sum + normalizeCurrency(b.amount), 0);
+    const paid = payments.reduce((sum, p) => sum + normalizeCurrency(p.amount), 0);
+    
+    return { expenses, payments: paid, balance: expenses - paid };
+  };
+
+  // Calculate stats for each category
+  const rentStats = getCategoryStats('rent');
+  const garbageStats = getCategoryStats('garbage');
+  const maintenanceStats = getCategoryStats('maintenance');
+  const electricityStats = getCategoryStats('electricity');
+  const waterStats = getCategoryStats('water');
+  const heatingStats = getCategoryStats('thermos');
+
+  // Calculate total amounts
   const totalExpenses = state.debts.reduce(
-    (sum, debt) => sum + normalizeCurrency(debt.amount),
-    0
+    (sum, debt) => sum + normalizeCurrency(debt.amount), 0
   );
+
   const totalPayments = state.payments.reduce(
-    (sum, payment) => sum + normalizeCurrency(payment.amount),
-    0
+    (sum, payment) => sum + normalizeCurrency(payment.amount), 0
   );
-  const totalUnpaid = state.debts
-    .filter((debt) => !debt.is_paid)
-    .reduce((sum, debt) => sum + normalizeCurrency(debt.amount), 0);
+
+  // Total unpaid (balance for all categories)
+  const totalUnpaid = totalExpenses - totalPayments;
 
   // Get PDF count from localStorage
   let pdfGeneratedCount = 0;
@@ -243,7 +522,71 @@ function renderStatistics() {
   if (statPdfGeneratedValue) statPdfGeneratedValue.textContent = formatNumber(pdfGeneratedCount);
   if (statTotalExpensesValue) statTotalExpensesValue.textContent = formatCurrency(totalExpenses);
   if (statTotalPaymentsValue) statTotalPaymentsValue.textContent = formatCurrency(totalPayments);
-  if (statTotalUnpaidValue) statTotalUnpaidValue.textContent = formatCurrency(totalUnpaid);
+  
+  // Update total unpaid with color
+  if (statTotalUnpaidValue) {
+    if (totalUnpaid < -0.01) {
+      statTotalUnpaidValue.textContent = `-${formatCurrency(Math.abs(totalUnpaid))}`;
+      statTotalUnpaidValue.style.color = '#166534'; // Green for credit
+    } else if (totalUnpaid > 0.01) {
+      statTotalUnpaidValue.textContent = formatCurrency(totalUnpaid);
+      statTotalUnpaidValue.style.color = '#dc2626'; // Red for owes
+    } else {
+      statTotalUnpaidValue.textContent = '€0.00';
+      statTotalUnpaidValue.style.color = '';
+    }
+  }
+
+  // Update category DOM elements
+  const updateCategoryValue = (id, value, isBalance = false) => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (isBalance) {
+        if (value < -0.01) {
+          el.textContent = `-${formatCurrency(Math.abs(value))}`;
+          el.style.color = '#166534'; // Green for credit
+        } else if (value > 0.01) {
+          el.textContent = formatCurrency(value);
+          el.style.color = '#dc2626'; // Red for owes
+        } else {
+          el.textContent = '€0.00';
+          el.style.color = '';
+        }
+      } else {
+        el.textContent = formatCurrency(value);
+      }
+    }
+  };
+
+  // Rent
+  updateCategoryValue('statRentExpensesValue', rentStats.expenses);
+  updateCategoryValue('statRentPaymentsValue', rentStats.payments);
+  updateCategoryValue('statRentBalanceValue', rentStats.balance, true);
+  
+  // Garbage
+  updateCategoryValue('statGarbageExpensesValue', garbageStats.expenses);
+  updateCategoryValue('statGarbagePaymentsValue', garbageStats.payments);
+  updateCategoryValue('statGarbageBalanceValue', garbageStats.balance, true);
+  
+  // Maintenance
+  updateCategoryValue('statMaintenanceExpensesValue', maintenanceStats.expenses);
+  updateCategoryValue('statMaintenancePaymentsValue', maintenanceStats.payments);
+  updateCategoryValue('statMaintenanceBalanceValue', maintenanceStats.balance, true);
+  
+  // Electricity
+  updateCategoryValue('statElectricityExpensesValue', electricityStats.expenses);
+  updateCategoryValue('statElectricityPaymentsValue', electricityStats.payments);
+  updateCategoryValue('statElectricityBalanceValue', electricityStats.balance, true);
+  
+  // Water
+  updateCategoryValue('statWaterExpensesValue', waterStats.expenses);
+  updateCategoryValue('statWaterPaymentsValue', waterStats.payments);
+  updateCategoryValue('statWaterBalanceValue', waterStats.balance, true);
+  
+  // Heating
+  updateCategoryValue('statHeatingExpensesValue', heatingStats.expenses);
+  updateCategoryValue('statHeatingPaymentsValue', heatingStats.payments);
+  updateCategoryValue('statHeatingBalanceValue', heatingStats.balance, true);
 }
 
 async function loadInitialData() {
@@ -253,6 +596,8 @@ async function loadInitialData() {
     loadContracts(),
     loadDebts(),
     loadPayments(),
+    loadUtilityBills(),
+    loadUtilityPayments(),
   ]);
   renderStatistics();
 }
@@ -268,31 +613,110 @@ async function init() {
 
   currentUser = user;
   
-  // Update auth UI
-  const userEmail = document.getElementById("userEmail");
-  if (userEmail) {
-    userEmail.textContent = user.email || "";
-  }
-
   // Set up event listeners
   const logoutButton = document.getElementById("logoutButton");
-  const languagePicker = document.getElementById("languagePicker");
+  const languageToggleBtn = document.getElementById("languageToggleBtn");
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  const backLink = document.getElementById("statisticsBackLink");
 
   if (logoutButton) {
     logoutButton.addEventListener("click", handleLogout);
   }
-  if (languagePicker) {
-    languagePicker.value = currentLanguage;
-    languagePicker.addEventListener("change", (event) => {
-      currentLanguage = event.target.value;
+  
+  // Language toggle button
+  if (languageToggleBtn) {
+    languageToggleBtn.textContent = currentLanguage === "en" ? "En" : "Sq";
+    languageToggleBtn.addEventListener("click", () => {
+      if (currentLanguage === "en") {
+        currentLanguage = "sq";
+        languageToggleBtn.textContent = "Sq";
+      } else {
+        currentLanguage = "en";
+        languageToggleBtn.textContent = "En";
+      }
       localStorage.setItem("language", currentLanguage);
       translateUI();
     });
   }
 
+  // Theme toggle button (light / dark)
+  if (themeToggleBtn) {
+    const applyTheme = (theme) => {
+      if (theme === "dark") {
+        document.body.classList.add("dark-theme");
+        themeToggleBtn.textContent = "Light";
+      } else {
+        document.body.classList.remove("dark-theme");
+        themeToggleBtn.textContent = "Dark";
+        theme = "light";
+      }
+      try {
+        window.localStorage.setItem("theme", theme);
+      } catch (_) {}
+    };
+
+    const storedTheme =
+      (window.localStorage && window.localStorage.getItem("theme")) ||
+      "light";
+    applyTheme(storedTheme);
+
+    themeToggleBtn.addEventListener("click", () => {
+      const isDark = document.body.classList.contains("dark-theme");
+      applyTheme(isDark ? "light" : "dark");
+    });
+  }
+
   translateUI();
+  
+  // Update back link for tenants after translation (in case translateUI overrides it)
+  if (backLink) {
+    const role = user.user_metadata?.role || "Property Owner / Landlord";
+    if (role === "Tenant") {
+      backLink.href = "tenant-apartments.html";
+      backLink.textContent = "Back to Tenant Portal";
+      backLink.removeAttribute("data-i18n");
+    }
+  }
+  
+  // Set up statistics toggle button
+  const statisticsToggleBtn = document.getElementById("statisticsToggleBtn");
+  const statisticsToggleText = document.getElementById("statisticsToggleText");
+  
+  if (statisticsToggleBtn && statisticsToggleText) {
+    const updateToggleText = () => {
+      statisticsToggleText.textContent = showOverallStats 
+        ? translate("showPersonal") 
+        : translate("showOverall");
+    };
+    
+    updateToggleText();
+    
+    statisticsToggleBtn.addEventListener("click", async () => {
+      showOverallStats = !showOverallStats;
+      updateToggleText();
+      
+      // Update header title
+      const headerTitle = document.getElementById("statisticsHeaderTitle");
+      if (headerTitle) {
+        headerTitle.textContent = showOverallStats 
+          ? translate("overallStatistics") 
+          : translate("myStatistics");
+      }
+      
+      // Reload data with new filter
+      await loadInitialData();
+    });
+  }
+  
   await loadInitialData();
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+
+
+document.addEventListener("DOMContentLoaded", init);
+
+
+
 

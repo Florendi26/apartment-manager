@@ -7,8 +7,8 @@
     <title data-i18n="overallStatistics">Statistics - Apartment Management</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
-    <link rel="manifest" href="site.webmanifest" />
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.1/lottie.min.js"></script>
   </head>
   <body>
@@ -20,24 +20,13 @@
         </p>
       </div>
       <div class="header-controls">
-        <div class="control">
-          <label for="languagePicker" data-i18n="languageLabel">Language</label>
-          <select id="languagePicker">
-            <option value="en">En</option>
-            <option value="sq">Sq</option>
-          </select>
+        <div class="control header-buttons">
+          <button type="button" id="themeToggleBtn" class="button-secondary">Dark</button>
+          <button type="button" id="languageToggleBtn" class="button-secondary">En</button>
         </div>
-        <div class="control">
-          <label for="rolePicker" data-i18n="roleLabel">View As</label>
-          <select id="rolePicker">
-            <option value="admin" data-i18n="roleAdmin">Administrator</option>
-            <option value="tenant" data-i18n="roleTenant">Tenant</option>
-          </select>
-        </div>
-        <div class="control" id="authControls">
-          <a href="index.html" class="button-secondary" data-i18n="backToDashboard" style="text-decoration: none; display: inline-block; text-align: center; padding: 0.6rem 1rem; border: none; border-radius: 0.5rem; font-size: inherit; font-weight: inherit; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;">Back to Dashboard</a>
-          <span id="userEmail" class="user-email"></span>
-          <button type="button" id="logoutButton" class="button-secondary" data-i18n="logout">Logout</button>
+        <div class="control header-buttons" id="authControls">
+          <a href="index.html" id="statisticsBackLink" class="button-secondary" data-i18n="backToDashboard" style="text-decoration: none; display: inline-block; text-align: center;">Back to Dashboard</a>
+          <a href="profile.html" class="button-secondary" data-i18n="profile" style="text-decoration: none; display: inline-block; text-align: center;">Profile</a>
         </div>
       </div>
     </header>
@@ -47,8 +36,11 @@
       
       <section id="adminView" class="view active">
         <section id="adminSummary" class="card admin-summary">
-          <header>
-            <h3 data-i18n="overallStatistics">Overall Statistics</h3>
+          <header style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="statisticsHeaderTitle" data-i18n="myStatistics">My Statistics</h3>
+            <button type="button" id="statisticsToggleBtn" class="button-secondary" style="margin-left: auto;">
+              <span id="statisticsToggleText">Show Overall</span>
+            </button>
           </header>
           <div class="metrics-grid">
             <div class="metric-card">
@@ -89,6 +81,115 @@
             </div>
           </div>
         </section>
+
+        <!-- Expense Categories Statistics Section -->
+        <section id="categoryStatistics" class="card admin-summary" style="margin-top: 1.5rem;">
+          <header>
+            <h3 data-i18n="categoryStatistics">Expense Categories</h3>
+          </header>
+          
+          <!-- Rent Row -->
+          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Rent</h4>
+          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="metric-card">
+              <span class="metric-label">Expenses</span>
+              <span class="metric-value" id="statRentExpensesValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Payments</span>
+              <span class="metric-value" id="statRentPaymentsValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Balance</span>
+              <span class="metric-value" id="statRentBalanceValue">€0.00</span>
+            </div>
+          </div>
+          
+          <!-- Garbage Row -->
+          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Garbage</h4>
+          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="metric-card">
+              <span class="metric-label">Expenses</span>
+              <span class="metric-value" id="statGarbageExpensesValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Payments</span>
+              <span class="metric-value" id="statGarbagePaymentsValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Balance</span>
+              <span class="metric-value" id="statGarbageBalanceValue">€0.00</span>
+            </div>
+          </div>
+          
+          <!-- Maintenance Row -->
+          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Maintenance</h4>
+          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="metric-card">
+              <span class="metric-label">Expenses</span>
+              <span class="metric-value" id="statMaintenanceExpensesValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Payments</span>
+              <span class="metric-value" id="statMaintenancePaymentsValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Balance</span>
+              <span class="metric-value" id="statMaintenanceBalanceValue">€0.00</span>
+            </div>
+          </div>
+          
+          <!-- Electricity Row -->
+          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Electricity</h4>
+          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="metric-card">
+              <span class="metric-label">Expenses</span>
+              <span class="metric-value" id="statElectricityExpensesValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Payments</span>
+              <span class="metric-value" id="statElectricityPaymentsValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Balance</span>
+              <span class="metric-value" id="statElectricityBalanceValue">€0.00</span>
+            </div>
+          </div>
+          
+          <!-- Water Row -->
+          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Water</h4>
+          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="metric-card">
+              <span class="metric-label">Expenses</span>
+              <span class="metric-value" id="statWaterExpensesValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Payments</span>
+              <span class="metric-value" id="statWaterPaymentsValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Balance</span>
+              <span class="metric-value" id="statWaterBalanceValue">€0.00</span>
+            </div>
+          </div>
+          
+          <!-- Heating Row -->
+          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Heating</h4>
+          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="metric-card">
+              <span class="metric-label">Expenses</span>
+              <span class="metric-value" id="statHeatingExpensesValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Payments</span>
+              <span class="metric-value" id="statHeatingPaymentsValue">€0.00</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Balance</span>
+              <span class="metric-value" id="statHeatingBalanceValue">€0.00</span>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
 
@@ -99,6 +200,8 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/languages.js"></script>
     <script src="js/statistics.js"></script>
   </body>
 </html>

@@ -1,0 +1,657 @@
+/* ============================================
+   RESPONSIVE STYLES
+   Mobile, Tablet, and Laptop breakpoints
+   ============================================ */
+
+/* ============================================
+   TABLET STYLES (769px - 1024px)
+   ============================================ */
+@media screen and (max-width: 1024px) {
+  /* Header adjustments */
+  .app-header {
+    padding: 1.25rem 1.5rem;
+    gap: 1rem;
+  }
+
+  .header-main h1 {
+    font-size: 1.75rem;
+  }
+
+  .header-controls {
+    gap: 0.75rem;
+  }
+
+  /* Main content */
+  main {
+    padding: 1.5rem;
+  }
+
+  /* Admin navigation */
+  .admin-nav {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .admin-nav button {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Forms */
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  /* Tables */
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+
+  table th,
+  table td {
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Cards */
+  .card {
+    padding: 1.25rem;
+  }
+
+  /* Metrics grid */
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* ============================================
+   MOBILE STYLES (up to 768px)
+   ============================================ */
+@media screen and (max-width: 768px) {
+  /* Header - Stack vertically on mobile */
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .header-main {
+    width: 100%;
+  }
+
+  .header-main h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .header-main .subtitle {
+    font-size: 0.85rem;
+  }
+
+  .header-controls {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .control {
+    width: 100%;
+  }
+
+  .header-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tenant-nav-grid,
+  .tenant-header-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, auto);
+    gap: 0.5rem;
+    min-width: auto;
+  }
+
+  .app-header .button-secondary {
+    flex: 1 1 auto;
+    min-width: 120px;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .tenant-header-grid .button-secondary {
+    min-width: 120px;
+  }
+
+  /* Main content */
+  main {
+    padding: 1rem;
+  }
+
+  /* Admin navigation - Horizontal scroll on mobile */
+  .admin-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .admin-nav::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .admin-nav::-webkit-scrollbar-thumb {
+    background: #08a88a;
+    border-radius: 2px;
+  }
+
+  .admin-nav button {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .nav-group {
+    flex-shrink: 0;
+  }
+
+  .nav-group-label {
+    font-size: 0.75rem;
+  }
+
+  .nav-group-buttons {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .nav-group-buttons button {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  /* Forms - Single column on mobile */
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .field {
+    width: 100%;
+  }
+
+  /* Tables - Wrap content instead of scrolling */
+  .table-wrapper {
+    overflow-x: visible;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  table {
+    width: 100%;
+    font-size: 0.85rem;
+    table-layout: auto;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  table thead {
+    display: none; /* Hide header on mobile */
+  }
+
+  table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  table tr {
+    display: block;
+    width: 100%;
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  table td {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f4f6;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-align: left;
+    box-sizing: border-box;
+  }
+
+  table td:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  /* Show label from data-label attribute if present */
+  table td[data-label]::before {
+    content: attr(data-label) ": ";
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Dark theme table adjustments */
+  body.dark-theme table tr {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  body.dark-theme table td {
+    border-bottom-color: #374151;
+  }
+
+  body.dark-theme table td[data-label]::before {
+    color: #9ca3af;
+  }
+
+  /* Cards */
+  .card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .card header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .card header h3 {
+    font-size: 1.25rem;
+  }
+
+  .card header button {
+    width: 100%;
+  }
+
+  /* Buttons */
+  button {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .button-primary,
+  .button-secondary {
+    width: 100%;
+  }
+
+  /* Metrics grid - Single column on mobile */
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .metric-card {
+    padding: 1rem;
+  }
+
+  .metric-label {
+    font-size: 0.85rem;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .toolbar > div {
+    width: 100%;
+  }
+
+  .toolbar label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .toolbar select,
+  .toolbar input {
+    width: 100%;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+  }
+
+  .toolbar-actions button {
+    width: 100%;
+  }
+
+  /* Form toggle */
+  .form-toggle {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-toggle button {
+    width: 100%;
+  }
+
+  /* Summary controls */
+  .summary-controls {
+    margin-bottom: 1rem;
+  }
+
+  .summary-controls button {
+    width: 100%;
+  }
+
+  /* Summary panel */
+  .summary-panel {
+    padding: 1rem;
+  }
+
+  .summary-panel table {
+    font-size: 0.8rem;
+  }
+
+  /* Utility summary */
+  .utility-summary-section {
+    padding: 1rem;
+  }
+
+  .utility-summary-totals {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .utility-tables-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .utility-table-wrapper {
+    width: 100%;
+  }
+
+  /* Global filters */
+  .global-tenant-filter,
+  .global-contract-filter {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    width: 100% !important;
+    display: flex !important;
+  }
+
+  .global-tenant-filter label,
+  .global-contract-filter label {
+    width: 100%;
+  }
+
+  .global-tenant-filter select,
+  .global-contract-filter select {
+    width: 100%;
+  }
+
+  .global-tenant-filter button,
+  .global-contract-filter button {
+    width: 100%;
+  }
+
+  /* Profile layout */
+  .profile-layout {
+    flex-direction: column;
+  }
+
+  .profile-main {
+    width: 100%;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .avatar-circle {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+  }
+
+  .definition-list {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .profile-actions button {
+    width: 100%;
+  }
+
+  /* Login/Signup cards */
+  .login-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .login-card h2 {
+    font-size: 1.5rem;
+  }
+
+  /* Modals */
+  .mark-paid-modal {
+    padding: 1rem;
+  }
+
+  .mark-paid-modal-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  .mark-paid-form {
+    gap: 1rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  /* Payment method buttons */
+  .payment-method-buttons {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .payment-method-btn {
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+
+  /* Date picker */
+  .date-picker {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .date-picker select {
+    width: 100%;
+  }
+
+  /* Expense summary */
+  .expense-summary {
+    padding: 1rem;
+  }
+
+  .expense-summary-table {
+    font-size: 0.8rem;
+  }
+
+  /* Footer */
+  .app-footer {
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+}
+
+/* ============================================
+   SMALL MOBILE STYLES (up to 480px)
+   ============================================ */
+@media screen and (max-width: 480px) {
+  /* Header */
+  .app-header {
+    padding: 0.75rem;
+  }
+
+  .header-main h1 {
+    font-size: 1.25rem;
+  }
+
+  .header-main .subtitle {
+    font-size: 0.75rem;
+  }
+
+  /* Main content */
+  main {
+    padding: 0.75rem;
+  }
+
+  /* Cards */
+  .card {
+    padding: 0.75rem;
+  }
+
+  .card header h3 {
+    font-size: 1.1rem;
+  }
+
+  /* Tables */
+  table {
+    font-size: 0.75rem;
+    width: 100%;
+  }
+
+  table td {
+    padding: 0.4rem 0;
+    font-size: 0.8rem;
+  }
+
+  table td:before {
+    font-size: 0.7rem;
+  }
+
+  /* Buttons */
+  button {
+    font-size: 0.85rem;
+    padding: 0.45rem 0.65rem;
+  }
+
+  /* Metrics */
+  .metric-value {
+    font-size: 1.25rem;
+  }
+
+  /* Forms */
+  input,
+  select,
+  textarea {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+
+  /* Admin nav */
+  .admin-nav button {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  /* Login card */
+  .login-card {
+    padding: 1rem 0.75rem;
+  }
+
+  .login-card h2 {
+    font-size: 1.25rem;
+  }
+}
+
+/* ============================================
+   LANDSCAPE MOBILE STYLES
+   ============================================ */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  .app-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .header-controls {
+    flex-direction: row;
+    width: auto;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  .app-header,
+  .admin-nav,
+  .header-controls,
+  .toolbar,
+  .form-grid,
+  button,
+  .summary-controls,
+  .global-tenant-filter,
+  .global-contract-filter {
+    display: none !important;
+  }
+
+  .card {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+
+  table {
+    font-size: 0.75rem;
+  }
+}
+

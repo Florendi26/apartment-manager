@@ -7,9 +7,9 @@
     <title data-i18n="appTitle">Apartment Management</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
-    <link rel="manifest" href="site.webmanifest" />
     <link rel="stylesheet" href="css/styles.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.1/lottie.min.js"></script>
+    <link rel="stylesheet" href="css/responsive.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.1/lottie.min.js" crossorigin="anonymous"></script>
   </head>
   <body>
     <header class="app-header">
@@ -20,32 +20,120 @@
         </p>
       </div>
       <div class="header-controls">
-        <div class="control">
-          <label for="languagePicker" data-i18n="languageLabel">Language</label>
-          <select id="languagePicker">
-            <option value="en">En</option>
-            <option value="sq">Sq</option>
-          </select>
+        <div class="control header-buttons">
+          <button
+            type="button"
+            id="themeToggleBtn"
+            class="button-secondary"
+          >
+            Dark
+          </button>
+          <button
+            type="button"
+            id="languageToggleBtn"
+            class="button-secondary"
+          >
+            En
+          </button>
         </div>
-        <div class="control">
-          <label for="rolePicker" data-i18n="roleLabel">View As</label>
-          <select id="rolePicker">
-            <option value="admin" data-i18n="roleAdmin">Administrator</option>
-            <option value="tenant" data-i18n="roleTenant">Tenant</option>
-          </select>
-        </div>
-        <div class="control" id="authControls" style="display: none;">
-          <a href="statistics.html" class="button-secondary" data-i18n="statistics" style="text-decoration: none; display: inline-block; text-align: center; padding: 0.6rem 1rem; border: none; border-radius: 0.5rem; font-size: inherit; font-weight: inherit; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;">Statistics</a>
-          <span id="userEmail" class="user-email"></span>
-          <button type="button" id="logoutButton" class="button-secondary" data-i18n="logout">Logout</button>
+        <div class="control header-buttons" id="authControls" style="display: none;">
+          <a
+            href="statistics.html"
+            id="headerStatisticsBtn"
+            class="button-secondary"
+            data-i18n="statistics"
+            style="
+              text-decoration: none;
+              display: inline-block;
+              text-align: center;
+            "
+            >Statistics</a
+          >
+          <a
+            href="profile.html"
+            id="headerProfileBtn"
+            class="button-secondary"
+            data-i18n="profile"
+            style="
+              text-decoration: none;
+              display: inline-block;
+              text-align: center;
+            "
+            >Profile</a
+          >
+          
         </div>
       </div>
     </header>
+
+    <div class="administrator-option">
+      <button
+        type="button"
+        id="roleToggleBtnBottom"
+        class="button-secondary"
+        data-i18n="roleAdmin"
+      >
+        Administrator
+      </button>
+    </div>
 
     <main>
       <section id="notificationArea" aria-live="polite"></section>
       <div id="confirmationModal" class="confirmation-modal" style="display: none;">
         <div class="confirmation-animation-container" id="confirmationAnimationContainer"></div>
+      </div>
+      
+      <!-- Photo Viewer Modal -->
+      <div id="photoViewerModal" class="photo-viewer-modal" style="display: none;">
+        <div class="photo-viewer-content">
+          <button class="photo-viewer-close" id="photoViewerClose">&times;</button>
+          <button class="photo-viewer-nav photo-viewer-prev" id="photoViewerPrev">&#8249;</button>
+          <button class="photo-viewer-nav photo-viewer-next" id="photoViewerNext">&#8250;</button>
+          <div class="photo-viewer-main">
+            <img id="photoViewerImage" src="" alt="Apartment Photo" />
+          </div>
+          <div class="photo-viewer-info">
+            <span id="photoViewerCounter"></span>
+          </div>
+          <div class="photo-viewer-thumbnails" id="photoViewerThumbnails"></div>
+        </div>
+      </div>
+      
+      <!-- Photo Review Modal (for upload previews) -->
+      <div id="photoReviewModal" class="photo-viewer-modal" style="display: none;">
+        <div class="photo-viewer-content">
+          <button class="photo-viewer-close" id="photoReviewClose">&times;</button>
+          <div class="photo-viewer-main">
+            <img id="photoReviewImage" src="" alt="Photo Review" />
+          </div>
+          <div class="photo-review-actions">
+            <button type="button" class="button-danger" id="photoReviewDelete" data-i18n="delete">Delete</button>
+            <button type="button" class="button-primary" id="photoReviewKeep" data-i18n="keep">Keep</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Delete Apartment Confirmation Modal -->
+      <div id="deleteApartmentModal" class="delete-confirmation-modal" style="display: none;">
+        <div class="delete-confirmation-content">
+          <h3 data-i18n="confirmDeleteApartmentTitle">Confirm Deletion</h3>
+          <p class="delete-confirmation-message" id="deleteApartmentMessage"></p>
+          <div class="form-group">
+            <label for="deleteApartmentNameInput" data-i18n="typeApartmentNameToConfirm">Type the apartment name to confirm deletion:</label>
+            <input
+              type="text"
+              id="deleteApartmentNameInput"
+              class="form-input"
+              placeholder=""
+              autocomplete="off"
+            />
+            <small class="form-hint" id="deleteApartmentHint"></small>
+          </div>
+          <div class="delete-confirmation-actions">
+            <button type="button" class="button-secondary" id="deleteApartmentCancel" data-i18n="cancel">Cancel</button>
+            <button type="button" class="button-danger" id="deleteApartmentConfirm" data-i18n="delete" disabled>Delete</button>
+          </div>
+        </div>
       </div>
       
       <!-- Mark Paid Payment Modal -->
@@ -59,13 +147,19 @@
             </div>
             <div class="form-group">
               <label data-i18n="paymentDate">Payment Date</label>
-              <input type="date" id="markPaidDate">
+              <div class="date-input-group">
+                <input type="number" id="markPaidDay" class="date-input date-day" placeholder="DD" min="1" max="31" required />
+                <input type="number" id="markPaidMonth" class="date-input date-month" placeholder="MM" min="1" max="12" required />
+                <input type="number" id="markPaidYear" class="date-input date-year" placeholder="YYYY" min="2020" max="2030" required />
+              </div>
+              <input type="hidden" id="markPaidDate" />
             </div>
             <div class="form-group">
               <label data-i18n="paymentMethod">Payment Method</label>
               <div class="payment-method-buttons">
                 <button type="button" class="payment-method-btn" data-method="Cash">Cash</button>
                 <button type="button" class="payment-method-btn" data-method="Bank transfer">Bank transfer</button>
+                <button type="button" class="payment-method-btn" data-method="Online payment">Online payment</button>
                 <button type="button" class="payment-method-btn" data-method="custom">Custom</button>
               </div>
               <input type="text" id="markPaidMethod" placeholder="Enter payment method" style="display: none; margin-top: 0.5rem;">
@@ -85,6 +179,7 @@
           </button>
           <button type="button" data-page="tenants" data-i18n="navTenants">Tenants</button>
           <button type="button" data-page="contracts" data-i18n="navContracts">Contracts</button>
+          <button type="button" data-page="requests" data-i18n="navRequests">Requests</button>
           <div class="nav-group">
             <span class="nav-group-label" data-i18n="navExpensesGroup">Expenses</span>
             <div class="nav-group-buttons">
@@ -145,6 +240,15 @@
           <button type="button" data-page="payments" data-i18n="navPayments">Payments</button>
         </nav>
 
+        <!-- Global Contract Filter -->
+        <div class="global-tenant-filter">
+          <label for="globalContractFilter" data-i18n="filterByContract">Filter by Contract:</label>
+          <select id="globalContractFilter">
+            <option value="" data-i18n="allContracts">All Contracts</option>
+          </select>
+          <button type="button" id="clearContractFilter" class="button-secondary button-small" data-i18n="clearFilter">Clear</button>
+        </div>
+
         <section id="page-apartments" class="admin-page" data-page="apartments">
           <article class="card" id="apartmentsCard">
             <header>
@@ -154,6 +258,7 @@
               </button>
             </header>
             <form id="apartmentForm" class="form-grid">
+              <input type="hidden" id="apartmentId" name="apartment_id" />
               <div class="field">
                 <label for="apartmentName" data-i18n="apartmentName"
                   >Name</label
@@ -221,20 +326,206 @@
                   placeholder="Waste account"
                 />
               </div>
-              <button type="submit" data-i18n="addApartment">
-                Add Apartment
-              </button>
+              <div class="field">
+                <label for="apartmentCondition" data-i18n="apartmentCondition">Condition</label>
+                <select id="apartmentCondition" name="condition">
+                  <option value="">-</option>
+                  <option value="New" data-i18n="conditionNew">New</option>
+                  <option value="Renovated" data-i18n="conditionRenovated">Renovated</option>
+                  <option value="Good" data-i18n="conditionGood">Good</option>
+                  <option value="Needs Renovation" data-i18n="conditionNeedsRenovation">Needs Renovation</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <div class="field">
+                  <label for="apartmentRooms" data-i18n="apartmentRooms">Number of Rooms</label>
+                  <select id="apartmentRooms" name="rooms">
+                    <option value="">-</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value=">10">>10</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="apartmentBalconies" data-i18n="apartmentBalconies">Number of Balconies</label>
+                  <select id="apartmentBalconies" name="balconies">
+                    <option value="">-</option>
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="apartmentBathrooms" data-i18n="apartmentBathrooms">Number of Bathrooms</label>
+                  <select id="apartmentBathrooms" name="bathrooms">
+                    <option value="">-</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="apartmentArea" data-i18n="apartmentArea">Area (m²)</label>
+                  <input
+                    type="number"
+                    id="apartmentArea"
+                    name="area"
+                    min="15"
+                    max="300"
+                    step="0.01"
+                    placeholder="e.g. 75.5"
+                  />
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field">
+                  <label for="apartmentMunicipality" data-i18n="apartmentMunicipality">Municipality</label>
+                  <select id="apartmentMunicipality" name="municipality">
+                    <option value="">-</option>
+                    <option value="Prishtina" data-i18n="municipalityPrishtina">Prishtina</option>
+                    <option value="Prizren" data-i18n="municipalityPrizren">Prizren</option>
+                    <option value="Peja" data-i18n="municipalityPeja">Peja</option>
+                    <option value="Mitrovica" data-i18n="municipalityMitrovica">Mitrovica</option>
+                    <option value="Gjakova" data-i18n="municipalityGjakova">Gjakova</option>
+                    <option value="Gjilan" data-i18n="municipalityGjilan">Gjilan</option>
+                    <option value="Ferizaj" data-i18n="municipalityFerizaj">Ferizaj</option>
+                    <option value="Podujeva" data-i18n="municipalityPodujeva">Podujeva</option>
+                    <option value="Rahovec" data-i18n="municipalityRahovec">Rahovec</option>
+                    <option value="Lipjan" data-i18n="municipalityLipjan">Lipjan</option>
+                    <option value="Malisheva" data-i18n="municipalityMalisheva">Malisheva</option>
+                    <option value="Suhareka" data-i18n="municipalitySuhareka">Suhareka</option>
+                    <option value="Vushtrri" data-i18n="municipalityVushtrri">Vushtrri</option>
+                    <option value="Skenderaj" data-i18n="municipalitySkenderaj">Skenderaj</option>
+                    <option value="Drenas" data-i18n="municipalityDrenas">Drenas</option>
+                    <option value="Istog" data-i18n="municipalityIstog">Istog</option>
+                    <option value="Kamenica" data-i18n="municipalityKamenica">Kamenica</option>
+                    <option value="Viti" data-i18n="municipalityViti">Viti</option>
+                    <option value="Deçan" data-i18n="municipalityDecan">Deçan</option>
+                    <option value="Junik" data-i18n="municipalityJunik">Junik</option>
+                    <option value="Klina" data-i18n="municipalityKlina">Klina</option>
+                    <option value="Leposaviq" data-i18n="municipalityLeposaviq">Leposaviq</option>
+                    <option value="Zubin Potok" data-i18n="municipalityZubinPotok">Zubin Potok</option>
+                    <option value="Zveçan" data-i18n="municipalityZvecan">Zveçan</option>
+                    <option value="Shtime" data-i18n="municipalityShtime">Shtime</option>
+                    <option value="Kaçanik" data-i18n="municipalityKacanik">Kaçanik</option>
+                    <option value="Hani i Elezit" data-i18n="municipalityHaniElezit">Hani i Elezit</option>
+                    <option value="Graçanica" data-i18n="municipalityGracanica">Graçanica</option>
+                    <option value="Ranillug" data-i18n="municipalityRanillug">Ranillug</option>
+                    <option value="Partesh" data-i18n="municipalityPartesh">Partesh</option>
+                    <option value="Kllokot" data-i18n="municipalityKllokot">Kllokot</option>
+                    <option value="Novobërdë" data-i18n="municipalityNovoberde">Novobërdë</option>
+                    <option value="Other" data-i18n="municipalityOther">Other</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="apartmentMonthlyRent" data-i18n="apartmentMonthlyRent">Monthly Rent Price (EUR)</label>
+                  <input
+                    type="number"
+                    id="apartmentMonthlyRent"
+                    name="monthly_rent"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 350"
+                  />
+                </div>
+              </div>
+              <div class="field">
+                <label for="apartmentFeatures" data-i18n="apartmentFeatures">Features</label>
+                <div class="features-select-container">
+                  <div class="features-buttons" id="apartmentFeaturesButtons">
+                    <button type="button" class="feature-button" data-feature="Balcony/Terrace" data-i18n-en="Balcony/Terrace" data-i18n-sq="Ballkon/Tarracë">Balcony/Terrace</button>
+                    <button type="button" class="feature-button" data-feature="Wood Stove/Fireplace" data-i18n-en="Wood Stove/Fireplace" data-i18n-sq="Sobë me Dru/Oxhak">Wood Stove/Fireplace</button>
+                    <button type="button" class="feature-button" data-feature="Elevator" data-i18n-en="Elevator" data-i18n-sq="Ashensor">Elevator</button>
+                    <button type="button" class="feature-button" data-feature="First Floor" data-i18n-en="First Floor" data-i18n-sq="Kati i Parë">First Floor</button>
+                    <button type="button" class="feature-button" data-feature="Parking Space/Garage" data-i18n-en="Parking Space/Garage" data-i18n-sq="Parkim/Garaj">Parking Space/Garage</button>
+                    <button type="button" class="feature-button" data-feature="Attic Floor" data-i18n-en="Attic Floor" data-i18n-sq="Kati i Papafingo">Attic Floor</button>
+                    <button type="button" class="feature-button" data-feature="New Building" data-i18n-en="New Building" data-i18n-sq="Ndërtesë e Re">New Building</button>
+                    <button type="button" class="feature-button" data-feature="Renovated" data-i18n-en="Renovated" data-i18n-sq="E Renovuar">Renovated</button>
+                    <button type="button" class="feature-button" data-feature="Furnished" data-i18n-en="Furnished" data-i18n-sq="E Mobiluar">Furnished</button>
+                    <button type="button" class="feature-button" data-feature="Basement" data-i18n-en="Basement" data-i18n-sq="Bodrum">Basement</button>
+                    <button type="button" class="feature-button" data-feature="Intercom" data-i18n-en="Intercom" data-i18n-sq="Interkom">Intercom</button>
+                    <button type="button" class="feature-button" data-feature="Duplex" data-i18n-en="Duplex" data-i18n-sq="Dupleks">Duplex</button>
+                  </div>
+                  <select id="apartmentFeatures" name="features" multiple style="display: none;">
+                    <option value="Balcony/Terrace" data-i18n-en="Balcony/Terrace" data-i18n-sq="Ballkon/Tarracë">Balcony/Terrace</option>
+                    <option value="Wood Stove/Fireplace" data-i18n-en="Wood Stove/Fireplace" data-i18n-sq="Sobë me Dru/Oxhak">Wood Stove/Fireplace</option>
+                    <option value="Elevator" data-i18n-en="Elevator" data-i18n-sq="Ashensor">Elevator</option>
+                    <option value="First Floor" data-i18n-en="First Floor" data-i18n-sq="Kati i Parë">First Floor</option>
+                    <option value="Parking Space/Garage" data-i18n-en="Parking Space/Garage" data-i18n-sq="Parkim/Garaj">Parking Space/Garage</option>
+                    <option value="Attic Floor" data-i18n-en="Attic Floor" data-i18n-sq="Kati i Papafingo">Attic Floor</option>
+                    <option value="New Building" data-i18n-en="New Building" data-i18n-sq="Ndërtesë e Re">New Building</option>
+                    <option value="Renovated" data-i18n-en="Renovated" data-i18n-sq="E Renovuar">Renovated</option>
+                    <option value="Furnished" data-i18n-en="Furnished" data-i18n-sq="E Mobiluar">Furnished</option>
+                    <option value="Basement" data-i18n-en="Basement" data-i18n-sq="Bodrum">Basement</option>
+                    <option value="Intercom" data-i18n-en="Intercom" data-i18n-sq="Interkom">Intercom</option>
+                    <option value="Duplex" data-i18n-en="Duplex" data-i18n-sq="Dupleks">Duplex</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="apartmentDescription" data-i18n="apartmentDescription">Description</label>
+                <textarea
+                  id="apartmentDescription"
+                  name="description"
+                  rows="4"
+                  placeholder="Add a detailed description of the apartment, features, nearby amenities, and any rules or requirements"
+                ></textarea>
+              </div>
+              <div class="field">
+                <label for="apartmentPhotos" data-i18n="apartmentPhotos"
+                  >Photos</label
+                >
+                <div id="photoUploadArea" class="photo-upload-area">
+                  <input
+                    type="file"
+                    id="apartmentPhotos"
+                    name="photos"
+                    accept="image/*"
+                    multiple
+                    style="display: none;"
+                  />
+                  <div class="photo-upload-dropzone" id="photoDropzone">
+                    <p data-i18n="photoUploadDragDrop">Drag and drop photos here, or click to select</p>
+                    <p class="photo-upload-hint" data-i18n="photoUploadHint">You can select multiple photos (max 10)</p>
+                  </div>
+                  <div id="photoPreviewContainer" class="photo-preview-container"></div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" id="apartmentSubmitBtn" data-i18n="addApartment">
+                  Add Apartment
+                </button>
+                <button type="button" id="apartmentCancelBtn" class="button-secondary hidden" data-i18n="cancelEdit">
+                  Cancel
+                </button>
+              </div>
             </form>
             <div class="table-wrapper">
               <table>
                 <thead>
                   <tr>
+                    <th data-i18n="apartmentPhoto">Photo</th>
                     <th data-i18n="apartmentName">Name</th>
                     <th data-i18n="apartmentAddress">Address</th>
                     <th data-i18n="apartmentElectricityCode">Electricity Code</th>
                     <th data-i18n="apartmentHeatingCode">Heating Code</th>
                     <th data-i18n="apartmentWaterCode">Water Code</th>
                     <th data-i18n="apartmentWasteCode">Waste Code</th>
+                    <th data-i18n="apartmentStatus">Status</th>
+                    <th data-i18n="actions">Actions</th>
                     <th>ID</th>
                   </tr>
                 </thead>
@@ -264,12 +555,21 @@
                 />
               </div>
               <div class="field">
+                <label for="tenantEmail" data-i18n="tenantEmail">Email</label>
+                <input
+                  type="email"
+                  id="tenantEmail"
+                  name="email"
+                  placeholder="example@email.com"
+                />
+              </div>
+              <div class="field">
                 <label for="tenantPhone" data-i18n="tenantPhone">Phone</label>
                 <input
                   type="tel"
                   id="tenantPhone"
                   name="phone"
-                  placeholder="+383..."
+                  placeholder="+383-xx-xxx-xxx"
                 />
               </div>
               <button type="submit" data-i18n="addTenant">Add Tenant</button>
@@ -279,6 +579,7 @@
                 <thead>
                   <tr>
                     <th data-i18n="tenantFullName">Full Name</th>
+                    <th data-i18n="tenantEmail">Email</th>
                     <th data-i18n="tenantPhone">Phone</th>
                     <th>ID</th>
                   </tr>
@@ -377,7 +678,10 @@
               </div>
               <button type="submit" data-i18n="addContract">Add Contract</button>
             </form>
+
+            <!-- Active contracts table -->
             <div class="table-wrapper">
+              <h4 data-i18n="contractsActiveTitle">Active contracts</h4>
               <table>
                 <thead>
                   <tr>
@@ -390,10 +694,32 @@
                     <th data-i18n="monthlyMaintenance">Maintenance</th>
                     <th data-i18n="contractDeposit">Deposit</th>
                     <th data-i18n="contractActive">Active</th>
-              <th data-i18n="actions">Actions</th>
+                    <th data-i18n="actions">Actions</th>
                   </tr>
                 </thead>
-                <tbody id="contractsTableBody"></tbody>
+                <tbody id="contractsActiveTableBody"></tbody>
+              </table>
+            </div>
+
+            <!-- Inactive contracts table -->
+            <div class="table-wrapper">
+              <h4 data-i18n="contractsInactiveTitle">Inactive contracts</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="selectApartment">Apartment</th>
+                    <th data-i18n="selectTenant">Tenant</th>
+                    <th data-i18n="startDate">Start</th>
+                    <th data-i18n="endDate">End</th>
+                    <th data-i18n="monthlyRent">Rent</th>
+                    <th data-i18n="monthlyGarbage">Garbage</th>
+                    <th data-i18n="monthlyMaintenance">Maintenance</th>
+                    <th data-i18n="contractDeposit">Deposit</th>
+                    <th data-i18n="contractActive">Active</th>
+                    <th data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="contractsInactiveTableBody"></tbody>
               </table>
             </div>
           </article>
@@ -494,8 +820,13 @@
                   <input type="checkbox" id="debtElectricityCut" />
                 </div>
                 <div class="field">
-                  <label for="debtDueDate" data-i18n="dueDate">Due Date</label>
-                  <input type="date" id="debtDueDate" name="due_date" min="2020-01-01" max="2030-12-31" required />
+                  <label data-i18n="dueDate">Due Date</label>
+                  <div class="date-input-group">
+                    <input type="number" id="debtDueDay" class="date-input date-day" placeholder="DD" min="1" max="31" required />
+                    <input type="number" id="debtDueMonth" class="date-input date-month" placeholder="MM" min="1" max="12" required />
+                    <input type="number" id="debtDueYear" class="date-input date-year" placeholder="YYYY" min="2020" max="2030" required />
+                  </div>
+                  <input type="hidden" id="debtDueDate" name="due_date" />
                 </div>
                 <div class="field">
                   <label for="debtNotes" data-i18n="notes">Notes</label>
@@ -535,17 +866,13 @@
                   />
                 </div>
                 <div class="field">
-                  <label for="paymentDate" data-i18n="paymentDate"
-                    >Payment Date</label
-                  >
-                  <input
-                    type="date"
-                    id="paymentDate"
-                    name="payment_date"
-                    min="2020-01-01"
-                    max="2030-12-31"
-                    required
-                  />
+                  <label data-i18n="paymentDate">Payment Date</label>
+                  <div class="date-input-group">
+                    <input type="number" id="paymentDay" class="date-input date-day" placeholder="DD" min="1" max="31" required />
+                    <input type="number" id="paymentMonth" class="date-input date-month" placeholder="MM" min="1" max="12" required />
+                    <input type="number" id="paymentYear" class="date-input date-year" placeholder="YYYY" min="2020" max="2030" required />
+                  </div>
+                  <input type="hidden" id="paymentDate" name="payment_date" />
                 </div>
                 <div class="field">
                   <label for="paymentMethod" data-i18n="paymentMethod"
@@ -554,6 +881,7 @@
                   <div class="payment-method-buttons">
                     <button type="button" class="payment-method-btn payment-form-method-btn" data-method="Cash">Cash</button>
                     <button type="button" class="payment-method-btn payment-form-method-btn" data-method="Bank transfer">Bank transfer</button>
+                    <button type="button" class="payment-method-btn payment-form-method-btn" data-method="Online payment">Online payment</button>
                     <button type="button" class="payment-method-btn payment-form-method-btn" data-method="custom">Custom</button>
                   </div>
                   <input
@@ -618,22 +946,58 @@
               </div>
             </div>
 
-            <div id="totalPaymentSummary" class="total-payment-summary card" data-expense-mode="expense" style="display: none;">
-              <div class="total-payment-summary-content">
-                <h4 data-i18n="paymentSummary">Payment Summary</h4>
-                <div class="total-payment-summary-grid">
-                  <div class="total-payment-summary-item">
-                    <span class="total-payment-summary-label" data-i18n="paymentSummaryDebt">Expenses:</span>
-                    <span class="total-payment-summary-value" id="totalDebtAmount">€0.00</span>
+            <!-- Utility Summary Section (for electricity, water, heating) -->
+            <div id="utilitySummarySection" class="utility-summary-section card" style="display: none;">
+              <div class="utility-summary-header">
+                <h4 data-i18n="utilitySummaryTitle">Utility Summary</h4>
                   </div>
-                  <div class="total-payment-summary-item">
-                    <span class="total-payment-summary-label" data-i18n="paymentSummaryPaid">Paid:</span>
-                    <span class="total-payment-summary-value" id="totalPaidAmount">€0.00</span>
+              <div class="utility-summary-totals">
+                <div class="utility-summary-item">
+                  <span class="utility-summary-label" data-i18n="totalExpenses">Total Expenses:</span>
+                  <span class="utility-summary-value" id="utilityTotalExpenses">€0.00</span>
                   </div>
-                  <div class="total-payment-summary-item">
-                    <span class="total-payment-summary-label" data-i18n="paymentSummaryRemaining">Remaining:</span>
-                    <span class="total-payment-summary-value" id="totalRemainingAmount">€0.00</span>
+                <div class="utility-summary-item">
+                  <span class="utility-summary-label" data-i18n="totalPayments">Total Payments:</span>
+                  <span class="utility-summary-value" id="utilityTotalPayments">€0.00</span>
                   </div>
+                <div class="utility-summary-item utility-summary-difference">
+                  <span class="utility-summary-label" data-i18n="difference">Difference:</span>
+                  <span class="utility-summary-value" id="utilityDifference">€0.00</span>
+                </div>
+              </div>
+              <div class="utility-tables-container">
+                <div class="utility-table-wrapper">
+                  <h5 data-i18n="expensesList">Expenses</h5>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th data-i18n="selectTenant">Tenant</th>
+                        <th data-i18n="debtType">Type</th>
+                        <th data-i18n="amount">Amount</th>
+                        <th data-i18n="dueDate">Due Date</th>
+                        <th data-i18n="paymentReference">Reference</th>
+                        <th data-i18n="actions">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="utilityExpensesTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="utility-table-wrapper">
+                  <h5 data-i18n="paymentsList">Payments</h5>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th data-i18n="selectTenant">Tenant</th>
+                        <th data-i18n="debtType">Type</th>
+                        <th data-i18n="amount">Amount</th>
+                        <th data-i18n="paymentDate">Date</th>
+                        <th data-i18n="actions">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="utilityPaymentsTableBody"></tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -681,29 +1045,6 @@
               <h3 data-i18n="paymentsHistory">Payments History</h3>
               <button id="refreshPayments" data-i18n="refresh">Refresh</button>
             </header>
-            <div class="summary-controls">
-              <button
-                id="togglePaymentSummary"
-                type="button"
-                data-i18n="togglePaymentSummary"
-              >
-                Tenant Summary
-              </button>
-            </div>
-            <div class="summary-panel hidden" id="paymentSummaryPanel">
-              <table>
-                <thead>
-                  <tr>
-                    <th data-i18n="summaryTenant">Tenant</th>
-                    <th data-i18n="summaryExpensesCount">Open Expenses</th>
-                    <th data-i18n="summaryExpensesAmount">Open Amount</th>
-                    <th data-i18n="summaryPaymentsCount">Payments</th>
-                    <th data-i18n="summaryPaymentsAmount">Payments Amount</th>
-                  </tr>
-                </thead>
-                <tbody id="paymentSummaryBody"></tbody>
-              </table>
-            </div>
             <div class="table-wrapper">
               <table>
                 <thead>
@@ -711,6 +1052,7 @@
                     <th data-i18n="selectTenant">Tenant</th>
                     <th data-i18n="debtType">Debt Type</th>
                     <th data-i18n="amount">Amount</th>
+                    <th data-i18n="dueDate">Due Date</th>
                     <th data-i18n="paymentDate">Payment Date</th>
                     <th data-i18n="paymentMethod">Method</th>
                     <th data-i18n="paymentReference">Reference</th>
@@ -733,6 +1075,31 @@
                   </tr>
                 </thead>
                 <tbody id="openExpensesTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="page-requests" class="admin-page" data-page="requests">
+          <article class="card" id="requestsCard">
+            <header>
+              <h3 data-i18n="requestsTitle">Apartment Requests</h3>
+              <button id="refreshRequests" data-i18n="refresh">Refresh</button>
+            </header>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="requestApartment">Apartment</th>
+                    <th data-i18n="requestTenant">Tenant</th>
+                    <th data-i18n="requestType">Request Type</th>
+                    <th data-i18n="requestMessage">Message</th>
+                    <th data-i18n="requestDate">Date</th>
+                    <th data-i18n="requestStatus">Status</th>
+                    <th data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="requestsTableBody"></tbody>
               </table>
             </div>
           </article>
@@ -782,10 +1149,10 @@
                   <span data-i18n="pdfFormatDetailed">Detailed</span>
                 </label>
               </div>
-              <button id="exportTenantPdf" data-i18n="pdfOptionEnglish">
+              <button type="button" id="exportTenantPdf" data-i18n="pdfOptionEnglish">
                 Download in English
               </button>
-              <button id="exportTenantPdfSq" data-i18n="pdfOptionAlbanian">
+              <button type="button" id="exportTenantPdfSq" data-i18n="pdfOptionAlbanian">
                 Download in Albanian
               </button>
             </div>
@@ -798,6 +1165,7 @@
                   <th data-i18n="amount">Amount</th>
                   <th data-i18n="dueDate">Due Date</th>
                   <th data-i18n="status">Status</th>
+                  <th data-i18n="reference">Reference</th>
                 </tr>
               </thead>
               <tbody id="tenantDebtsTableBody"></tbody>
@@ -827,12 +1195,17 @@
 
     <footer class="app-footer">
       <small data-i18n="footerNote">
-        Powered by Supabase. Built for property managers and tenants.
+        Powered by Florend Ramusa. Built for property managers and tenants.
       </small>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+    <!-- Load configuration first -->
+    <script src="js/config.js"></script>
+    <!-- Load shared translations before any app logic that uses them -->
+    <script src="js/languages.js"></script>
+    <script src="js/pdf-export.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

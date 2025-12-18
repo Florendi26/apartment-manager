@@ -1,8 +1,66 @@
-const SUPABASE_URL = "https://krrhgslhvdfyvxayefqh.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtycmhnc2xodmRmeXZ4YXllZnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3MDAyODYsImV4cCI6MjA3ODI3NjI4Nn0.jil94otneKXn3GTiDLdx1A6yi_5Ktg4DU1_iem5ULbc";
+// Configuration is loaded from js/config.js
+const SUPABASE_URL = window.APP_CONFIG?.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = window.APP_CONFIG?.SUPABASE_ANON_KEY || "";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Phone number formatting function: +383-xx-xxx-xxx
+function formatPhoneNumber(value) {
+  // Remove all non-digit characters except the leading +
+  let cleaned = value.replace(/[^\d+]/g, '');
+  
+  // Ensure it starts with +383
+  if (!cleaned.startsWith('+383')) {
+    // If it starts with + but not +383, try to fix it
+    if (cleaned.startsWith('+') && !cleaned.startsWith('+383')) {
+      cleaned = '+383' + cleaned.substring(1);
+    } else if (!cleaned.startsWith('+')) {
+      // If no +, add +383
+      cleaned = '+383' + cleaned;
+    }
+  }
+  
+  // Remove the +383 prefix for formatting
+  let digits = cleaned.replace('+383', '');
+  
+  // Format as +383-xx-xxx-xxx
+  if (digits.length === 0) {
+    return '+383-';
+  } else if (digits.length <= 2) {
+    return '+383-' + digits;
+  } else if (digits.length <= 5) {
+    return '+383-' + digits.substring(0, 2) + '-' + digits.substring(2);
+  } else {
+    return '+383-' + digits.substring(0, 2) + '-' + digits.substring(2, 5) + '-' + digits.substring(5, 8);
+  }
+}
+
+// Setup phone number formatting for an input element
+function setupPhoneFormatting(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  
+  input.addEventListener('input', (e) => {
+    const cursorPosition = e.target.selectionStart;
+    const oldValue = e.target.value;
+    const newValue = formatPhoneNumber(e.target.value);
+    
+    e.target.value = newValue;
+    
+    // Restore cursor position (adjust for added dashes)
+    const addedChars = newValue.length - oldValue.length;
+    const newCursorPosition = Math.min(cursorPosition + addedChars, newValue.length);
+    e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+  });
+  
+  // Format on paste
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+    const formatted = formatPhoneNumber(pastedText);
+    input.value = formatted;
+  });
+}
 
 // Import translations from app.js structure
 const translations = {
@@ -22,6 +80,8 @@ const translations = {
     noAccount: "Don't have an account?",
     haveAccount: "Already have an account?",
     signupLink: "Sign Up",
+    backToDashboard: "Back to Dashboard",
+    statistics: "Statistics",
     loginLink: "Login",
     logout: "Logout",
     loginError: "Invalid email or password.",
@@ -48,6 +108,8 @@ const translations = {
     noAccount: "Nuk keni llogari?",
     haveAccount: "Keni tashmë një llogari?",
     signupLink: "Regjistrohu",
+    backToDashboard: "Kthehu te Paneli",
+    statistics: "Statistikat",
     loginLink: "Hyr",
     logout: "Dil",
     loginError: "Email ose fjalëkalim i pavlefshëm.",
@@ -56,7 +118,7 @@ const translations = {
     loginSuccess: "Hyrja u realizua me sukses!",
     signupSuccess: "Llogaria u krijua me sukses! Ju lutem hyni.",
     logoutSuccess: "Dilja u realizua me sukses.",
-    footerNote: "Krijuar nga Florend Ramusa. Ndërtuar për menaxherët e pronave dhe qiramarrësit.",
+    footerNote: "Krijuar nga Florend Ramusa. Ndërtuar për menaxherët e pronave dhe Qeramarrësit.",
   },
 };
 
@@ -131,8 +193,14 @@ async function handleLogin(event) {
     if (error) throw error;
 
     notify("success", translate("loginSuccess"));
-    // Redirect to statistics page
-    window.location.href = "statistics.html";
+    const user = data.user;
+    const role = user?.user_metadata?.role || "Property Owner / Landlord";
+    if (role === "Tenant") {
+      window.location.href = "tenant-apartments.html";
+    } else {
+      // Landlords / admins go to main dashboard
+      window.location.href = "index.html";
+    }
   } catch (error) {
     console.error("Login error:", error);
     if (loginError) {
@@ -148,9 +216,17 @@ async function handleSignup(event) {
   if (!signupForm) return;
 
   const formData = new FormData(signupForm);
+  const fullName = formData.get("full_name");
   const email = formData.get("email");
+  const phone = formData.get("phone");
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
+  const preferredLanguage = formData.get("preferred_language") || "en";
+  const preferredCurrency = formData.get("preferred_currency") || "EUR";
+  const themeMode = formData.get("theme_mode") || "light";
+  const signupRoleRaw = (formData.get("role") || "landlord").toString();
+  const role =
+    signupRoleRaw === "tenant" ? "Tenant" : "Property Owner / Landlord";
 
   const signupError = document.getElementById("signupError");
   if (signupError) {
@@ -171,6 +247,17 @@ async function handleSignup(event) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: fullName,
+          phone,
+          preferred_language: preferredLanguage,
+          preferred_currency: preferredCurrency,
+          theme_mode: themeMode,
+          date_joined: new Date().toISOString(),
+          role,
+        },
+      },
     });
 
     if (error) throw error;
@@ -191,23 +278,46 @@ async function handleSignup(event) {
   }
 }
 
-// Check if already authenticated and redirect
+// Simple shared logout helper for pages that only load auth.js (e.g. profile.html)
+async function handleLogout() {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    notify("success", translate("logoutSuccess"));
+  } catch (error) {
+    console.error("Logout error:", error);
+  } finally {
+    window.location.href = "login.html";
+  }
+}
+
 async function init() {
+  const path = window.location.pathname || "";
+  const isLoginPage =
+    path.endsWith("login.html") || path.endsWith("/login") || path === "/" || path === "";
+
   const user = await checkAuth();
-  if (user) {
-    // Already logged in, redirect to main app
+
+  // Only auto-redirect authenticated users from the LOGIN page.
+  // Other pages (e.g. profile.html) handle their own redirect logic.
+  if (isLoginPage && user) {
     window.location.href = "index.html";
     return;
   }
 
   translateUI();
+  
+  // Setup phone number formatting for signup form
+  setupPhoneFormatting('signupPhone');
 
   // Set up event listeners
   const loginForm = document.getElementById("loginForm");
   const signupForm = document.getElementById("signupForm");
   const showSignup = document.getElementById("showSignup");
   const showLogin = document.getElementById("showLogin");
-  const languagePicker = document.getElementById("languagePicker");
+  const languageToggleBtn = document.getElementById("languageToggleBtn");
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  const passwordToggles = document.querySelectorAll(".password-toggle");
 
   if (loginForm) {
     loginForm.addEventListener("submit", handleLogin);
@@ -231,12 +341,63 @@ async function init() {
       if (loginCard) loginCard.style.display = "block";
     });
   }
-  if (languagePicker) {
-    languagePicker.value = currentLanguage;
-    languagePicker.addEventListener("change", (event) => {
-      currentLanguage = event.target.value;
+
+  // Show / hide password buttons
+  if (passwordToggles && passwordToggles.length) {
+    passwordToggles.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.getAttribute("data-target");
+        if (!targetId) return;
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        const isPassword = input.type === "password";
+        input.type = isPassword ? "text" : "password";
+        btn.setAttribute("aria-pressed", String(!isPassword));
+        btn.classList.toggle("is-visible", !isPassword);
+      });
+    });
+  }
+
+  // Language toggle button
+  if (languageToggleBtn) {
+    languageToggleBtn.textContent = currentLanguage === "en" ? "En" : "Sq";
+    languageToggleBtn.addEventListener("click", () => {
+      if (currentLanguage === "en") {
+        currentLanguage = "sq";
+        languageToggleBtn.textContent = "Sq";
+      } else {
+        currentLanguage = "en";
+        languageToggleBtn.textContent = "En";
+      }
       localStorage.setItem("language", currentLanguage);
       translateUI();
+    });
+  }
+
+  // Theme toggle button (shared with index / profile)
+  if (themeToggleBtn) {
+    const applyTheme = (theme) => {
+      if (theme === "dark") {
+        document.body.classList.add("dark-theme");
+        themeToggleBtn.textContent = "Light";
+      } else {
+        document.body.classList.remove("dark-theme");
+        themeToggleBtn.textContent = "Dark";
+        theme = "light";
+      }
+      try {
+        window.localStorage.setItem("theme", theme);
+      } catch (_) {}
+    };
+
+    const storedTheme =
+      (window.localStorage && window.localStorage.getItem("theme")) ||
+      "light";
+    applyTheme(storedTheme);
+
+    themeToggleBtn.addEventListener("click", () => {
+      const isDark = document.body.classList.contains("dark-theme");
+      applyTheme(isDark ? "light" : "dark");
     });
   }
 }

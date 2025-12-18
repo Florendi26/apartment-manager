@@ -1,426 +1,70 @@
-const SUPABASE_URL = "https://krrhgslhvdfyvxayefqh.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtycmhnc2xodmRmeXZ4YXllZnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3MDAyODYsImV4cCI6MjA3ODI3NjI4Nn0.jil94otneKXn3GTiDLdx1A6yi_5Ktg4DU1_iem5ULbc";
+// Configuration is loaded from js/config.js
+const SUPABASE_URL = window.APP_CONFIG?.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = window.APP_CONFIG?.SUPABASE_ANON_KEY || "";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Use var to allow redeclaration if loaded multiple times (prevents SyntaxError)
+var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const translations = {
-  en: {
-    appTitle: "Apartment Management",
-    appSubtitle:
-      "Manage contracts, deposits, debts and payments with ease.",
-    navApartments: "Apartments",
-    navTenants: "Tenants",
-    navContracts: "Contracts",
-    navPayments: "Payments",
-    navExpensesGroup: "Expenses",
-    navExpensesAll: "All",
-    navExpensesRent: "Rent",
-    navExpensesGarbage: "Garbage",
-    navExpensesMaintenance: "Maintenance",
-    navExpensesElectricity: "Electricity",
-    navExpensesWater: "Water",
-    navExpensesHeating: "Heating",
-    languageLabel: "Language",
-    roleLabel: "View As",
-    roleAdmin: "Administrator",
-    roleTenant: "Tenant",
-    tenantsTitle: "Tenants",
-    tenantsSubtitle: "Add new tenants and manage their details.",
-    tenantFullName: "Full Name",
-    tenantPhone: "Phone",
-    contractDeposit: "Contract Deposit",
-    addTenant: "Add Tenant",
-    apartmentsTitle: "Apartments",
-    apartmentName: "Name",
-    apartmentAddress: "Address",
-    apartmentElectricityCode: "Electricity Code",
-    apartmentHeatingCode: "Heating Code",
-    apartmentWaterCode: "Water Code",
-    apartmentWasteCode: "Waste Code",
-    addApartment: "Add Apartment",
-    refresh: "Refresh",
-    contractsTitle: "Contracts",
-    selectApartment: "Apartment",
-    selectTenant: "Tenant",
-    selectContract: "Contract",
-    startDate: "Start Date",
-    endDate: "End Date",
-    monthlyRent: "Monthly Rent",
-    monthlyGarbage: "Monthly Garbage",
-    monthlyMaintenance: "Monthly Maintenance",
-    contractActive: "Active",
-    contractDeactivate: "Deactivate",
-    contractActivate: "Activate",
-    contractDeactivateBlocked:
-      "Cannot deactivate contract while unpaid expenses remain.",
-    successContractDeactivate: "Contract marked as inactive.",
-    successContractActivate: "Contract reactivated.",
-    errorInactiveContract:
-      "This contract is inactive. Activate it before creating new expenses.",
-    addContract: "Add Contract",
-    debtsPaymentsTitle: "Debts & Payments",
-    debtsPaymentsSubtitle: "Track rent, utilities, damages and more.",
-    createDebt: "Create Expense",
-    expenseFormToggleExpense: "Create Expense",
-    expenseFormTogglePayment: "Record Payment",
-    debtType: "Type",
-    amount: "Amount",
-    dueDate: "Due Date",
-    notes: "Notes",
-    createDebtButton: "Create Debt",
-    updateDebtButton: "Update Expense",
-    recordPayment: "Record Payment",
-    selectDebt: "Debt",
-    paymentDate: "Payment Date",
-    paymentMethod: "Method",
-    paymentReference: "Reference",
-    recordPaymentButton: "Record Payment",
-    updatePaymentButton: "Update Payment",
-    save: "Save",
-    cancelEdit: "Cancel",
-    totalLabel: "Total",
-    billSingular: "bill",
-    billPlural: "bills",
-    unpaidExpensesSummary: "Unpaid Expenses Summary",
-    expenseType: "Expense Type",
-    paymentGroupInsufficient: "Enter an amount that covers at least one bill.",
-    paymentGroupRemainingPrefix: "Remaining unpaid amount for",
-    paymentGroupNoDebts: "No unpaid bills found for this type.",
-    paymentGroupUnusedAmountPrefix: "Unused amount not applied",
-    enteredAmountLabel: "Entered",
-    electricityCutLabel: "Electricity cut / disconnection",
-    electricityCutNotePrefix: "Electricity is cut on",
-    toggleExpenseSummary: "Tenant Summary",
-    togglePaymentSummary: "Tenant Summary",
-    summaryTenant: "Tenant",
-    summaryExpensesCount: "Open Expenses",
-    summaryExpensesAmount: "Open Amount",
-    summaryPaymentsCount: "Payments",
-    summaryPaymentsAmount: "Payments Amount",
-    summaryNoData: "No data available.",
-    paymentSummary: "Payment Summary",
-    paymentSummaryPaid: "Paid",
-    paymentSummaryDebt: "Expenses",
-    paymentSummaryRemaining: "Remaining",
-    openExpensesHeading: "Open & Overdue Expenses",
-    pdfOptionsHeading: "Export Tenant PDF",
-    pdfOptionEnglish: "Download in English",
-    pdfOptionAlbanian: "Download in Albanian",
-    pdfFormatNormal: "Normal",
-    pdfFormatDetailed: "Detailed",
-    filterStatus: "Status",
-    filterType: "Type",
-    statusAll: "All",
-    statusOpenOverdue: "Open & Overdue",
-    statusPaid: "Paid",
-    statusOverdue: "Overdue",
-    typeAll: "All",
-    debtRent: "Rent",
-    debtMaintenance: "Maintenance",
-    debtGarbage: "Garbage",
-    debtThermos: "Heating",
-    debtElectricity: "Electricity",
-    debtElectricityCut: "Electricity cut / disconnection",
-    debtWater: "Water",
-    debtDamage: "Damage",
-    debtOther: "Other",
-    expensesHeadingAll: "All Expenses",
-    expensesHeadingRent: "Rent Expenses",
-    expensesHeadingGarbage: "Garbage Expenses",
-    expensesHeadingMaintenance: "Maintenance Expenses",
-    expensesHeadingElectricity: "Electricity Expenses",
-    expensesHeadingWater: "Water Expenses",
-    expensesHeadingHeating: "Heating Expenses",
-    actions: "Actions",
-    edit: "Edit",
-    delete: "Delete",
-    markPaid: "Mark Paid",
-    exportPdf: "Export Debts to PDF",
-    paymentsHistory: "Payments History",
-    loadTenant: "Load Tenant",
-    tenantInfo: "Tenant Info",
-    contractInfo: "Contract Info",
-    financialSummary: "Financial Summary",
-    overallStatistics: "Overall Statistics",
-    statTenants: "Tenants",
-    statApartments: "Apartments",
-    statContracts: "Contracts",
-    statExpenses: "Expenses",
-    statPayments: "Payments",
-    statTotalPayments: "Total Payments Amount",
-    statTotalExpenses: "Total Expenses Amount",
-    statTotalUnpaid: "Total Unpaid Expenses",
-    statPdfGenerated: "PDFs Generated",
-    tenantDebts: "Unpaid Expenses",
-    tenantPayments: "Payments",
-    exportTenantPdf: "Export to PDF",
-    status: "Status",
-    footerNote: "Powered by Florend Ramusa. Built for property managers and tenants.",
-    tenantSince: "Entry Date",
-    totalDebt: "Total Expenses",
-    totalPaid: "Total Payments",
-    totalUnpaid: "Total Unpaid Expenses",
-    yes: "Yes",
-    no: "No",
-    paid: "Paid",
-    open: "Open",
-    overdue: "Overdue",
-    unknown: "Unknown",
-    confirmationMarkPaid: "Are you sure you want to mark this debt as paid?",
-    confirmationDeleteDebt: "Are you sure you want to delete this expense?",
-    confirmationDeletePayment: "Are you sure you want to delete this payment?",
-    successAddApartment: "Apartment created successfully.",
-    successAddTenant: "Tenant created successfully.",
-    successAddContract: "Contract created successfully.",
-    successAddDebt: "Debt created successfully.",
-    successAddPayment: "Payment recorded successfully.",
-    successUpdateDebt: "Expense updated successfully.",
-    successUpdatePayment: "Payment updated successfully.",
-    successDeleteDebt: "Expense deleted successfully.",
-    successDeletePayment: "Payment deleted successfully.",
-    successMarkPaid: "Debt marked as paid.",
-    errorLoad: "Something went wrong. Please try again.",
-    errorFieldRequired: "Please fill all required fields.",
-    errorAmountMismatch: "The amount you typed does not match. Deletion cancelled.",
-    noTenantSelected: "Select a tenant to view details.",
-    noDebtsFound: "No debts found.",
-    noPaymentsFound: "No payments found.",
-    errorAutoTableLoading:
-      "PDF table plugin is loading. Please try again in a moment.",
-    loginTitle: "Login",
-    loginSubtitle: "Enter your credentials to access the system",
-    loginButton: "Login",
-    signupTitle: "Sign Up",
-    signupSubtitle: "Create a new account to get started",
-    signupButton: "Sign Up",
-    email: "Email",
-    password: "Password",
-    confirmPassword: "Confirm Password",
-    noAccount: "Don't have an account?",
-    haveAccount: "Already have an account?",
-    signupLink: "Sign Up",
-    loginLink: "Login",
-    logout: "Logout",
-    loginError: "Invalid email or password.",
-    signupError: "Error creating account. Please try again.",
-    passwordMismatch: "Passwords do not match.",
-    loginSuccess: "Login successful!",
-    signupSuccess: "Account created successfully! Please login.",
-    logoutSuccess: "Logged out successfully.",
-    statistics: "Statistics",
-    backToDashboard: "Back to Dashboard",
-  },
-  sq: {
-    appTitle: "Menaxhimi i Banesave",
-    appSubtitle:
-      "Menaxhoni kontratat, depozitat, detyrimet dhe pagesat me lehtësi.",
-    navApartments: "Banesat",
-    navTenants: "Qiramarrësit",
-    navContracts: "Kontratat",
-    navPayments: "Pagesat",
-    navExpensesGroup: "Shpenzimet",
-    navExpensesAll: "Të Gjitha",
-    navExpensesRent: "Qira",
-    navExpensesGarbage: "Mbeturina",
-    navExpensesMaintenance: "Mirëmbajtje",
-    navExpensesElectricity: "Rrymë",
-    navExpensesWater: "Ujë",
-    navExpensesHeating: "Ngrohje",
-    languageLabel: "Gjuha",
-    roleLabel: "Shiko si",
-    roleAdmin: "Administrator",
-    roleTenant: "Qiramarrës",
-    adminDashboard: "Paneli i Administratorit",
-    tenantsTitle: "Qiramarrësit",
-    tenantsSubtitle: "Shtoni qiramarrës të rinj dhe menaxhoni të dhënat e tyre.",
-    tenantFullName: "Emri i Plotë",
-    tenantPhone: "Telefon",
-    contractDeposit: "Depozitë Kontrate",
-    addTenant: "Shto Qiramarrës",
-    apartmentsTitle: "Banesat",
-    apartmentName: "Emri",
-    apartmentAddress: "Adresa",
-    apartmentElectricityCode: "Kodi i Rrymës",
-    apartmentHeatingCode: "Kodi i Ngrohjes",
-    apartmentWaterCode: "Kodi i Ujit",
-    apartmentWasteCode: "Kodi i Mbeturinave",
-    addApartment: "Shto Banesë",
-    refresh: "Rifresko",
-    contractsTitle: "Kontratat",
-    selectApartment: "Banesa",
-    selectTenant: "Qiramarrësi",
-    selectContract: "Kontrata",
-    startDate: "Data e Fillimit",
-    endDate: "Data e Mbarimit",
-    monthlyRent: "Qiraja Mujore",
-    monthlyGarbage: "Mbeturinat Mujore",
-    monthlyMaintenance: "Mirëmbajtja Mujore",
-    contractActive: "Aktive",
-    contractDeactivate: "Çaktivizo",
-    contractActivate: "Aktivizo",
-    contractDeactivateBlocked:
-      "Kontrata nuk mund të çaktivizohet derisa të shlyhen të gjitha shpenzimet.",
-    successContractDeactivate: "Kontrata u çaktivizua.",
-    successContractActivate: "Kontrata u riaktivizua.",
-    errorInactiveContract:
-      "Kjo kontratë është joaktive. Aktivizojeni para se të krijoni shpenzime të reja.",
-    addContract: "Shto Kontratë",
-    debtsPaymentsTitle: "Detyrimet & Pagesat",
-    debtsPaymentsSubtitle: "Ndiq qiratë, shërbimet, dëmtimet dhe më shumë.",
-    createDebt: "Krijo Shpenzim",
-    expenseFormToggleExpense: "Krijo Shpenzim",
-    expenseFormTogglePayment: "Regjistro Pagesë",
-    debtType: "Lloji",
-    amount: "Shuma",
-    dueDate: "Afati",
-    notes: "Shënime",
-    createDebtButton: "Krijo Detyrim",
-    updateDebtButton: "Përditëso Shpenzimin",
-    recordPayment: "Regjistro Pagesë",
-    selectDebt: "Detyrimi",
-    paymentDate: "Data e Pagesës",
-    paymentMethod: "Metoda",
-    paymentReference: "Referenca",
-    recordPaymentButton: "Regjistro Pagesë",
-    updatePaymentButton: "Përditëso Pagesën",
-    save: "Ruaj",
-    cancelEdit: "Anulo",
-    totalLabel: "Totali",
-    billSingular: "faturë",
-    billPlural: "fatura",
-    unpaidExpensesSummary: "Përmbledhje e Shpenzimeve të Papaguara",
-    expenseType: "Lloji i Shpenzimit",
-    paymentGroupInsufficient:
-      "Shkruani një shumë që mbulon të paktën një faturë.",
-    paymentGroupRemainingPrefix: "Shuma e papaguar e mbetur për",
-    paymentGroupNoDebts: "Nuk u gjetën fatura të papaguara për këtë lloj.",
-    paymentGroupUnusedAmountPrefix: "Shuma e papërdorur nuk u aplikua",
-    enteredAmountLabel: "Shkruar",
-    electricityCutLabel: "Ndërprerja e rrymës",
-    electricityCutNotePrefix: "Rryma është ndërprerë më",
-    toggleExpenseSummary: "Përmbledhje e Qiramarrësve",
-    togglePaymentSummary: "Përmbledhje e Qiramarrësve",
-    summaryTenant: "Qiramarrësi",
-    summaryExpensesCount: "Detyrimet e Hapura",
-    summaryExpensesAmount: "Shuma e Hapur",
-    summaryPaymentsCount: "Nr. Pagesave",
-    summaryPaymentsAmount: "Shuma e Pagesave",
-    summaryNoData: "Asnjë e dhënë.",
-    openExpensesHeading: "Shpenzime të Hapura & Vonesë",
-    pdfOptionsHeading: "Eksporto PDF për Qiramarrësin",
-    pdfOptionEnglish: "Shkarko në Anglisht",
-    pdfOptionAlbanian: "Shkarko në Shqip",
-    pdfFormatNormal: "Normal",
-    pdfFormatDetailed: "Të Detajuara",
-    filterStatus: "Statusi",
-    filterType: "Lloji",
-    statusAll: "Të Gjitha",
-    statusOpenOverdue: "Të Hapura & Vonesë",
-    statusPaid: "Të Paguara",
-    statusOverdue: "Vonesë",
-    typeAll: "Të Gjitha",
-    debtRent: "Qira",
-    debtMaintenance: "Mirëmbajtje",
-    debtGarbage: "Mbeturina",
-    debtThermos: "Ngrohje",
-    debtElectricity: "Rrymë",
-    debtElectricityCut: "Ndërprerja e rrymës",
-    debtWater: "Ujë",
-    debtDamage: "Dëmtim",
-    debtOther: "Tjetër",
-    expensesHeadingAll: "Shpenzimet Totale",
-    expensesHeadingRent: "Shpenzimet e Qirasë",
-    expensesHeadingGarbage: "Shpenzimet e Mbeturinave",
-    expensesHeadingMaintenance: "Shpenzimet e Mirëmbajtjes",
-    expensesHeadingElectricity: "Shpenzimet e Energjisë Elektrike",
-    expensesHeadingWater: "Shpenzimet e Ujit",
-    expensesHeadingHeating: "Shpenzimet e Ngrohjes",
-    actions: "Veprimet",
-    edit: "Ndrysho",
-    delete: "Fshi",
-    markPaid: "Shëno të Paguar",
-    exportPdf: "Eksporto Detyrimet në PDF",
-    paymentsHistory: "Historia e Pagesave",
-    tenantDashboard: "Paneli i Qiramarrësit",
-    loadTenant: "Ngarko Qiramarrësin",
-    tenantInfo: "Të Dhënat e Qiramarrësit",
-    contractInfo: "Të Dhënat e Kontratës",
-    financialSummary: "Përmbledhje Financiare",
-    overallStatistics: "Statistikat e Përgjithshme",
-    statTenants: "Qiramarrësit",
-    statApartments: "Banesat",
-    statContracts: "Kontratat",
-    statExpenses: "Shpenzimet",
-    statPayments: "Pagesat",
-    statTotalPayments: "Shuma e Pagesave",
-    statTotalExpenses: "Shuma e Shpenzimeve",
-    statTotalUnpaid: "Shuma e Papaguar",
-    statPdfGenerated: "PDF të Gjeneruara",
-    tenantDebts: "Shpenzime të Papaguara",
-    tenantPayments: "Pagesat",
-    exportTenantPdf: "Eksporto në PDF",
-    status: "Statusi",
-    footerNote: "Mundësohet nga Florend Ramusa. Ndërtuar për administratorë dhe qiramarrës.",
-    tenantSince: "Data e Hyrjes",
-    totalDebt: "Shpenzime Totale",
-    totalPaid: "Pagesat Totale",
-    totalUnpaid: "Shpenzime të Papaguara",
-    yes: "Po",
-    no: "Jo",
-    paid: "Paguar",
-    open: "Hapur",
-    overdue: "Vonesë",
-    unknown: "Panjor",
-    confirmationMarkPaid: "A jeni i sigurt që doni ta shënoni këtë detyrim si të paguar?",
-    confirmationDeleteDebt: "A jeni i sigurt që doni ta fshini këtë shpenzim?",
-    confirmationDeletePayment: "A jeni i sigurt që doni ta fshini këtë pagesë?",
-    successAddApartment: "Banesa u krijua me sukses.",
-    successAddTenant: "Qiramarrësi u shtua me sukses.",
-    successAddContract: "Kontrata u krijua me sukses.",
-    successAddDebt: "Detyrimi u krijua me sukses.",
-    successAddPayment: "Pagesa u regjistrua me sukses.",
-    successUpdateDebt: "Shpenzimi u përditësua me sukses.",
-    successUpdatePayment: "Pagesa u përditësua me sukses.",
-    successDeleteDebt: "Shpenzimi u fshi me sukses.",
-    successDeletePayment: "Pagesa u fshi me sukses.",
-    successMarkPaid: "Detyrimi u shënua si i paguar.",
-    errorLoad: "Diçka shkoi keq. Ju lutem provoni përsëri.",
-    errorFieldRequired: "Plotësoni të gjitha fushat e detyrueshme.",
-    errorAmountMismatch: "Shuma që keni shkruar nuk përputhet. Fshirja u anulua.",
-    noTenantSelected: "Zgjidhni një qiramarrës për të parë detajet.",
-    noDebtsFound: "Asnjë detyrim i gjetur.",
-    noPaymentsFound: "Asnjë pagesë e gjetur.",
-    paymentSummary: "Përmbledhje Pagesash",
-    paymentSummaryPaid: "E Paguar",
-    paymentSummaryDebt: "Shpenzimet",
-    paymentSummaryRemaining: "E Mbetur",
-    errorAutoTableLoading:
-      "Shtojca e tabelave për PDF po ngarkohet. Ju lutem provoni sërish pas pak.",
-    loginTitle: "Hyrje",
-    loginSubtitle: "Shkruani kredencialet tuaja për të hyrë në sistem",
-    loginButton: "Hyr",
-    signupTitle: "Regjistrohu",
-    signupSubtitle: "Krijoni një llogari të re për të filluar",
-    signupButton: "Regjistrohu",
-    email: "Email",
-    password: "Fjalëkalimi",
-    confirmPassword: "Konfirmo Fjalëkalimin",
-    noAccount: "Nuk keni llogari?",
-    haveAccount: "Keni tashmë një llogari?",
-    signupLink: "Regjistrohu",
-    loginLink: "Hyr",
-    logout: "Dil",
-    loginError: "Email ose fjalëkalim i pavlefshëm.",
-    signupError: "Gabim në krijimin e llogarisë. Ju lutem provoni përsëri.",
-    passwordMismatch: "Fjalëkalimet nuk përputhen.",
-    loginSuccess: "Hyrja u realizua me sukses!",
-    signupSuccess: "Llogaria u krijua me sukses! Ju lutem hyni.",
-    logoutSuccess: "Dilja u realizua me sukses.",
-    statistics: "Statistika",
-    backToDashboard: "Kthehu në Panel",
-  },
-};
+// Phone number formatting function: +383-xx-xxx-xxx
+function formatPhoneNumber(value) {
+  // Remove all non-digit characters except the leading +
+  let cleaned = value.replace(/[^\d+]/g, '');
+  
+  // Ensure it starts with +383
+  if (!cleaned.startsWith('+383')) {
+    // If it starts with + but not +383, try to fix it
+    if (cleaned.startsWith('+') && !cleaned.startsWith('+383')) {
+      cleaned = '+383' + cleaned.substring(1);
+    } else if (!cleaned.startsWith('+')) {
+      // If no +, add +383
+      cleaned = '+383' + cleaned;
+    }
+  }
+  
+  // Remove the +383 prefix for formatting
+  let digits = cleaned.replace('+383', '');
+  
+  // Format as +383-xx-xxx-xxx
+  if (digits.length === 0) {
+    return '+383-';
+  } else if (digits.length <= 2) {
+    return '+383-' + digits;
+  } else if (digits.length <= 5) {
+    return '+383-' + digits.substring(0, 2) + '-' + digits.substring(2);
+  } else {
+    return '+383-' + digits.substring(0, 2) + '-' + digits.substring(2, 5) + '-' + digits.substring(5, 8);
+  }
+}
+
+// Setup phone number formatting for an input element
+function setupPhoneFormatting(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  
+  input.addEventListener('input', (e) => {
+    const cursorPosition = e.target.selectionStart;
+    const oldValue = e.target.value;
+    const newValue = formatPhoneNumber(e.target.value);
+    
+    e.target.value = newValue;
+    
+    // Restore cursor position (adjust for added dashes)
+    const addedChars = newValue.length - oldValue.length;
+    const newCursorPosition = Math.min(cursorPosition + addedChars, newValue.length);
+    e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+  });
+  
+  // Format on paste
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+    const formatted = formatPhoneNumber(pastedText);
+    input.value = formatted;
+  });
+}
+
+// Shared translations are defined globally in js/languages.js
+const translations = window.TRANSLATIONS || {};
 
 const EXPENSE_TYPE_MAP = {
   all: "all",
@@ -431,6 +75,9 @@ const EXPENSE_TYPE_MAP = {
   water: "water",
   heating: "thermos",
 };
+
+// Utility types that show summary view instead of mark-paid
+const UTILITY_TYPES = ["electricity", "water", "thermos"];
 
 const EXPENSE_HEADING_KEYS = {
   all: "expensesHeadingAll",
@@ -444,7 +91,7 @@ const EXPENSE_HEADING_KEYS = {
 
 const UTILITY_PAYMENT_TYPES = ["electricity", "water", "thermos"];
 
-const ELECTRICITY_RECONNECTION_FEE = 17.7;
+const ELECTRICITY_RECONNECTION_FEE = window.APP_CONFIG?.ELECTRICITY_RECONNECTION_FEE || 17.7;
 const ELECTRICITY_CUT_MARKER = "__electricityCut__";
 
 let persistedPdfGeneratedCount = 0;
@@ -466,6 +113,21 @@ const state = {
   contracts: [],
   debts: [],
   payments: [],
+  utilityBills: [],
+  utilityPayments: [],
+  // Split tables data
+  rentBills: [],
+  rentPayments: [],
+  garbageBills: [],
+  garbagePayments: [],
+  maintenanceBills: [],
+  maintenancePayments: [],
+  electricityBills: [],
+  electricityPayments: [],
+  waterBills: [],
+  waterPayments: [],
+  heatingBills: [],
+  heatingPayments: [],
   selectedTenantId: null,
   adminPage: "expenses",
   expensesCategory: "rent",
@@ -476,10 +138,34 @@ const state = {
   contractsLoaded: false,
   debtsLoaded: false,
   recurringDebtsEnsured: false,
+  ensuringRecurringDebts: false,
   pdfGeneratedCount: persistedPdfGeneratedCount,
   editingDebtId: null,
   editingPaymentId: null,
+  editingUtilityBillId: null,
+  editingUtilityPaymentId: null,
   markPaidDebtId: null,
+  globalTenantFilter: null, // Global tenant filter for all views
+  globalContractFilter: null, // Global contract filter for all views
+};
+
+// Table mapping for split tables
+const EXPENSE_TABLES = {
+  rent: { bills: "rent_bills", payments: "rent_payments", hasStatus: true },
+  garbage: { bills: "garbage_bills", payments: "garbage_payments", hasStatus: true },
+  maintenance: { bills: "maintenance_bills", payments: "maintenance_payments", hasStatus: true },
+  electricity: { bills: "electricity_bills", payments: "electricity_payments", hasStatus: false },
+  water: { bills: "water_bills", payments: "water_payments", hasStatus: false },
+  thermos: { bills: "heating_bills", payments: "heating_payments", hasStatus: false },
+};
+
+const EXPENSE_STATE_KEYS = {
+  rent: { bills: "rentBills", payments: "rentPayments" },
+  garbage: { bills: "garbageBills", payments: "garbagePayments" },
+  maintenance: { bills: "maintenanceBills", payments: "maintenancePayments" },
+  electricity: { bills: "electricityBills", payments: "electricityPayments" },
+  water: { bills: "waterBills", payments: "waterPayments" },
+  thermos: { bills: "heatingBills", payments: "heatingPayments" },
 };
 
 const elements = {};
@@ -491,6 +177,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   // Setup date inputs with year limits (2020-2030)
   setupDateInputs();
+  
+  // Setup phone number formatting
+  setupPhoneFormatting('tenantPhone');
   
   // Check authentication status on load
   await checkAuth();
@@ -508,142 +197,80 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function setupDateInputs() {
-  // Initialize custom date pickers with day, month, year dropdowns
-  const yearStart = 2020;
-  const yearEnd = 2030;
-  
-  // Setup year dropdowns
-  const yearSelects = document.querySelectorAll('.date-year');
-  yearSelects.forEach(select => {
-    const existingOptions = select.querySelectorAll('option').length;
-    if (existingOptions <= 1) { // Only placeholder option exists
-      for (let year = yearStart; year <= yearEnd; year++) {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        select.appendChild(option);
-      }
-    }
-  });
-  
-  // Setup day dropdowns
-  const daySelects = document.querySelectorAll('.date-day');
-  daySelects.forEach(select => {
-    const existingOptions = select.querySelectorAll('option').length;
-    if (existingOptions <= 1) { // Only placeholder option exists
-      for (let day = 1; day <= 31; day++) {
-        const option = document.createElement('option');
-        option.value = String(day).padStart(2, '0');
-        option.textContent = day;
-        select.appendChild(option);
-      }
-    }
-  });
-  
-  // Add change listeners to update hidden input values
+  // Add input listeners to update hidden input values
   setupDatePickerListeners();
 }
 
+function setDefaultDateToToday() {
+  const today = new Date();
+  const day = today.getDate();
+  const month = today.getMonth() + 1;
+  const year = today.getFullYear();
+  
+  // Set debt due date
+  if (elements.debtDueDay) elements.debtDueDay.value = day;
+  if (elements.debtDueMonth) elements.debtDueMonth.value = month;
+  if (elements.debtDueYear) elements.debtDueYear.value = year;
+  if (elements.debtDueDate) elements.debtDueDate.value = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  
+  // Set payment date
+  if (elements.paymentDay) elements.paymentDay.value = day;
+  if (elements.paymentMonth) elements.paymentMonth.value = month;
+  if (elements.paymentYear) elements.paymentYear.value = year;
+  if (elements.paymentDate) elements.paymentDate.value = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 function setupDatePickerListeners() {
-  // Map of date picker IDs to their component selectors
+  // Map of date picker IDs to their component inputs
   const datePickers = [
-    { prefix: 'debtDueDate', hidden: 'debtDueDate' },
-    { prefix: 'paymentDate', hidden: 'paymentDate' },
-    { prefix: 'contractStartDate', hidden: 'contractStartDate' },
-    { prefix: 'contractEndDate', hidden: 'contractEndDate' },
-    { prefix: 'markPaidDate', hidden: 'markPaidDate' }
+    { day: 'debtDueDay', month: 'debtDueMonth', year: 'debtDueYear', hidden: 'debtDueDate' },
+    { day: 'paymentDay', month: 'paymentMonth', year: 'paymentYear', hidden: 'paymentDate' },
+    { day: 'markPaidDay', month: 'markPaidMonth', year: 'markPaidYear', hidden: 'markPaidDate' },
   ];
   
   datePickers.forEach(picker => {
-    const daySelect = document.getElementById(`${picker.prefix}Day`);
-    const monthSelect = document.getElementById(`${picker.prefix}Month`);
-    const yearSelect = document.getElementById(`${picker.prefix}Year`);
+    const dayInput = document.getElementById(picker.day);
+    const monthInput = document.getElementById(picker.month);
+    const yearInput = document.getElementById(picker.year);
     const hiddenInput = document.getElementById(picker.hidden);
     
-    if (!daySelect || !monthSelect || !yearSelect || !hiddenInput) return;
+    if (!dayInput || !monthInput || !yearInput || !hiddenInput) return;
     
     const updateHiddenInput = () => {
-      const day = daySelect.value;
-      const month = monthSelect.value;
-      const year = yearSelect.value;
+      const day = parseInt(dayInput.value) || 0;
+      const month = parseInt(monthInput.value) || 0;
+      const year = parseInt(yearInput.value) || 0;
       
-      // Adjust days based on selected month/year
-      updateDaysInMonth(daySelect, month, year);
-      
-      if (day && month && year) {
+      if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 2020 && year <= 2030) {
         // Validate date (check if day is valid for the month)
-        const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
-        if (parseInt(day) > daysInMonth) {
-          daySelect.value = String(daysInMonth).padStart(2, '0');
-        }
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const validDay = Math.min(day, daysInMonth);
         
-        hiddenInput.value = `${year}-${month}-${daySelect.value}`;
+        hiddenInput.value = `${year}-${String(month).padStart(2, '0')}-${String(validDay).padStart(2, '0')}`;
       } else {
         hiddenInput.value = '';
       }
     };
     
-    daySelect.addEventListener('change', updateHiddenInput);
-    monthSelect.addEventListener('change', () => {
-      updateDaysInMonth(daySelect, monthSelect.value, yearSelect.value);
-      updateHiddenInput();
-    });
-    yearSelect.addEventListener('change', () => {
-      updateDaysInMonth(daySelect, monthSelect.value, yearSelect.value);
-      updateHiddenInput();
-    });
+    dayInput.addEventListener('input', updateHiddenInput);
+    monthInput.addEventListener('input', updateHiddenInput);
+    yearInput.addEventListener('input', updateHiddenInput);
   });
-}
-
-function updateDaysInMonth(daySelect, month, year) {
-  if (!month || !year) {
-    // Reset to 31 days if month/year not selected
-    const currentDay = daySelect.value;
-    daySelect.innerHTML = '<option value="">Day</option>';
-    for (let day = 1; day <= 31; day++) {
-      const option = document.createElement('option');
-      option.value = String(day).padStart(2, '0');
-      option.textContent = day;
-      if (option.value === currentDay) option.selected = true;
-      daySelect.appendChild(option);
-    }
-    return;
-  }
-  
-  const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
-  const currentDay = daySelect.value;
-  const currentDayNum = parseInt(currentDay);
-  
-  daySelect.innerHTML = '<option value="">Day</option>';
-  for (let day = 1; day <= daysInMonth; day++) {
-    const option = document.createElement('option');
-    option.value = String(day).padStart(2, '0');
-    option.textContent = day;
-    if (day === currentDayNum || (!currentDay && day === 1)) {
-      option.selected = true;
-    }
-    daySelect.appendChild(option);
-  }
-  
-  // If current day is greater than days in month, select last day
-  if (currentDayNum > daysInMonth) {
-    daySelect.value = String(daysInMonth).padStart(2, '0');
-  }
 }
 
 // Helper function to set date picker value from ISO date string
 function setDatePickerValue(prefix, isoDate) {
-  const daySelect = document.getElementById(`${prefix}Day`);
-  const monthSelect = document.getElementById(`${prefix}Month`);
-  const yearSelect = document.getElementById(`${prefix}Year`);
+  const dayInput = document.getElementById(`${prefix}Day`);
+  const monthInput = document.getElementById(`${prefix}Month`);
+  const yearInput = document.getElementById(`${prefix}Year`);
   const hiddenInput = document.getElementById(prefix);
   
-  if (!daySelect || !monthSelect || !yearSelect || !hiddenInput) return;
+  if (!dayInput || !monthInput || !yearInput || !hiddenInput) return;
   
   if (!isoDate) {
-    daySelect.value = '';
-    monthSelect.value = '';
-    yearSelect.value = '';
+    dayInput.value = '';
+    monthInput.value = '';
+    yearInput.value = '';
     hiddenInput.value = '';
     return;
   }
@@ -652,16 +279,13 @@ function setDatePickerValue(prefix, isoDate) {
     const date = new Date(isoDate + 'T00:00:00');
     if (isNaN(date.getTime())) return;
     
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
     const year = date.getFullYear();
     
-    // Update days based on month/year
-    updateDaysInMonth(daySelect, month, year);
-    
-    daySelect.value = day;
-    monthSelect.value = month;
-    yearSelect.value = year;
+    dayInput.value = day;
+    monthInput.value = month;
+    yearInput.value = year;
     hiddenInput.value = isoDate.split('T')[0]; // Ensure YYYY-MM-DD format
   } catch (e) {
     console.error('Error setting date picker value:', e);
@@ -691,9 +315,7 @@ function cacheElements() {
     showLogin: document.getElementById("showLogin"),
     logoutButton: document.getElementById("logoutButton"),
     authControls: document.getElementById("authControls"),
-    userEmail: document.getElementById("userEmail"),
-    rolePicker: document.getElementById("rolePicker"),
-    languagePicker: document.getElementById("languagePicker"),
+    languageToggleBtn: document.getElementById("languageToggleBtn"),
     adminView: document.getElementById("adminView"),
     tenantView: document.getElementById("tenantView"),
     adminNav: document.getElementById("adminNav"),
@@ -702,6 +324,9 @@ function cacheElements() {
     confirmationAnimationContainer: document.getElementById("confirmationAnimationContainer"),
     markPaidModal: document.getElementById("markPaidModal"),
     markPaidAmount: document.getElementById("markPaidAmount"),
+    markPaidDay: document.getElementById("markPaidDay"),
+    markPaidMonth: document.getElementById("markPaidMonth"),
+    markPaidYear: document.getElementById("markPaidYear"),
     markPaidDate: document.getElementById("markPaidDate"),
     markPaidMethod: document.getElementById("markPaidMethod"),
     markPaidCancel: document.getElementById("markPaidCancel"),
@@ -717,6 +342,23 @@ function cacheElements() {
     statTotalUnpaidValue: document.getElementById("statTotalUnpaidValue"),
     statPdfGeneratedValue: document.getElementById("statPdfGeneratedValue"),
     apartmentForm: document.getElementById("apartmentForm"),
+    apartmentId: document.getElementById("apartmentId"),
+    apartmentName: document.getElementById("apartmentName"),
+    apartmentAddress: document.getElementById("apartmentAddress"),
+    apartmentElectricityCode: document.getElementById("apartmentElectricityCode"),
+    apartmentHeatingCode: document.getElementById("apartmentHeatingCode"),
+    apartmentWaterCode: document.getElementById("apartmentWaterCode"),
+    apartmentWasteCode: document.getElementById("apartmentWasteCode"),
+    apartmentCondition: document.getElementById("apartmentCondition"),
+    apartmentRooms: document.getElementById("apartmentRooms"),
+    apartmentBalconies: document.getElementById("apartmentBalconies"),
+    apartmentBathrooms: document.getElementById("apartmentBathrooms"),
+    apartmentArea: document.getElementById("apartmentArea"),
+    apartmentMunicipality: document.getElementById("apartmentMunicipality"),
+    apartmentMonthlyRent: document.getElementById("apartmentMonthlyRent"),
+    apartmentDescription: document.getElementById("apartmentDescription"),
+    apartmentSubmitBtn: document.getElementById("apartmentSubmitBtn"),
+    apartmentCancelBtn: document.getElementById("apartmentCancelBtn"),
     apartmentsTableBody: document.getElementById("apartmentsTableBody"),
     refreshApartments: document.getElementById("refreshApartments"),
     tenantForm: document.getElementById("tenantForm"),
@@ -728,12 +370,16 @@ function cacheElements() {
     contractGarbage: document.getElementById("contractGarbage"),
     contractMaintenance: document.getElementById("contractMaintenance"),
     contractActive: document.getElementById("contractActive"),
-    contractsTableBody: document.getElementById("contractsTableBody"),
+    contractsActiveTableBody: document.getElementById("contractsActiveTableBody"),
+    contractsInactiveTableBody: document.getElementById("contractsInactiveTableBody"),
     refreshContracts: document.getElementById("refreshContracts"),
     debtForm: document.getElementById("debtForm"),
     debtType: document.getElementById("debtType"),
     debtAmount: document.getElementById("debtAmount"),
     debtDueDate: document.getElementById("debtDueDate"),
+    debtDueDay: document.getElementById("debtDueDay"),
+    debtDueMonth: document.getElementById("debtDueMonth"),
+    debtDueYear: document.getElementById("debtDueYear"),
     debtNotes: document.getElementById("debtNotes"),
     paymentForm: document.getElementById("paymentForm"),
     debtFormSubmit: document.getElementById("debtFormSubmit"),
@@ -750,6 +396,9 @@ function cacheElements() {
     paymentDebt: document.getElementById("paymentDebt"),
     paymentAmount: document.getElementById("paymentAmount"),
     paymentDate: document.getElementById("paymentDate"),
+    paymentDay: document.getElementById("paymentDay"),
+    paymentMonth: document.getElementById("paymentMonth"),
+    paymentYear: document.getElementById("paymentYear"),
     paymentMethod: document.getElementById("paymentMethod"),
     paymentDebtSummary: document.getElementById("paymentDebtSummary"),
     debtsTableBody: document.getElementById("debtsTableBody"),
@@ -761,6 +410,8 @@ function cacheElements() {
     paymentsTableBody: document.getElementById("paymentsTableBody"),
     refreshDebts: document.getElementById("refreshDebts"),
     refreshPayments: document.getElementById("refreshPayments"),
+    requestsTableBody: document.getElementById("requestsTableBody"),
+    refreshRequests: document.getElementById("refreshRequests"),
     tenantSelector: document.getElementById("tenantSelector"),
     tenantSelect: document.getElementById("tenantSelect"),
     tenantInfoList: document.getElementById("tenantInfoList"),
@@ -781,6 +432,16 @@ function cacheElements() {
       "expensesPaymentsTableBody"
     ),
     openExpensesTableBody: document.getElementById("openExpensesTableBody"),
+    utilitySummarySection: document.getElementById("utilitySummarySection"),
+    utilityTotalExpenses: document.getElementById("utilityTotalExpenses"),
+    utilityTotalPayments: document.getElementById("utilityTotalPayments"),
+    utilityDifference: document.getElementById("utilityDifference"),
+    utilityExpensesTableBody: document.getElementById("utilityExpensesTableBody"),
+    utilityPaymentsTableBody: document.getElementById("utilityPaymentsTableBody"),
+    globalTenantFilter: document.getElementById("globalTenantFilter"),
+    clearTenantFilter: document.getElementById("clearTenantFilter"),
+    globalContractFilter: document.getElementById("globalContractFilter"),
+    clearContractFilter: document.getElementById("clearContractFilter"),
   });
   if (elements.debtFormCancelEdit) {
     elements.debtFormCancelEdit.addEventListener("click", () => {
@@ -803,6 +464,12 @@ function cacheElements() {
       "click",
       handlePaymentsTableClick
     );
+  }
+  if (elements.utilityExpensesTableBody) {
+    elements.utilityExpensesTableBody.addEventListener("click", handleUtilityBillsTableClick);
+  }
+  if (elements.utilityPaymentsTableBody) {
+    elements.utilityPaymentsTableBody.addEventListener("click", handleUtilityPaymentsTableClick);
   }
   elements.expenseFormModeButtons = Array.from(
     document.querySelectorAll("[data-expense-form-mode]")
@@ -842,16 +509,62 @@ function attachEventListeners() {
     elements.logoutButton.addEventListener("click", handleLogout);
   }
 
-  if (elements.rolePicker) {
-    elements.rolePicker.addEventListener("change", (event) => {
-      state.role = event.target.value;
+  // Role toggle button (bottom only)
+  const roleToggleBtnBottom = document.getElementById("roleToggleBtnBottom");
+  
+  if (roleToggleBtnBottom) {
+    roleToggleBtnBottom.addEventListener("click", () => {
+      if (state.role === "admin") {
+        state.role = "tenant";
+        roleToggleBtnBottom.textContent = translate("roleTenant");
+      } else {
+        state.role = "admin";
+        roleToggleBtnBottom.textContent = translate("roleAdmin");
+      }
       toggleViews();
     });
   }
 
-  if (elements.languagePicker) {
-    elements.languagePicker.addEventListener("change", (event) => {
-      state.language = event.target.value;
+  // Theme toggle button (light / dark)
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  function applyTheme(theme) {
+    const body = document.body;
+    if (!body) return;
+    if (theme === "dark") {
+      body.classList.add("dark-theme");
+      if (themeToggleBtn) themeToggleBtn.textContent = "Light";
+    } else {
+      body.classList.remove("dark-theme");
+      if (themeToggleBtn) themeToggleBtn.textContent = "Dark";
+      theme = "light";
+    }
+    try {
+      window.localStorage.setItem("theme", theme);
+    } catch (_) {}
+  }
+
+  const storedTheme = (window.localStorage && window.localStorage.getItem("theme")) || "light";
+  applyTheme(storedTheme);
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener("click", () => {
+      const isDark = document.body.classList.contains("dark-theme");
+      applyTheme(isDark ? "light" : "dark");
+    });
+  }
+
+  // Language toggle button
+  const languageToggleBtn = document.getElementById("languageToggleBtn");
+  
+  if (languageToggleBtn) {
+    languageToggleBtn.addEventListener("click", () => {
+      if (state.language === "en") {
+        state.language = "sq";
+        languageToggleBtn.textContent = "Sq";
+      } else {
+        state.language = "en";
+        languageToggleBtn.textContent = "En";
+      }
       translateUI();
     });
   }
@@ -859,9 +572,37 @@ function attachEventListeners() {
   if (elements.adminNav) {
     elements.adminNav.addEventListener("click", handleAdminNavClick);
   }
+  
+  // Global contract filter
+  if (elements.globalContractFilter) {
+    elements.globalContractFilter.addEventListener("change", handleGlobalContractFilterChange);
+  }
+  if (elements.clearContractFilter) {
+    elements.clearContractFilter.addEventListener("click", clearGlobalContractFilter);
+  }
 
   elements.apartmentForm.addEventListener("submit", onCreateApartment);
   elements.refreshApartments.addEventListener("click", loadApartments);
+  
+  // Feature buttons click handlers
+  setupFeatureButtons();
+  
+  // Cancel edit button
+  if (elements.apartmentCancelBtn) {
+    elements.apartmentCancelBtn.addEventListener("click", cancelEditApartment);
+  }
+  
+  // Initialize photo upload functionality
+  initializePhotoUpload();
+  
+  // Initialize photo viewer modal
+  initializePhotoViewer();
+  
+  // Initialize photo review modal
+  initializePhotoReview();
+  
+  // Initialize apartment map
+  // Map initialization removed
 
   elements.tenantForm.addEventListener("submit", onCreateTenant);
   elements.refreshTenants.addEventListener("click", loadTenants);
@@ -916,6 +657,9 @@ function attachEventListeners() {
   });
   if (elements.refreshPayments) {
     elements.refreshPayments.addEventListener("click", loadPayments);
+  }
+  if (elements.refreshRequests) {
+    elements.refreshRequests.addEventListener("click", loadRequests);
   }
 
   elements.debtsFilterStatus.addEventListener("change", renderDebtsTable);
@@ -987,13 +731,15 @@ function attachEventListeners() {
   });
 
   if (elements.exportTenantPdf) {
-    elements.exportTenantPdf.addEventListener("click", () => {
+    elements.exportTenantPdf.addEventListener("click", (e) => {
+      e.preventDefault();
       const format = document.querySelector('input[name="pdfFormat"]:checked')?.value || "normal";
       exportTenantToPdf("en", format);
     });
   }
   if (elements.exportTenantPdfSq) {
-    elements.exportTenantPdfSq.addEventListener("click", () => {
+    elements.exportTenantPdfSq.addEventListener("click", (e) => {
+      e.preventDefault();
       const format = document.querySelector('input[name="pdfFormat"]:checked')?.value || "normal";
       exportTenantToPdf("sq", format);
     });
@@ -1012,6 +758,125 @@ function handleAdminNavClick(event) {
   } else {
     setAdminPage(page);
   }
+}
+
+function handleGlobalContractFilterChange() {
+  const value = elements.globalContractFilter?.value || "";
+  state.globalContractFilter = value || null;
+  
+  // Update UI to show filter is active
+  const filterContainer = document.querySelector('.global-tenant-filter');
+  if (filterContainer) {
+    filterContainer.classList.toggle('has-filter', !!value);
+  }
+  
+  // Lock/unlock form fields based on filter
+  updateFormContractLock();
+  
+  // Refresh all views
+  renderDebtsTable();
+  renderPaymentsTable();
+  renderOpenExpensesTable();
+  renderUtilitySummary();
+}
+
+function clearGlobalContractFilter() {
+  if (elements.globalContractFilter) {
+    elements.globalContractFilter.value = "";
+  }
+  state.globalContractFilter = null;
+  
+  const filterContainer = document.querySelector('.global-tenant-filter');
+  if (filterContainer) {
+    filterContainer.classList.remove('has-filter');
+  }
+  
+  // Unlock form fields
+  updateFormContractLock();
+  
+  // Refresh all views
+  renderDebtsTable();
+  renderPaymentsTable();
+  renderOpenExpensesTable();
+  renderUtilitySummary();
+}
+
+function updateFormContractLock() {
+  const hasFilter = !!state.globalContractFilter;
+  
+  // First unlock to allow setting values
+  if (elements.debtContract) {
+    elements.debtContract.disabled = false;
+  }
+  if (elements.debtTenant) {
+    elements.debtTenant.disabled = false;
+  }
+  
+  if (hasFilter) {
+    // Set contract/tenant in expense form
+    if (elements.debtContract) {
+      elements.debtContract.value = state.globalContractFilter;
+    }
+    
+    // Get tenant from contract
+    const contract = state.contracts.find(c => equalsId(c.id, state.globalContractFilter));
+    if (contract && elements.debtTenant) {
+      elements.debtTenant.value = contract.tenant_id;
+    }
+    
+    // Set amount based on expense type
+    if (contract && elements.debtAmount) {
+      const expenseType = getActiveExpenseType();
+      let amount = 0;
+      if (expenseType === 'rent') {
+        amount = contract.monthly_rent || 0;
+      } else if (expenseType === 'garbage') {
+        amount = contract.monthly_garbage || 0;
+      } else if (expenseType === 'maintenance') {
+        amount = contract.monthly_maintenance || 0;
+      }
+      if (amount > 0) {
+        elements.debtAmount.value = amount;
+      }
+    }
+    
+    // Now lock the fields
+    if (elements.debtContract) {
+      elements.debtContract.disabled = true;
+    }
+    if (elements.debtTenant) {
+      elements.debtTenant.disabled = true;
+    }
+  }
+}
+
+function populateGlobalContractFilter() {
+  if (!elements.globalContractFilter) return;
+  
+  const currentValue = state.globalContractFilter || "";
+  elements.globalContractFilter.innerHTML = `<option value="" data-i18n="allContracts">${translate("allContracts") || "All Contracts"}</option>`;
+  
+  // Only show active contracts
+  state.contracts.filter(c => c.is_active).forEach(contract => {
+    const tenant = state.tenants.find(t => equalsId(t.id, contract.tenant_id));
+    const apartment = state.apartments.find(a => equalsId(a.id, contract.apartment_id));
+    const label = `${tenant?.full_name || "?"} - ${apartment?.name || "?"}`;
+    const option = document.createElement("option");
+    option.value = contract.id;
+    option.textContent = label;
+    if (contract.id === currentValue) option.selected = true;
+    elements.globalContractFilter.appendChild(option);
+  });
+}
+
+function getFilteredDebts() {
+  if (!state.globalContractFilter) return state.debts;
+  return state.debts.filter(d => equalsId(d.contract_id, state.globalContractFilter));
+}
+
+function getFilteredPayments() {
+  if (!state.globalContractFilter) return state.payments;
+  return state.payments.filter(p => equalsId(p.contract_id, state.globalContractFilter));
 }
 
 function onDebtsTypeFilterChange() {
@@ -1065,6 +930,14 @@ function setAdminPage(page, expenseCategory = state.expensesCategory) {
   if (page === "expenses") {
     applyExpensesCategory(expenseCategory);
   }
+  
+  // Initialize map when apartments page is shown (lazy loading)
+  if (page === "apartments" && !mapInitialized) {
+    // Small delay to ensure page is visible before initializing map
+    requestAnimationFrame(() => {
+      // Map initialization removed
+    });
+  }
 }
 
 function applyExpensesCategory(category = "all") {
@@ -1075,6 +948,7 @@ function applyExpensesCategory(category = "all") {
   }
   updateExpensesHeading();
   updateExpenseFormTypeLock();
+  updateFormContractLock(); // Update amount based on new expense type
   renderDebtsTable();
   renderPaymentsTable(); // Refresh payments table with new filter
   populateDebtSelects();
@@ -1251,6 +1125,9 @@ function buildTenantSummaryData() {
         .filter((payment) => {
           // Filter by expense type if a filter is active
           if (activeExpenseType) {
+            // Check payment's own type first
+            if (payment.type === activeExpenseType) return true;
+            // Fall back to checking linked debt
             const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
             return debt && debt.type === activeExpenseType;
           }
@@ -1326,11 +1203,66 @@ function getExpenseCategoryFromTypeValue(value) {
 
 function translateUI() {
   const dictionary = translations[state.language] || translations.en;
+  const currentLang = state.language || "en";
+  
   document
     .querySelectorAll("[data-i18n]")
-    .forEach((node) => (node.textContent = dictionary[node.dataset.i18n]));
+    .forEach((node) => {
+      const key = node.dataset.i18n;
+      if (dictionary[key]) {
+        if (node.tagName === "OPTION") {
+          // For option elements, check if there's a language-specific attribute
+          const langKey = currentLang === "sq" ? "data-i18n-sq" : "data-i18n-en";
+          const langText = node.getAttribute(langKey);
+          if (langText) {
+            node.textContent = langText;
+          } else {
+            node.textContent = dictionary[key] || node.textContent;
+          }
+        } else {
+          node.textContent = dictionary[key];
+        }
+      }
+    });
   document.title = dictionary.appTitle;
-  renderApartmentsTable();
+  
+  // Update features select options
+  const featuresSelect = document.getElementById("apartmentFeatures");
+  if (featuresSelect) {
+    Array.from(featuresSelect.options).forEach(option => {
+      const langKey = currentLang === "sq" ? "data-i18n-sq" : "data-i18n-en";
+      const langText = option.getAttribute(langKey);
+      if (langText) {
+        option.textContent = langText;
+      }
+    });
+  }
+  
+  // Update feature buttons text
+  const featuresButtons = document.querySelectorAll('.feature-button');
+  featuresButtons.forEach(button => {
+    const langKey = currentLang === "sq" ? "data-i18n-sq" : "data-i18n-en";
+    const langText = button.getAttribute(langKey);
+    if (langText) {
+      button.textContent = langText;
+    }
+  });
+  
+  // Update municipality options
+  const municipalitySelect = document.getElementById("apartmentMunicipality");
+  if (municipalitySelect) {
+    Array.from(municipalitySelect.options).forEach(option => {
+      const key = option.getAttribute("data-i18n");
+      if (key && dictionary[key]) {
+        option.textContent = dictionary[key];
+      }
+    });
+  }
+  
+  // Only render apartments table if contracts are loaded (for accurate status)
+  if (state.contractsLoaded) {
+    renderApartmentsTable();
+  }
   renderTenantsTable();
   renderContractsTable();
   renderDebtsTable();
@@ -1340,8 +1272,36 @@ function translateUI() {
   populateContractSelects();
   populateDebtSelects();
   populateTenantSelector();
+  populateGlobalContractFilter();
+  // Always re-render tenant view if tenant is selected, regardless of which view is active
+  // This ensures translations work when language is changed while viewing tenant data
   if (state.selectedTenantId) {
+    // Re-render all tenant view content with new language
+    // This will use translate() which reads from state.language (already updated above)
+    // The translate() function will automatically use the new language
     loadTenantView();
+  }
+  // Re-translate any data-i18n elements in tenant view after re-rendering
+  // Do this after loadTenantView to ensure all elements exist
+  // This handles static HTML elements that have data-i18n attributes
+  if (elements.tenantView) {
+    elements.tenantView
+      .querySelectorAll("[data-i18n]")
+      .forEach((node) => {
+        const key = node.dataset.i18n;
+        if (key && dictionary[key]) {
+          node.textContent = dictionary[key];
+        }
+      });
+    // Also translate option elements in selects within tenant view
+    elements.tenantView
+      .querySelectorAll("select option[data-i18n]")
+      .forEach((node) => {
+        const key = node.dataset.i18n;
+        if (key && dictionary[key]) {
+          node.textContent = dictionary[key];
+        }
+      });
   }
   updateExpensesHeading();
   updateExpenseFormTypeLock();
@@ -1362,6 +1322,54 @@ function translate(key) {
   );
 }
 
+// Setup feature buttons functionality
+function setupFeatureButtons() {
+  const featuresButtonsContainer = document.getElementById("apartmentFeaturesButtons");
+  const featuresSelect = document.getElementById("apartmentFeatures");
+  
+  if (!featuresButtonsContainer || !featuresSelect) return;
+  
+  // Add click handlers to all feature buttons
+  featuresButtonsContainer.addEventListener("click", (e) => {
+    if (e.target.classList.contains("feature-button")) {
+      const button = e.target;
+      const featureValue = button.getAttribute("data-feature");
+      
+      // Toggle button selected state
+      button.classList.toggle("selected");
+      
+      // Sync with hidden select
+      const option = Array.from(featuresSelect.options).find(opt => opt.value === featureValue);
+      if (option) {
+        option.selected = button.classList.contains("selected");
+      }
+    }
+  });
+}
+
+// Sync feature buttons state to hidden select (useful before form submission)
+function syncFeatureButtonsToSelect() {
+  const featuresButtonsContainer = document.getElementById("apartmentFeaturesButtons");
+  const featuresSelect = document.getElementById("apartmentFeatures");
+  
+  if (!featuresButtonsContainer || !featuresSelect) return;
+  
+  // First, deselect all options
+  Array.from(featuresSelect.options).forEach(option => {
+    option.selected = false;
+  });
+  
+  // Then, select options based on button states
+  const selectedButtons = featuresButtonsContainer.querySelectorAll('.feature-button.selected');
+  selectedButtons.forEach(button => {
+    const featureValue = button.getAttribute("data-feature");
+    const option = Array.from(featuresSelect.options).find(opt => opt.value === featureValue);
+    if (option) {
+      option.selected = true;
+    }
+  });
+}
+
 async function loadInitialData() {
   // Check if statistics animation has already been shown in this session
   const hasSeenAnimation = sessionStorage.getItem('statisticsAnimationShown') === 'true';
@@ -1380,7 +1388,17 @@ async function loadInitialData() {
     loadContracts(),
     loadDebts(),
     loadPayments(),
+    loadUtilityBills(),
+    loadUtilityPayments(),
+    loadRequests(),
   ]);
+  
+  // Ensure apartments table is rendered after all data is loaded
+  // This handles the case where apartments finished loading before contracts
+  if (state.apartments && state.apartments.length >= 0 && state.contractsLoaded) {
+    renderApartmentsTable();
+  }
+  
   populateTenantSelector();
   
   if (!hasSeenAnimation) {
@@ -1493,11 +1511,22 @@ function animateCurrencyCounter(element, start, end, duration = 2000) {
 }
 
 async function loadApartments() {
+  if (!state.currentUser) {
+    state.apartments = [];
+    // Only render if contracts are loaded (or if no contracts exist)
+    if (state.contractsLoaded || state.contracts.length === 0) {
+      renderApartmentsTable();
+    }
+    populateApartmentSelects();
+    return;
+  }
+  
   const { data, error } = await supabase
     .from("apartments")
     .select(
-      "id, name, address, electricity_code, heating_code, water_code, waste_code"
+      "id, name, address, electricity_code, heating_code, water_code, waste_code, photos"
     )
+    .eq("landlord_id", state.currentUser.id) // Filter by current user
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -1507,18 +1536,23 @@ async function loadApartments() {
   }
 
   state.apartments = data || [];
-  renderApartmentsTable();
+  // Don't render yet - wait for contracts to load first for accurate status
   populateApartmentSelects();
   // Only update summary if not in initial load (initial load uses animated version)
   if (!state.isInitialLoad) {
     renderAdminSummary();
+  }
+  
+  // Render apartments table if contracts are already loaded
+  if (state.contractsLoaded) {
+    renderApartmentsTable();
   }
 }
 
 async function loadTenants() {
   const { data, error } = await supabase
     .from("tenants")
-    .select("id, full_name, phone, entry_date")
+    .select("id, full_name, email, phone, entry_date")
     .order("full_name");
 
   if (error) {
@@ -1531,6 +1565,7 @@ async function loadTenants() {
   renderTenantsTable();
   populateTenantSelects();
   populateTenantSelector();
+  populateGlobalContractFilter();
   refreshTenantSummaries();
   updateExpenseSummaryUI();
   updatePaymentSummaryUI();
@@ -1541,11 +1576,38 @@ async function loadTenants() {
 }
 
 async function loadContracts() {
+  if (!state.currentUser) {
+    state.contracts = [];
+    renderContractsTable();
+    populateContractSelects();
+    populateGlobalContractFilter();
+    return;
+  }
+  
+  // First, get all apartment IDs for this landlord
+  const { data: landlordApartments, error: apartmentError } = await supabase
+    .from("apartments")
+    .select("id")
+    .eq("landlord_id", state.currentUser.id);
+  
+  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
+    // No apartments for this landlord, clear contracts
+    state.contracts = [];
+    renderContractsTable();
+    populateContractSelects();
+    populateGlobalContractFilter();
+    return;
+  }
+  
+  const apartmentIds = landlordApartments.map(a => a.id);
+  
+  // Filter contracts by apartment IDs
   const { data, error } = await supabase
     .from("contracts")
     .select(
       "id, apartment_id, tenant_id, start_date, end_date, monthly_rent, monthly_garbage, monthly_maintenance, deposit_amount, is_active"
     )
+    .in("apartment_id", apartmentIds)
     .order("start_date", { ascending: false });
 
   if (error) {
@@ -1555,11 +1617,19 @@ async function loadContracts() {
   }
 
   state.contracts = data || [];
+  state.contractsLoaded = true;
   renderContractsTable();
   populateContractSelects();
+  populateGlobalContractFilter();
+  updateFormContractLock();
   handleDebtContractChange();
-  state.contractsLoaded = true;
   maybeEnsureRecurringDebts();
+  
+  // Now render apartments table with accurate contract status
+  if (state.apartments && state.apartments.length > 0) {
+    renderApartmentsTable();
+  }
+  
   // Only update summary if not in initial load (initial load uses animated version)
   if (!state.isInitialLoad) {
     renderAdminSummary();
@@ -1567,20 +1637,19 @@ async function loadContracts() {
 }
 
 async function loadDebts() {
-  const { data, error } = await supabase
-    .from("debts")
-    .select(
-      "id, tenant_id, contract_id, type, amount, due_date, is_paid, notes, paid_at, reference"
-    )
-    .order("due_date", { ascending: false });
-
-  if (error) {
-    notify("error", translate("errorLoad"));
-    console.error("loadDebts", error);
-    return;
-  }
-
-  state.debts = data || [];
+  // Load from all split bill tables
+  await loadAllBills();
+  
+  // Combine all bills into state.debts for backward compatibility
+  state.debts = [
+    ...state.rentBills.map(b => ({ ...b, type: "rent", due_date: b.bill_date || b.due_date })),
+    ...state.garbageBills.map(b => ({ ...b, type: "garbage", due_date: b.bill_date || b.due_date })),
+    ...state.maintenanceBills.map(b => ({ ...b, type: "maintenance", due_date: b.bill_date || b.due_date })),
+    ...state.electricityBills.map(b => ({ ...b, type: "electricity", due_date: b.bill_date, is_paid: false })),
+    ...state.waterBills.map(b => ({ ...b, type: "water", due_date: b.bill_date, is_paid: false })),
+    ...state.heatingBills.map(b => ({ ...b, type: "thermos", due_date: b.bill_date, is_paid: false })),
+  ];
+  
   renderDebtsTable();
   populateDebtSelects();
 
@@ -1593,27 +1662,106 @@ async function loadDebts() {
   renderOpenExpensesTable();
   state.debtsLoaded = true;
   maybeEnsureRecurringDebts();
-  // Only update summary if not in initial load (initial load uses animated version)
   if (!state.isInitialLoad) {
     renderAdminSummary();
   }
 }
 
-async function loadPayments() {
-  const { data, error } = await supabase
-    .from("payments")
-    .select(
-      "id, debt_id, tenant_id, contract_id, amount, payment_date, method, reference"
-    )
-    .order("payment_date", { ascending: false });
-
-  if (error) {
-    notify("error", translate("errorLoad"));
-    console.error("loadPayments", error);
+async function loadAllBills() {
+  if (!state.currentUser) {
+    // Clear all bills if no user
+    const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.bills] = [];
+    }
     return;
   }
+  
+  // First, get all apartment IDs for this landlord
+  const { data: landlordApartments, error: apartmentError } = await supabase
+    .from("apartments")
+    .select("id")
+    .eq("landlord_id", state.currentUser.id);
+  
+  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
+    // No apartments for this landlord, clear all bills
+    const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.bills] = [];
+    }
+    return;
+  }
+  
+  const apartmentIds = landlordApartments.map(a => a.id);
+  
+  // Then get all contract IDs for those apartments
+  const { data: landlordContracts, error: contractError } = await supabase
+    .from("contracts")
+    .select("id")
+    .in("apartment_id", apartmentIds);
+  
+  if (contractError || !landlordContracts || landlordContracts.length === 0) {
+    // No contracts for this landlord, clear all bills
+    const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.bills] = [];
+    }
+    return;
+  }
+  
+  const contractIds = landlordContracts.map(c => c.id);
+  
+  const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+  
+  // Execute all queries in parallel for better performance
+  const queryPromises = types.map(async (type) => {
+    const tableInfo = EXPENSE_TABLES[type];
+    const stateKey = EXPENSE_STATE_KEYS[type];
+    
+    const selectFields = tableInfo.hasStatus
+      ? "id, tenant_id, contract_id, amount, bill_date, due_date, is_paid, notes, reference"
+      : "id, tenant_id, contract_id, amount, bill_date, notes, reference";
+    
+    const { data, error } = await supabase
+      .from(tableInfo.bills)
+      .select(selectFields)
+      .in("contract_id", contractIds)
+      .order("bill_date", { ascending: false });
 
-  state.payments = data || [];
+    if (error) {
+      console.error(`Error loading ${type} bills:`, error);
+      return { type, stateKey, data: [] };
+    } else {
+      return { type, stateKey, data: data || [] };
+    }
+  });
+  
+  // Wait for all queries to complete
+  const results = await Promise.all(queryPromises);
+  
+  // Update state with results
+  results.forEach(({ stateKey, data }) => {
+    state[stateKey.bills] = data;
+  });
+}
+
+async function loadPayments() {
+  // Load from all split payment tables
+  await loadAllPayments();
+  
+  // Combine all payments into state.payments for backward compatibility
+  state.payments = [
+    ...state.rentPayments.map(p => ({ ...p, type: "rent" })),
+    ...state.garbagePayments.map(p => ({ ...p, type: "garbage" })),
+    ...state.maintenancePayments.map(p => ({ ...p, type: "maintenance" })),
+    ...state.electricityPayments.map(p => ({ ...p, type: "electricity" })),
+    ...state.waterPayments.map(p => ({ ...p, type: "water" })),
+    ...state.heatingPayments.map(p => ({ ...p, type: "thermos" })),
+  ];
+
   renderPaymentsTable();
 
   if (state.selectedTenantId) {
@@ -1623,28 +1771,398 @@ async function loadPayments() {
   updateExpenseSummaryUI();
   updatePaymentSummaryUI();
   renderOpenExpensesTable();
-  // Only update summary if not in initial load (initial load uses animated version)
   if (!state.isInitialLoad) {
     renderAdminSummary();
   }
 }
 
+async function loadAllPayments() {
+  if (!state.currentUser) {
+    // Clear all payments if no user
+    const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.payments] = [];
+    }
+    return;
+  }
+  
+  // First, get all apartment IDs for this landlord
+  const { data: landlordApartments, error: apartmentError } = await supabase
+    .from("apartments")
+    .select("id")
+    .eq("landlord_id", state.currentUser.id);
+  
+  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
+    // No apartments for this landlord, clear all payments
+    const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.payments] = [];
+    }
+    return;
+  }
+  
+  const apartmentIds = landlordApartments.map(a => a.id);
+  
+  // Then get all contract IDs for those apartments
+  const { data: landlordContracts, error: contractError } = await supabase
+    .from("contracts")
+    .select("id")
+    .in("apartment_id", apartmentIds);
+  
+  if (contractError || !landlordContracts || landlordContracts.length === 0) {
+    // No contracts for this landlord, clear all payments
+    const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+    for (const type of types) {
+      const stateKey = EXPENSE_STATE_KEYS[type];
+      state[stateKey.payments] = [];
+    }
+    return;
+  }
+  
+  const contractIds = landlordContracts.map(c => c.id);
+  
+  const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
+  
+  // Execute all queries in parallel for better performance
+  const queryPromises = types.map(async (type) => {
+    const tableInfo = EXPENSE_TABLES[type];
+    const stateKey = EXPENSE_STATE_KEYS[type];
+    
+    const { data, error } = await supabase
+      .from(tableInfo.payments)
+      .select("id, tenant_id, contract_id, bill_id, amount, payment_date, method")
+      .in("contract_id", contractIds)
+      .order("payment_date", { ascending: false });
+    
+    if (error) {
+      console.error(`Error loading ${type} payments:`, error);
+      return { stateKey, data: [] };
+    } else {
+      // Map bill_id to debt_id for compatibility with render functions
+      return { stateKey, data: (data || []).map(p => ({ ...p, debt_id: p.bill_id })) };
+    }
+  });
+  
+  // Wait for all queries to complete
+  const results = await Promise.all(queryPromises);
+  
+  // Update state with results
+  results.forEach(({ stateKey, data }) => {
+    state[stateKey.payments] = data;
+  });
+}
+
+// Legacy functions - now handled by loadDebts() and loadPayments()
+async function loadUtilityBills() {
+  // Now handled by loadDebts() which loads from all split tables
+}
+
+async function loadUtilityPayments() {
+  // Now handled by loadPayments() which loads from all split tables
+}
+
+async function loadRequests() {
+  if (!state.currentUser || !elements.requestsTableBody) return;
+
+  // Get all apartment IDs for this landlord
+  const { data: landlordApartments, error: apartmentError } = await supabase
+    .from("apartments")
+    .select("id")
+    .eq("landlord_id", state.currentUser.id);
+
+  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
+    if (elements.requestsTableBody) {
+      elements.requestsTableBody.innerHTML = "<tr><td colspan='7'>No requests</td></tr>";
+    }
+    return;
+  }
+
+  const apartmentIds = landlordApartments.map(a => a.id);
+
+  // Load requests for landlord's apartments
+  const { data: requests, error } = await supabase
+    .from("apartment_requests")
+    .select("id, apartment_id, tenant_id, request_type, message, status, created_at")
+    .in("apartment_id", apartmentIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("loadRequests", error);
+    if (elements.requestsTableBody) {
+      elements.requestsTableBody.innerHTML = "<tr><td colspan='7'>Error loading requests</td></tr>";
+    }
+    return;
+  }
+
+  if (!requests || requests.length === 0) {
+    if (elements.requestsTableBody) {
+      elements.requestsTableBody.innerHTML = "<tr><td colspan='7'>No requests</td></tr>";
+    }
+    return;
+  }
+
+  // Get apartment and tenant details
+  const apartmentIdsInRequests = [...new Set(requests.map(r => r.apartment_id))];
+  const tenantIdsInRequests = [...new Set(requests.map(r => r.tenant_id))];
+
+  const { data: apartments } = await supabase
+    .from("apartments")
+    .select("id, name")
+    .in("id", apartmentIdsInRequests);
+
+  const { data: tenants } = await supabase
+    .from("tenants")
+    .select("id, full_name, email, phone")
+    .in("id", tenantIdsInRequests);
+
+  const apartmentsMap = {};
+  apartments?.forEach(apt => { apartmentsMap[apt.id] = apt; });
+  const tenantsMap = {};
+  tenants?.forEach(tenant => { tenantsMap[tenant.id] = tenant; });
+
+  // Render requests table
+  if (elements.requestsTableBody) {
+    elements.requestsTableBody.innerHTML = requests
+      .map(request => {
+        const apartment = apartmentsMap[request.apartment_id];
+        const tenant = tenantsMap[request.tenant_id];
+        const requestTypeText = request.request_type === "contract" 
+          ? (translate("requestTypeContract") || "Contract Request")
+          : (translate("requestTypeViewing") || "Viewing Request");
+        const statusText = request.status === "pending"
+          ? (translate("requestStatusPending") || "Pending")
+          : request.status === "accepted"
+          ? (translate("requestStatusAccepted") || "Accepted")
+          : (translate("requestStatusRejected") || "Rejected");
+        const statusClass = request.status === "pending" ? "pending" : request.status === "accepted" ? "accepted" : "rejected";
+
+        return `
+          <tr>
+            <td data-label="Apartment">${sanitize(apartment?.name || translate("unknown"))}</td>
+            <td data-label="Tenant">${sanitize(tenant?.full_name || translate("unknown"))}</td>
+            <td data-label="Type">${requestTypeText}</td>
+            <td data-label="Message">${sanitize(request.message || "-")}</td>
+            <td data-label="Date">${formatDate(request.created_at)}</td>
+            <td data-label="Status"><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td data-label="Actions">
+              ${request.status === "pending" ? `
+                <button type="button" class="button-primary button-small" data-action="accept-request" data-id="${request.id}" data-apartment-id="${request.apartment_id}" data-tenant-id="${request.tenant_id}" data-request-type="${request.request_type}">
+                  ${translate("accept") || "Accept"}
+                </button>
+                <button type="button" class="button-secondary button-small" data-action="reject-request" data-id="${request.id}">
+                  ${translate("reject") || "Reject"}
+                </button>
+              ` : ""}
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    // Add event listeners for accept/reject buttons
+    elements.requestsTableBody.querySelectorAll("[data-action='accept-request']").forEach(btn => {
+      btn.addEventListener("click", () => handleAcceptRequest(btn.dataset.id, btn.dataset.apartmentId, btn.dataset.tenantId, btn.dataset.requestType));
+    });
+    elements.requestsTableBody.querySelectorAll("[data-action='reject-request']").forEach(btn => {
+      btn.addEventListener("click", () => handleRejectRequest(btn.dataset.id));
+    });
+  }
+}
+
+async function handleAcceptRequest(requestId, apartmentId, tenantId, requestType) {
+  if (!confirm(translate("confirmAcceptRequest") || "Are you sure you want to accept this request?")) {
+    return;
+  }
+
+  // Update request status
+  const { error: updateError } = await supabase
+    .from("apartment_requests")
+    .update({ status: "accepted" })
+    .eq("id", requestId);
+
+  if (updateError) {
+    notify("error", translate("errorLoad"));
+    console.error("handleAcceptRequest", updateError);
+    return;
+  }
+
+  // If it's a contract request, optionally create a contract
+  if (requestType === "contract") {
+    notify("info", translate("requestAcceptedCreateContract") || "Request accepted. You can now create a contract for this tenant.");
+  } else {
+    notify("success", translate("requestAccepted") || "Request accepted successfully!");
+  }
+
+  // Send notification (placeholder - you'll need to implement SMS/email)
+  await sendRequestNotification(requestId, "accepted");
+
+  await loadRequests();
+}
+
+async function handleRejectRequest(requestId) {
+  if (!confirm(translate("confirmRejectRequest") || "Are you sure you want to reject this request?")) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("apartment_requests")
+    .update({ status: "rejected" })
+    .eq("id", requestId);
+
+  if (error) {
+    notify("error", translate("errorLoad"));
+    console.error("handleRejectRequest", error);
+    return;
+  }
+
+  // Send notification (placeholder - you'll need to implement SMS/email)
+  await sendRequestNotification(requestId, "rejected");
+
+  notify("success", translate("requestRejected") || "Request rejected.");
+  await loadRequests();
+}
+
+async function sendRequestNotification(requestId, status) {
+  // Get request details
+  const { data: request } = await supabase
+    .from("apartment_requests")
+    .select("tenant_id, apartment_id, request_type")
+    .eq("id", requestId)
+    .single();
+
+  if (!request) return;
+
+  // Get tenant details
+  const { data: tenant } = await supabase
+    .from("tenants")
+    .select("email, phone")
+    .eq("id", request.tenant_id)
+    .single();
+
+  if (!tenant) return;
+
+  // Get apartment details
+  const { data: apartment } = await supabase
+    .from("apartments")
+    .select("name")
+    .eq("id", request.apartment_id)
+    .single();
+
+  // TODO: Implement actual SMS/Email sending
+  // For now, just log it
+  console.log(`Notification: Request ${status} for apartment ${apartment?.name || request.apartment_id}`);
+  console.log(`Tenant: ${tenant.email}, Phone: ${tenant.phone || "N/A"}`);
+  
+  // You can integrate with services like:
+  // - Twilio for SMS
+  // - SendGrid, Mailgun, or Supabase Edge Functions for Email
+  // - Or use Supabase's built-in email functionality
+}
+
 function renderApartmentsTable() {
+  // Pre-compute a Set of apartment IDs with active contracts for O(1) lookup
+  // Convert to strings to match equalsId behavior
+  const apartmentsWithActiveContracts = new Set(
+    state.contracts
+      .filter(c => c.is_active && c.apartment_id != null)
+      .map(c => String(c.apartment_id))
+  );
+  
   elements.apartmentsTableBody.innerHTML = state.apartments
     .map(
-      (apartment) => `
-      <tr>
-        <td>${sanitize(apartment.name)}</td>
-        <td>${sanitize(apartment.address || "")}</td>
-        <td>${sanitize(apartment.electricity_code || "")}</td>
-        <td>${sanitize(apartment.heating_code || "")}</td>
-        <td>${sanitize(apartment.water_code || "")}</td>
-        <td>${sanitize(apartment.waste_code || "")}</td>
-        <td>${apartment.id}</td>
+      (apartment) => {
+        // Check if apartment has an active contract using Set lookup (O(1))
+        // Convert to string to match Set keys
+        const hasActiveContract = apartmentsWithActiveContracts.has(String(apartment.id));
+        const statusClass = hasActiveContract ? "" : "view-active";
+        const statusText = hasActiveContract 
+          ? translate("apartmentOccupied") || "Occupied" 
+          : translate("apartmentAvailable") || "Available";
+        
+        // Parse photos (comma-separated URLs or JSON array)
+        let photos = [];
+        if (apartment.photos) {
+          try {
+            photos = typeof apartment.photos === 'string' 
+              ? (apartment.photos.startsWith('[') ? JSON.parse(apartment.photos) : apartment.photos.split(',').map(p => p.trim()))
+              : apartment.photos;
+          } catch (e) {
+            photos = apartment.photos.split(',').map(p => p.trim());
+          }
+        }
+        const firstPhoto = photos.length > 0 ? photos[0] : null;
+        
+        return `
+      <tr class="${statusClass}">
+        <td data-label="Photo">
+          ${firstPhoto 
+            ? `<img src="${sanitize(firstPhoto)}" alt="${sanitize(apartment.name)}" class="apartment-photo-thumbnail" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;" onerror="this.style.display='none'" data-apartment-id="${apartment.id}">`
+            : '<span style="color: #999;">No photo</span>'
+          }
+        </td>
+        <td data-label="Name">${sanitize(apartment.name)}</td>
+        <td data-label="Address">${sanitize(apartment.address || "")}</td>
+        <td data-label="Electricity Code">${sanitize(apartment.electricity_code || "")}</td>
+        <td data-label="Heating Code">${sanitize(apartment.heating_code || "")}</td>
+        <td data-label="Water Code">${sanitize(apartment.water_code || "")}</td>
+        <td data-label="Waste Code">${sanitize(apartment.waste_code || "")}</td>
+        <td data-label="Status"><span class="status-badge ${hasActiveContract ? 'occupied' : 'available'}">${statusText}</span></td>
+        <td data-label="Actions">
+          <div class="actions-group">
+            <button type="button" class="button-secondary button-small" data-action="edit-apartment" data-id="${apartment.id}">
+              ${translate("edit") || "Edit"}
+            </button>
+            <button type="button" class="button-danger button-small" data-action="delete-apartment" data-id="${apartment.id}">
+              ${translate("delete") || "Delete"}
+            </button>
+          </div>
+        </td>
+        <td data-label="ID">${apartment.id}</td>
       </tr>
-    `
+    `;
+      }
     )
     .join("");
+  
+  // Add event listeners for edit and delete buttons
+  elements.apartmentsTableBody.querySelectorAll("[data-action='edit-apartment']").forEach(btn => {
+    btn.addEventListener("click", () => editApartment(btn.dataset.id));
+  });
+  elements.apartmentsTableBody.querySelectorAll("[data-action='delete-apartment']").forEach(btn => {
+    btn.addEventListener("click", () => handleDeleteApartment(btn.dataset.id));
+  });
+  
+  // Add event listeners for photo thumbnails
+  elements.apartmentsTableBody.querySelectorAll(".apartment-photo-thumbnail").forEach(img => {
+    img.addEventListener("click", () => {
+      const apartmentId = img.getAttribute("data-apartment-id");
+      if (!apartmentId) return;
+      
+      // Get photos from apartment data in state
+      const apartment = state.apartments.find(a => equalsId(a.id, apartmentId));
+      if (!apartment) return;
+      
+      // Parse photos from apartment
+      let photos = [];
+      if (apartment.photos) {
+        try {
+          photos = typeof apartment.photos === 'string' 
+            ? (apartment.photos.startsWith('[') ? JSON.parse(apartment.photos) : apartment.photos.split(',').map(p => p.trim()))
+            : apartment.photos;
+        } catch (e) {
+          console.error("Error parsing apartment photos:", e);
+          // Try comma-separated fallback
+          photos = apartment.photos.split(',').map(p => p.trim()).filter(p => p.length > 0);
+        }
+      }
+      
+      if (photos.length > 0 && window.openPhotoViewer) {
+        window.openPhotoViewer(photos, 0);
+      }
+    });
+  });
 }
 
 function renderTenantsTable() {
@@ -1652,9 +2170,10 @@ function renderTenantsTable() {
     .map(
       (tenant) => `
       <tr>
-        <td>${sanitize(tenant.full_name)}</td>
-        <td>${sanitize(tenant.phone || "")}</td>
-        <td>${tenant.id}</td>
+        <td data-label="Full Name">${sanitize(tenant.full_name)}</td>
+        <td data-label="Email">${sanitize(tenant.email || "")}</td>
+        <td data-label="Phone">${sanitize(tenant.phone || "")}</td>
+        <td data-label="ID">${tenant.id}</td>
       </tr>
     `
     )
@@ -1662,7 +2181,10 @@ function renderTenantsTable() {
 }
 
 function renderContractsTable() {
-  const rows = state.contracts.map((contract) => {
+  const activeContracts = state.contracts.filter((c) => !!c.is_active);
+  const inactiveContracts = state.contracts.filter((c) => !c.is_active);
+
+  const buildRow = (contract) => {
     const apartment = state.apartments.find((a) =>
       equalsId(a.id, contract.apartment_id)
     );
@@ -1674,16 +2196,16 @@ function renderContractsTable() {
     const actionType = isActive ? "deactivate" : "activate";
     return `
       <tr>
-        <td>${sanitize(apartment?.name || translate("unknown"))}</td>
-        <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
-        <td>${formatDate(contract.start_date)}</td>
-        <td>${formatDate(contract.end_date)}</td>
-        <td>${formatCurrency(contract.monthly_rent)}</td>
-        <td>${formatCurrency(contract.monthly_garbage)}</td>
-        <td>${formatCurrency(contract.monthly_maintenance)}</td>
-        <td>${formatCurrency(contract.deposit_amount)}</td>
-        <td>${contract.is_active ? translate("yes") : translate("no")}</td>
-        <td>
+        <td data-label="Apartment">${sanitize(apartment?.name || translate("unknown"))}</td>
+        <td data-label="Tenant">${sanitize(tenant?.full_name || translate("unknown"))}</td>
+        <td data-label="Start Date">${formatDate(contract.start_date)}</td>
+        <td data-label="End Date">${formatDate(contract.end_date)}</td>
+        <td data-label="Monthly Rent">${formatCurrency(contract.monthly_rent)}</td>
+        <td data-label="Monthly Garbage">${formatCurrency(contract.monthly_garbage)}</td>
+        <td data-label="Monthly Maintenance">${formatCurrency(contract.monthly_maintenance)}</td>
+        <td data-label="Deposit">${formatCurrency(contract.deposit_amount)}</td>
+        <td data-label="Active">${contract.is_active ? translate("yes") : translate("no")}</td>
+        <td data-label="Actions">
           <div class="actions-group">
             <button
               type="button"
@@ -1696,25 +2218,50 @@ function renderContractsTable() {
         </td>
       </tr>
     `;
-  });
+  };
 
-  elements.contractsTableBody.innerHTML = rows.join("");
+  const activeRows = activeContracts.map(buildRow);
+  const inactiveRows = inactiveContracts.map(buildRow);
 
-  elements.contractsTableBody
-    .querySelectorAll("button[data-action='deactivate-contract']")
-    .forEach((button) =>
-      button.addEventListener("click", () =>
-        handleContractStatusChange(button.dataset.id, false)
-      )
-    );
+  if (elements.contractsActiveTableBody) {
+    elements.contractsActiveTableBody.innerHTML = activeRows.join("");
 
-  elements.contractsTableBody
-    .querySelectorAll("button[data-action='activate-contract']")
-    .forEach((button) =>
-      button.addEventListener("click", () =>
-        handleContractStatusChange(button.dataset.id, true)
-      )
-    );
+    elements.contractsActiveTableBody
+      .querySelectorAll("button[data-action='deactivate-contract']")
+      .forEach((button) =>
+        button.addEventListener("click", () =>
+          handleContractStatusChange(button.dataset.id, false)
+        )
+      );
+
+    elements.contractsActiveTableBody
+      .querySelectorAll("button[data-action='activate-contract']")
+      .forEach((button) =>
+        button.addEventListener("click", () =>
+          handleContractStatusChange(button.dataset.id, true)
+        )
+      );
+  }
+
+  if (elements.contractsInactiveTableBody) {
+    elements.contractsInactiveTableBody.innerHTML = inactiveRows.join("");
+
+    elements.contractsInactiveTableBody
+      .querySelectorAll("button[data-action='deactivate-contract']")
+      .forEach((button) =>
+        button.addEventListener("click", () =>
+          handleContractStatusChange(button.dataset.id, false)
+        )
+      );
+
+    elements.contractsInactiveTableBody
+      .querySelectorAll("button[data-action='activate-contract']")
+      .forEach((button) =>
+        button.addEventListener("click", () =>
+          handleContractStatusChange(button.dataset.id, true)
+        )
+      );
+  }
 }
 
 async function handleContractStatusChange(contractId, shouldActivate) {
@@ -1762,12 +2309,12 @@ function getDebtPaymentSummary(debtId) {
     0
   );
   const debtAmount = normalizeCurrency(debt.amount);
-  const remaining = Math.max(0, debtAmount - totalPaid);
+  const remaining = normalizeCurrency(debtAmount - totalPaid);
 
   return {
     totalPaid,
     debtAmount,
-    remaining: remaining < 0.001 ? null : remaining, // null means fully paid
+    remaining: Math.abs(remaining) < 0.001 ? null : remaining, // null means exactly paid, negative means overpaid
   };
 }
 
@@ -1789,9 +2336,16 @@ function renderTotalPaymentSummary(summary) {
     if (summary.totalRemaining === null) {
       totalRemainingEl.textContent = "-";
       totalRemainingEl.classList.add("payment-summary-paid");
+      totalRemainingEl.classList.remove("payment-summary-credit");
+    } else if (summary.totalRemaining < 0) {
+      // Overpaid - show as credit
+      totalRemainingEl.textContent = `-${formatCurrency(Math.abs(summary.totalRemaining))}`;
+      totalRemainingEl.classList.add("payment-summary-credit");
+      totalRemainingEl.classList.remove("payment-summary-paid");
     } else {
       totalRemainingEl.textContent = formatCurrency(summary.totalRemaining);
       totalRemainingEl.classList.remove("payment-summary-paid");
+      totalRemainingEl.classList.remove("payment-summary-credit");
     }
   }
 
@@ -1805,12 +2359,18 @@ function renderDebtsTable() {
   const typeFilter = elements.debtsFilterType.value;
   const today = new Date().toISOString().slice(0, 10);
 
-  const filtered = state.debts.filter((debt) => {
+  // Apply global tenant filter first
+  const debtsToFilter = getFilteredDebts();
+  
+  const filtered = debtsToFilter.filter((debt) => {
     const isPaid = !!debt.is_paid;
     const isOverdue = !isPaid && debt.due_date && debt.due_date < today;
 
+    // Skip status filter for utility types (electricity, water, heating)
+    if (!isUtilityType(debt.type)) {
     if (statusFilter === "paid" && !isPaid) return false;
     if (statusFilter === "open_overdue" && isPaid) return false;
+    }
     if (typeFilter !== "all" && debt.type !== typeFilter) return false;
     return true;
   });
@@ -1823,11 +2383,19 @@ function renderDebtsTable() {
     return summary;
   }, { totalPaid: 0, totalDebt: 0 });
   
-  const totalRemaining = Math.max(0, totalPaymentSummary.totalDebt - totalPaymentSummary.totalPaid);
-  totalPaymentSummary.totalRemaining = totalRemaining < 0.001 ? null : totalRemaining;
+  const totalRemaining = normalizeCurrency(totalPaymentSummary.totalDebt - totalPaymentSummary.totalPaid);
+  totalPaymentSummary.totalRemaining = Math.abs(totalRemaining) < 0.001 ? null : totalRemaining;
 
   // Render total payment summary
   renderTotalPaymentSummary(totalPaymentSummary);
+
+  // Hide/show status header based on utility type filter
+  const activeType = getActiveExpenseType();
+  const isUtilityView = activeType && isUtilityType(activeType);
+  const statusHeader = document.querySelector('#debtsTableBody')?.closest('table')?.querySelector('th[data-i18n="status"]');
+  if (statusHeader) {
+    statusHeader.style.display = isUtilityView ? 'none' : '';
+  }
 
   elements.debtsTableBody.innerHTML = filtered
     .map((debt) => {
@@ -1841,6 +2409,7 @@ function renderDebtsTable() {
         const amountValue = normalizeCurrency(debt.amount).toFixed(2);
         const dueDateValue = debt.due_date || "";
         const notesValue = stripElectricityCutMarker(debt.notes || "").replace(/"/g, "&quot;");
+        const isUtilityEdit = isUtilityType(debt.type);
         
         // Build type options
         const typeOptions = [
@@ -1884,7 +2453,7 @@ function renderDebtsTable() {
                 required
               />
             </td>
-            <td><span class="tag ${status.class}">${status.label}</span></td>
+            ${isUtilityEdit ? "" : `<td><span class="tag ${status.class}">${status.label}</span></td>`}
             <td>${sanitize(formatReferenceForDisplay(debt.reference))}</td>
             <td>
               <input 
@@ -1910,13 +2479,15 @@ function renderDebtsTable() {
       }
 
       // Render normal row
+      const showMarkPaid = !isUtilityType(debt.type);
+      const isUtility = isUtilityType(debt.type);
       return `
         <tr>
           <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
           <td>${sanitize(typeLabel)}</td>
           <td>${formatCurrency(debt.amount)}</td>
           <td>${formatDate(debt.due_date)}</td>
-          <td><span class="tag ${status.class}">${status.label}</span></td>
+          ${isUtility ? "" : `<td><span class="tag ${status.class}">${status.label}</span></td>`}
           <td>${sanitize(formatReferenceForDisplay(debt.reference))}</td>
           <td>${sanitize(stripElectricityCutMarker(debt.notes || ""))}</td>
           <td>
@@ -1927,30 +2498,399 @@ function renderDebtsTable() {
               <button type="button" class="button-danger" data-action="delete-debt" data-id="${debt.id}">
                 ${translate("delete")}
               </button>
-              <button type="button" data-action="mark-paid" data-id="${debt.id}" ${
+              ${showMarkPaid ? `<button type="button" class="button-primary" data-action="mark-paid" data-id="${debt.id}" ${
         debt.is_paid ? "disabled" : ""
       }>
                 ${translate("markPaid")}
-              </button>
+              </button>` : ""}
             </div>
           </td>
         </tr>
       `;
     })
     .join("");
+  
+  // Render utility summary if viewing a utility type
+  renderUtilitySummary();
+}
+
+function isUtilityType(type) {
+  return UTILITY_TYPES.includes(type);
+}
+
+function renderUtilitySummary() {
+  const activeType = getActiveExpenseType();
+  const isUtility = activeType && isUtilityType(activeType);
+  
+  if (!elements.utilitySummarySection) return;
+  
+  // Show/hide utility summary based on type
+  if (!isUtility) {
+    elements.utilitySummarySection.style.display = "none";
+    return;
+  }
+  
+  elements.utilitySummarySection.style.display = "block";
+  
+  // Apply global tenant filter
+  const filteredDebts = getFilteredDebts();
+  const filteredPayments = getFilteredPayments();
+  
+  // Get utility bills from new table, fallback to debts table
+  const utilityBillsFromNewTable = state.utilityBills.filter((b) => {
+    if (b.type !== activeType) return false;
+    if (state.globalContractFilter && !equalsId(b.contract_id, state.globalContractFilter)) return false;
+    return true;
+  });
+  const utilityBillsFromDebts = filteredDebts.filter((d) => d.type === activeType);
+  const utilityExpenses = utilityBillsFromNewTable.length > 0 
+    ? utilityBillsFromNewTable.sort((a, b) => (a.bill_date || "").localeCompare(b.bill_date || ""))
+    : utilityBillsFromDebts.sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
+  
+  // Get utility payments - filter from state.payments which has type set
+  const utilityPayments = filteredPayments.filter((p) => {
+    // Check payment's own type first
+    if (p.type === activeType) return true;
+    // Fall back to checking linked debt
+    const debt = state.debts.find((d) => equalsId(d.id, p.debt_id));
+    return debt && debt.type === activeType;
+  }).sort((a, b) => (a.payment_date || "").localeCompare(b.payment_date || ""));
+  
+  // Calculate totals
+  const totalExpenses = utilityExpenses.reduce(
+    (sum, d) => sum + normalizeCurrency(d.amount),
+    0
+  );
+  const totalPayments = utilityPayments.reduce(
+    (sum, p) => sum + normalizeCurrency(p.amount),
+    0
+  );
+  const difference = normalizeCurrency(totalExpenses - totalPayments);
+  
+  // Update totals display
+  if (elements.utilityTotalExpenses) {
+    elements.utilityTotalExpenses.textContent = formatCurrency(totalExpenses);
+  }
+  if (elements.utilityTotalPayments) {
+    elements.utilityTotalPayments.textContent = formatCurrency(totalPayments);
+  }
+  if (elements.utilityDifference) {
+    if (Math.abs(difference) < 0.01) {
+      elements.utilityDifference.textContent = "€0.00";
+      elements.utilityDifference.className = "utility-summary-value zero";
+    } else if (difference > 0) {
+      // Owes money
+      elements.utilityDifference.textContent = formatCurrency(difference);
+      elements.utilityDifference.className = "utility-summary-value positive";
+    } else {
+      // Overpaid (credit)
+      elements.utilityDifference.textContent = `-${formatCurrency(Math.abs(difference))}`;
+      elements.utilityDifference.className = "utility-summary-value negative";
+    }
+  }
+  
+  // Render expenses table with columns: #, Tenant, Type, Amount, Due Date, Reference, Actions
+  if (elements.utilityExpensesTableBody) {
+    const typeLabel = translate(`debt${capitalize(activeType)}`) || activeType;
+    elements.utilityExpensesTableBody.innerHTML = utilityExpenses
+      .map((expense, index) => {
+        const tenant = state.tenants.find((t) => equalsId(t.id, expense.tenant_id));
+        const tenantName = tenant?.full_name || translate("unknown") || "Unknown";
+        const billDate = expense.bill_date || expense.due_date || "";
+        const reference = formatReferenceForDisplay(expense.reference) || "-";
+        const isFromUtilityTable = !!expense.bill_date;
+        const dataSource = isFromUtilityTable ? "utility_bills" : "debts";
+        const isEditing = state.editingUtilityBillId && equalsId(state.editingUtilityBillId, expense.id);
+        
+        if (isEditing) {
+          // Render editable row
+          const amountValue = normalizeCurrency(expense.amount).toFixed(2);
+          const dateValue = expense.bill_date || expense.due_date || "";
+          return `
+          <tr class="editing-row">
+            <td>${index + 1}</td>
+            <td>${sanitize(tenantName)}</td>
+            <td>${sanitize(typeLabel)}</td>
+            <td>
+              <input type="number" class="inline-edit-input" data-field="amount" value="${amountValue}" min="0" step="0.01" required />
+            </td>
+            <td>
+              <input type="date" class="inline-edit-input" data-field="bill_date" value="${dateValue}" required />
+            </td>
+            <td>${sanitize(reference)}</td>
+            <td>
+              <div class="actions-group">
+                <button type="button" class="button-primary" data-action="save-utility-bill" data-id="${expense.id}" data-source="${dataSource}">
+                  ${translate("save") || "Save"}
+                </button>
+                <button type="button" class="button-muted" data-action="cancel-edit-utility-bill">
+                  ${translate("cancelEdit") || "Cancel"}
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        }
+        
+        return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${sanitize(tenantName)}</td>
+          <td>${sanitize(typeLabel)}</td>
+          <td>${formatCurrency(expense.amount)}</td>
+          <td>${formatDate(billDate)}</td>
+          <td>${sanitize(reference)}</td>
+          <td>
+            <div class="actions-group">
+              <button type="button" class="button-secondary" data-action="edit-utility-bill" data-id="${expense.id}" data-source="${dataSource}">
+                ${translate("edit")}
+              </button>
+              <button type="button" class="button-danger" data-action="delete-utility-bill" data-id="${expense.id}" data-source="${dataSource}">
+                ${translate("delete")}
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+      })
+      .join("") || `<tr><td colspan="7" style="text-align:center;color:#6b7280;">${translate("noData") || "No data"}</td></tr>`;
+  }
+  
+  // Render payments table with columns: #, Tenant, Type, Amount, Date, Actions (no reference)
+  if (elements.utilityPaymentsTableBody) {
+    const typeLabel = translate(`debt${capitalize(activeType)}`) || activeType;
+    elements.utilityPaymentsTableBody.innerHTML = utilityPayments
+      .map((payment, index) => {
+        const tenant = state.tenants.find((t) => equalsId(t.id, payment.tenant_id));
+        const tenantName = tenant?.full_name || translate("unknown") || "Unknown";
+        const isFromUtilityTable = !!payment.type;
+        const dataSource = isFromUtilityTable ? "utility_payments" : "payments";
+        return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${sanitize(tenantName)}</td>
+          <td>${sanitize(typeLabel)}</td>
+          <td>${formatCurrency(payment.amount)}</td>
+          <td>${formatDate(payment.payment_date)}</td>
+          <td>
+            <div class="actions-group">
+              <button type="button" class="button-secondary" data-action="edit-utility-payment" data-id="${payment.id}" data-source="${dataSource}">
+                ${translate("edit")}
+              </button>
+              <button type="button" class="button-danger" data-action="delete-utility-payment" data-id="${payment.id}" data-source="${dataSource}">
+                ${translate("delete")}
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+      })
+      .join("") || `<tr><td colspan="6" style="text-align:center;color:#6b7280;">${translate("noData") || "No data"}</td></tr>`;
+  }
+}
+
+// Handle clicks on utility bills table (expenses)
+function handleUtilityBillsTableClick(event) {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  
+  const action = button.dataset.action;
+  const id = button.dataset.id;
+  const source = button.dataset.source;
+  
+  if (action === "delete-utility-bill") {
+    deleteUtilityBill(id, source);
+  } else if (action === "edit-utility-bill") {
+    editUtilityBill(id, source);
+  } else if (action === "save-utility-bill") {
+    saveUtilityBill(id, source);
+  } else if (action === "cancel-edit-utility-bill") {
+    cancelEditUtilityBill();
+  }
+}
+
+// Handle clicks on utility payments table
+function handleUtilityPaymentsTableClick(event) {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  
+  const action = button.dataset.action;
+  const id = button.dataset.id;
+  const source = button.dataset.source;
+  
+  if (action === "delete-utility-payment") {
+    deleteUtilityPayment(id, source);
+  } else if (action === "edit-utility-payment") {
+    editUtilityPayment(id, source);
+  }
+}
+
+async function deleteUtilityBill(id, source) {
+  if (!confirm(translate("confirmDelete") || "Are you sure you want to delete this item?")) {
+    return;
+  }
+  
+  let tableName;
+  if (source === "utility_bills") {
+    // Find the expense in state.debts to get its type
+    const expense = state.debts.find(d => equalsId(d.id, id));
+    if (!expense || !expense.type) {
+      notify("error", translate("errorLoad"));
+      console.error("deleteUtilityBill: Could not find expense or type", id);
+      return;
+    }
+    const tableInfo = EXPENSE_TABLES[expense.type];
+    if (!tableInfo) {
+      notify("error", translate("errorLoad"));
+      console.error("deleteUtilityBill: Unknown expense type", expense.type);
+      return;
+    }
+    tableName = tableInfo.bills;
+  } else {
+    tableName = "debts";
+  }
+  
+  const { error } = await supabase.from(tableName).delete().eq("id", id);
+  
+  if (error) {
+    console.error("deleteUtilityBill", error);
+    notify("error", translate("errorLoad"));
+    return;
+  }
+  
+  notify("success", translate("successDeleteDebt"), "delete");
+  if (source === "utility_bills") {
+    await loadDebts();
+  } else {
+    await loadDebts();
+  }
+}
+
+async function deleteUtilityPayment(id, source) {
+  if (!confirm(translate("confirmDelete") || "Are you sure you want to delete this item?")) {
+    return;
+  }
+  
+  let tableName;
+  if (source === "utility_payments") {
+    // Find the payment in state.payments to get its type
+    const payment = state.payments.find(p => equalsId(p.id, id));
+    if (!payment || !payment.type) {
+      notify("error", translate("errorLoad"));
+      console.error("deleteUtilityPayment: Could not find payment or type", id);
+      return;
+    }
+    const tableInfo = EXPENSE_TABLES[payment.type];
+    if (!tableInfo) {
+      notify("error", translate("errorLoad"));
+      console.error("deleteUtilityPayment: Unknown payment type", payment.type);
+      return;
+    }
+    tableName = tableInfo.payments;
+  } else {
+    tableName = "payments";
+  }
+  
+  const { error } = await supabase.from(tableName).delete().eq("id", id);
+  
+  if (error) {
+    console.error("deleteUtilityPayment", error);
+    notify("error", translate("errorLoad"));
+    return;
+  }
+  
+  notify("success", translate("successDeletePayment"), "delete");
+  if (source === "utility_payments") {
+    await loadPayments();
+  } else {
+    await loadPayments();
+  }
+}
+
+function editUtilityBill(id, source) {
+  if (source === "debts") {
+    state.editingDebtId = id;
+    renderDebtsTable();
+  } else {
+    state.editingUtilityBillId = id;
+    renderUtilitySummary();
+  }
+}
+
+function cancelEditUtilityBill() {
+  state.editingUtilityBillId = null;
+  renderUtilitySummary();
+}
+
+async function saveUtilityBill(id, billType) {
+  // Find the editing row
+  const row = elements.utilityExpensesTableBody?.querySelector('tr.editing-row');
+  if (!row) return;
+  
+  const amountInput = row.querySelector('input[data-field="amount"]');
+  const dateInput = row.querySelector('input[data-field="bill_date"]');
+  
+  if (!amountInput || !dateInput) return;
+  
+  const amount = normalizeCurrency(amountInput.value);
+  const billDate = dateInput.value;
+  
+  if (!billDate || amount < 0) {
+    notify("error", translate("errorFieldRequired"));
+    return;
+  }
+  
+  // Get the correct table for this bill type
+  const tableInfo = EXPENSE_TABLES[billType];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    return;
+  }
+  
+  const { error } = await supabase
+    .from(tableInfo.bills)
+    .update({ amount, bill_date: billDate })
+    .eq("id", id);
+  
+  if (error) {
+    console.error("saveUtilityBill", error);
+    notify("error", translate("errorLoad"));
+    return;
+  }
+  
+  state.editingUtilityBillId = null;
+  notify("success", translate("successUpdateDebt"), "edit");
+  await loadDebts();
+}
+
+function editUtilityPayment(id, source) {
+  // For now, redirect to the main payment editing
+  if (source === "payments") {
+    state.editingPaymentId = id;
+    renderPaymentsTable();
+  } else {
+    // TODO: Implement utility_payments inline editing
+    notify("info", "Edit utility payment - coming soon");
+  }
 }
 
 function renderPaymentsTable() {
   // Get the active expense type filter
   const activeExpenseType = getActiveExpenseType();
   
+  // Apply global tenant filter first
+  const paymentsToFilter = getFilteredPayments();
+  
   // Filter payments based on expense type if a filter is active
   const filteredPayments = activeExpenseType
-    ? state.payments.filter((payment) => {
+    ? paymentsToFilter.filter((payment) => {
+        // Check payment's own type first (set when loading from split tables)
+        if (payment.type === activeExpenseType) return true;
+        // Fall back to checking the linked debt
         const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
         return debt && debt.type === activeExpenseType;
       })
-    : state.payments;
+    : paymentsToFilter;
   
   const rows = filteredPayments
     .map((payment) => {
@@ -1958,7 +2898,8 @@ function renderPaymentsTable() {
         equalsId(t.id, payment.tenant_id)
       );
       const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
-      const typeLabel = debt ? getDebtTypeLabel(debt) : "-";
+      // Use payment's own type if no linked debt
+      const typeLabel = debt ? getDebtTypeLabel(debt) : (payment.type ? translate(`debt${capitalize(payment.type)}`) || payment.type : "-");
       const isEditing = state.editingPaymentId && equalsId(state.editingPaymentId, payment.id);
       
       if (isEditing) {
@@ -2071,8 +3012,10 @@ function renderPaymentsTable() {
 
 function renderOpenExpensesTable() {
   if (!elements.openExpensesTableBody) return;
-  const openRows = (state.debts || [])
-    .filter((debt) => !debt.is_paid)
+  const filteredDebts = getFilteredDebts();
+  // Exclude utility types from open expenses (they don't have is_paid status)
+  const openRows = (filteredDebts || [])
+    .filter((debt) => !debt.is_paid && !isUtilityType(debt.type))
     .map((debt) => {
       const tenant = state.tenants.find((t) => equalsId(t.id, debt.tenant_id));
       const status = getDebtStatus(debt);
@@ -2320,36 +3263,75 @@ function populateDebtSelects() {
     : "all";
   const unpaidDebts = state.debts.filter((debt) => !debt.is_paid);
 
-  const utilityOptions = UTILITY_PAYMENT_TYPES.map((type) => {
+  // Add direct payment option for utility types (allows payment without expense)
+  let directPaymentOptions = "";
+  if (typeFilterValue && isUtilityType(typeFilterValue)) {
+    const typeLabel = translate(`debt${capitalize(typeFilterValue)}`) || sanitize(typeFilterValue);
+    directPaymentOptions = `
+      <option value="direct:${typeFilterValue}" data-type="${typeFilterValue}" data-direct="true">
+        ${typeLabel} — ${translate("directPayment") || "Direct Payment"}
+      </option>
+    `;
+  }
+
+  // For utilities, group by tenant and show difference (expenses - payments)
+  const utilityOptions = UTILITY_PAYMENT_TYPES.flatMap((type) => {
     if (
       typeFilterValue &&
       typeFilterValue !== "all" &&
       typeFilterValue !== type
     ) {
-      return "";
+      return [];
     }
-    const debtsOfType = unpaidDebts.filter((debt) => debt.type === type);
-    if (!debtsOfType.length) return "";
-    const total = debtsOfType.reduce(
-      (sum, debt) => sum + normalizeCurrency(debt.amount),
-      0
-    );
-    if (total <= 0) return "";
-    const count = debtsOfType.length;
-    const typeLabel =
-      translate(`debt${capitalize(type)}`) || sanitize(type);
-    const billWord =
-      count === 1 ? translate("billSingular") : translate("billPlural");
+    // Get all debts of this type (not just unpaid)
+    const allDebtsOfType = state.debts.filter((debt) => debt.type === type);
+    if (!allDebtsOfType.length) return [];
+    
+    // Group by tenant
+    const byTenant = {};
+    for (const debt of allDebtsOfType) {
+      const tenantId = debt.tenant_id;
+      if (!byTenant[tenantId]) {
+        byTenant[tenantId] = { debts: [], totalExpenses: 0, totalPayments: 0 };
+      }
+      byTenant[tenantId].debts.push(debt);
+      byTenant[tenantId].totalExpenses += normalizeCurrency(debt.amount);
+    }
+    
+    // Add payments for each tenant
+    for (const payment of state.payments) {
+      if (payment.type !== type) continue;
+      const tenantId = payment.tenant_id;
+      if (byTenant[tenantId]) {
+        byTenant[tenantId].totalPayments += normalizeCurrency(payment.amount);
+      }
+    }
+    
+    const typeLabel = translate(`debt${capitalize(type)}`) || sanitize(type);
+    
+    return Object.entries(byTenant)
+      .filter(([_, data]) => {
+        // Only show if there's a positive difference (owes money)
+        const difference = data.totalExpenses - data.totalPayments;
+        return difference > 0.01;
+      })
+      .map(([tenantId, data]) => {
+        const tenant = state.tenants.find((t) => equalsId(t.id, tenantId));
+        const tenantName = tenant?.full_name || translate("unknown");
+        const debtIds = data.debts.map(d => d.id).join(",");
+        const difference = data.totalExpenses - data.totalPayments;
     return `
-      <option value="group:${type}" data-type="${type}" data-total="${total.toFixed(
-      2
-    )}" data-count="${count}">
-        ${typeLabel} — ${count} ${billWord} — ${formatCurrency(total)}
+          <option value="utility:${type}:${tenantId}" data-type="${type}" data-total="${difference.toFixed(2)}" data-tenant="${tenantId}" data-debt-ids="${debtIds}">
+            ${sanitize(tenantName)} - ${typeLabel} - ${translate("difference") || "Difference"}: ${formatCurrency(difference)}
       </option>
     `;
+      });
   }).join("");
 
+  // Filter out utility types from individual debt list (they are shown grouped by tenant)
   const filteredDebts = unpaidDebts.filter((debt) => {
+    // Exclude utility types - they are shown grouped
+    if (isUtilityType(debt.type)) return false;
     if (!typeFilterValue || typeFilterValue === "all") return true;
     return debt.type === typeFilterValue;
   });
@@ -2369,7 +3351,7 @@ function populateDebtSelects() {
     .join("");
 
   const placeholder = `<option value="">${translate("selectDebt")}</option>`;
-  elements.paymentDebt.innerHTML = placeholder + utilityOptions + debtOptions;
+  elements.paymentDebt.innerHTML = placeholder + directPaymentOptions + utilityOptions + debtOptions;
 
   let appliedPreviousSelection = false;
   if (currentValue) {
@@ -2426,6 +3408,34 @@ function updatePaymentDebtSummary(shouldAutofillAmount = false) {
   }
 
   const optionValue = selectedOption.value;
+  
+  // Handle direct payment option (no expense required)
+  if (isDirectPaymentValue(optionValue)) {
+    const utilityType = selectedOption.dataset.type || getDirectPaymentType(optionValue);
+    const typeLabel = translate(`debt${capitalize(utilityType)}`) || sanitize(utilityType);
+    elements.paymentDebtSummary.textContent = `${typeLabel} — ${translate("directPayment") || "Direct Payment"}`;
+    // Don't autofill amount for direct payments - user enters any amount
+    return;
+  }
+  
+  // Handle utility grouped payment (by tenant)
+  if (isUtilityGroupedValue(optionValue)) {
+    const utilityType = selectedOption.dataset.type || getUtilityGroupedType(optionValue);
+    const tenantId = selectedOption.dataset.tenant || getUtilityGroupedTenantId(optionValue);
+    const difference = normalizeCurrency(selectedOption.dataset.total || "0");
+    
+    const tenant = state.tenants.find((t) => equalsId(t.id, tenantId));
+    const tenantName = tenant?.full_name || translate("unknown");
+    const typeLabel = translate(`debt${capitalize(utilityType)}`) || sanitize(utilityType);
+    
+    if (shouldAutofillAmount && elements.paymentAmount) {
+      elements.paymentAmount.value = difference.toFixed(2);
+    }
+    
+    elements.paymentDebtSummary.textContent = `${sanitize(tenantName)} - ${typeLabel} - ${translate("difference") || "Difference"}: ${formatCurrency(difference)}`;
+    return;
+  }
+  
   if (isGroupedDebtValue(optionValue)) {
     const groupType =
       selectedOption.dataset.type || getGroupedDebtType(optionValue);
@@ -2448,8 +3458,20 @@ function updatePaymentDebtSummary(shouldAutofillAmount = false) {
             0
           );
 
+    // Calculate total remaining for grouped debts
+    let totalRemaining = 0;
+    let totalPaid = 0;
+    for (const debt of debtsOfType) {
+      const summary = getDebtPaymentSummary(debt.id);
+      totalPaid += summary.totalPaid;
+      if (summary.remaining !== null && summary.remaining > 0.001) {
+        totalRemaining += summary.remaining;
+      }
+    }
+
     if (shouldAutofillAmount && elements.paymentAmount) {
-      elements.paymentAmount.value = total.toFixed(2);
+      // Use remaining amount if available, otherwise use full total
+      elements.paymentAmount.value = totalRemaining > 0.001 ? totalRemaining.toFixed(2) : total.toFixed(2);
     }
 
     const typeLabel =
@@ -2458,8 +3480,19 @@ function updatePaymentDebtSummary(shouldAutofillAmount = false) {
       count === 1 ? translate("billSingular") : translate("billPlural");
     const parts = [
       `${typeLabel} — ${count} ${billWord}`,
-      `${translate("totalLabel")}: ${formatCurrency(total)}`,
+      `${translate("paymentSummaryDebt")}: ${formatCurrency(total)}`,
     ];
+    
+    if (totalPaid > 0) {
+      parts.push(`${translate("paymentSummaryPaid")}: ${formatCurrency(totalPaid)}`);
+    }
+    
+    if (totalRemaining > 0.001) {
+      parts.push(`${translate("paymentSummaryRemaining")}: ${formatCurrency(totalRemaining)}`);
+    } else {
+      parts.push(`${translate("paymentSummaryRemaining")}: -`);
+    }
+    
     if (elements.paymentAmount && elements.paymentAmount.value) {
       const enteredAmount = normalizeCurrency(elements.paymentAmount.value);
       if (enteredAmount > 0) {
@@ -2481,14 +3514,38 @@ function updatePaymentDebtSummary(shouldAutofillAmount = false) {
     return;
   }
   const amount = normalizeCurrency(debt.amount);
+  
+  // Calculate remaining amount
+  const summary = getDebtPaymentSummary(debt.id);
+  const remaining = summary.remaining;
+  
   if (shouldAutofillAmount && elements.paymentAmount) {
-    elements.paymentAmount.value = amount.toFixed(2);
+    // Use remaining amount if available, otherwise use full debt amount
+    elements.paymentAmount.value = remaining !== null ? remaining.toFixed(2) : amount.toFixed(2);
   }
+  
   const typeLabel = getDebtTypeLabel(debt);
-  const parts = [`${typeLabel} — ${formatCurrency(amount)}`];
+  const parts = [
+    `${typeLabel} — ${translate("paymentSummaryDebt")}: ${formatCurrency(amount)}`
+  ];
+  
+  if (summary.totalPaid > 0) {
+    parts.push(`${translate("paymentSummaryPaid")}: ${formatCurrency(summary.totalPaid)}`);
+  }
+  
+  if (remaining !== null && remaining > 0.001) {
+    parts.push(`${translate("paymentSummaryRemaining")}: ${formatCurrency(remaining)}`);
+  } else if (remaining !== null && remaining < -0.001) {
+    // Overpaid - show negative balance (credit)
+    parts.push(`${translate("paymentSummaryRemaining")}: -${formatCurrency(Math.abs(remaining))}`);
+  } else {
+    parts.push(`${translate("paymentSummaryRemaining")}: -`);
+  }
+  
   if (debt.due_date) {
     parts.push(`${translate("dueDate")}: ${formatDate(debt.due_date)}`);
   }
+  
   elements.paymentDebtSummary.textContent = parts.join(" | ");
 }
 
@@ -2500,6 +3557,32 @@ function getGroupedDebtType(value) {
   if (!isGroupedDebtValue(value)) return null;
   const [, type] = value.split(":");
   return type || null;
+}
+
+function isDirectPaymentValue(value) {
+  return typeof value === "string" && value.startsWith("direct:");
+}
+
+function getDirectPaymentType(value) {
+  if (!isDirectPaymentValue(value)) return null;
+  const [, type] = value.split(":");
+  return type || null;
+}
+
+function isUtilityGroupedValue(value) {
+  return typeof value === "string" && value.startsWith("utility:");
+}
+
+function getUtilityGroupedType(value) {
+  if (!isUtilityGroupedValue(value)) return null;
+  const parts = value.split(":");
+  return parts[1] || null;
+}
+
+function getUtilityGroupedTenantId(value) {
+  if (!isUtilityGroupedValue(value)) return null;
+  const parts = value.split(":");
+  return parts[2] || null;
 }
 
 function handleDebtsTableClick(event) {
@@ -2565,8 +3648,9 @@ function resetDebtForm() {
   elements.debtForm.reset();
   state.editingDebtId = null;
   
-  // Reset custom date picker
+  // Reset custom date picker (leave empty)
   setDatePickerValue('debtDueDate', '');
+  setDatePickerValue('paymentDate', '');
   
   if (elements.debtFormSubmit) {
     elements.debtFormSubmit.dataset.i18n = "createDebtButton";
@@ -2587,6 +3671,9 @@ function resetDebtForm() {
     elements.debtAmount.dataset.electricBase = "";
   }
   updateExpenseFormTypeLock();
+  
+  // Reapply global contract filter lock
+  updateFormContractLock();
 }
 
 function startEditPayment(paymentId) {
@@ -2639,7 +3726,7 @@ async function handleDeleteDebt(debtId) {
   }
 
   // Check if debt has associated payments
-  const associatedPayments = state.payments.filter((p) => equalsId(p.debt_id, debtId));
+  const associatedPayments = state.payments.filter((p) => equalsId(p.bill_id, debtId) || equalsId(p.debt_id, debtId));
   const hasPayments = associatedPayments.length > 0;
 
   // First confirmation: ask if they want to delete
@@ -2683,12 +3770,20 @@ async function handleDeleteDebt(debtId) {
     return;
   }
 
+  // Get the correct table for this expense type
+  const tableInfo = EXPENSE_TABLES[debt.type];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown expense type:", debt.type);
+    return;
+  }
+
   // Delete payments if requested
   if (deletePayments && hasPayments) {
     const { error: paymentsError } = await supabase
-      .from("payments")
+      .from(tableInfo.payments)
       .delete()
-      .eq("debt_id", debtId);
+      .eq("bill_id", debtId);
     if (paymentsError) {
       notify("error", translate("errorLoad"));
       console.error("handleDeleteDebt.deletePayments", paymentsError);
@@ -2696,8 +3791,8 @@ async function handleDeleteDebt(debtId) {
     }
   }
 
-  // Delete the debt
-  const { error } = await supabase.from("debts").delete().eq("id", debtId);
+  // Delete the bill from the correct table
+  const { error } = await supabase.from(tableInfo.bills).delete().eq("id", debtId);
   if (error) {
     notify("error", translate("errorLoad"));
     console.error("handleDeleteDebt", error);
@@ -2724,11 +3819,20 @@ async function handleDeletePayment(paymentId) {
   const confirmation = window.confirm(translate("confirmationDeletePayment"));
   if (!confirmation) return;
 
-  // Store the debt_id before deletion for later check
-  const debtId = payment.debt_id;
+  // Store the bill_id before deletion for later check
+  const billId = payment.bill_id || payment.debt_id;
+  const paymentType = payment.type;
 
-  // Delete the payment from Supabase
-  const { error } = await supabase.from("payments").delete().eq("id", paymentId);
+  // Get the correct table for this payment type
+  const tableInfo = EXPENSE_TABLES[paymentType];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown payment type:", paymentType);
+    return;
+  }
+
+  // Delete the payment from the correct table
+  const { error } = await supabase.from(tableInfo.payments).delete().eq("id", paymentId);
   if (error) {
     notify("error", translate("errorLoad"));
     console.error("handleDeletePayment", error);
@@ -2738,37 +3842,37 @@ async function handleDeletePayment(paymentId) {
   // Reload payments to get the current state after deletion
   await loadPayments();
 
-  // Recalculate total payments and update debt status if needed
-  if (debtId) {
-    const debt = state.debts.find((d) => equalsId(d.id, debtId));
-    if (debt) {
+  // Recalculate total payments and update bill status if needed (only for types with status)
+  if (billId && tableInfo.hasStatus) {
+    const bill = state.debts.find((d) => equalsId(d.id, billId));
+    if (bill) {
       const remainingPayments = state.payments.filter((p) =>
-        equalsId(p.debt_id, debtId)
+        equalsId(p.bill_id, billId)
       );
       
-      // Calculate total payments for this debt
+      // Calculate total payments for this bill
       const totalPaid = remainingPayments.reduce(
         (sum, payment) => sum + normalizeCurrency(payment.amount),
         0
       );
-      const debtAmount = normalizeCurrency(debt.amount);
+      const billAmount = normalizeCurrency(bill.amount);
 
-      // Mark debt as paid only if total payments >= debt amount, otherwise unpaid
-      if (totalPaid >= debtAmount - 0.001) {
-        const { error: debtUpdateError } = await supabase
-          .from("debts")
-          .update({ is_paid: true, paid_at: new Date().toISOString() })
-          .eq("id", debtId);
-        if (debtUpdateError) {
-          console.error("handleDeletePayment.markDebtPaid", debtUpdateError);
+      // Mark bill as paid only if total payments >= bill amount, otherwise unpaid
+      if (totalPaid >= billAmount - 0.001) {
+        const { error: billUpdateError } = await supabase
+          .from(tableInfo.bills)
+          .update({ is_paid: true })
+          .eq("id", billId);
+        if (billUpdateError) {
+          console.error("handleDeletePayment.markBillPaid", billUpdateError);
         }
       } else {
-        const { error: debtUpdateError } = await supabase
-          .from("debts")
-          .update({ is_paid: false, paid_at: null })
-          .eq("id", debtId);
-        if (debtUpdateError) {
-          console.error("handleDeletePayment.markDebtUnpaid", debtUpdateError);
+        const { error: billUpdateError } = await supabase
+          .from(tableInfo.bills)
+          .update({ is_paid: false })
+          .eq("id", billId);
+        if (billUpdateError) {
+          console.error("handleDeletePayment.markBillUnpaid", billUpdateError);
         }
       }
     }
@@ -2843,20 +3947,28 @@ async function handleSavePayment(paymentId) {
     }
   }
 
-  // Update the payment in Supabase
+  // Get the correct table for this payment type
+  const paymentType = payment.type;
+  const tableInfo = EXPENSE_TABLES[paymentType];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown payment type:", paymentType);
+    return;
+  }
+
+  // Update the payment in the correct table
   const payload = {
     amount: paymentAmount,
     payment_date: paymentDate,
     method,
-    reference,
     // Preserve the original relationships
-    debt_id: payment.debt_id,
+    bill_id: payment.bill_id || payment.debt_id,
     tenant_id: payment.tenant_id,
     contract_id: payment.contract_id,
   };
 
   const { error } = await supabase
-    .from("payments")
+    .from(tableInfo.payments)
     .update(payload)
     .eq("id", paymentId);
 
@@ -3026,13 +4138,19 @@ function adjustElectricityAmount() {
 
 async function maybeEnsureRecurringDebts() {
   // Always check for recurring debts when contracts and debts are loaded
-  // This will create rent and garbage expenses on the 5th of each month
+  // This will create rent, garbage, and maintenance expenses on the 5th of each month
   if (!state.contractsLoaded || !state.debtsLoaded) return;
+  
+  // Prevent multiple simultaneous calls
+  if (state.ensuringRecurringDebts) return;
+  state.ensuringRecurringDebts = true;
   
   try {
     await ensureMonthlyRecurringDebts();
   } catch (error) {
     console.error("ensureMonthlyRecurringDebts", error);
+  } finally {
+    state.ensuringRecurringDebts = false;
   }
 }
 
@@ -3040,6 +4158,12 @@ async function ensureMonthlyRecurringDebts() {
   const today = new Date();
   const currentYear = today.getUTCFullYear();
   const currentMonth = today.getUTCMonth();
+  
+  // Define current month range in UTC (for safe duplicate checks against DB)
+  const monthStart = new Date(Date.UTC(currentYear, currentMonth, 1));
+  const nextMonthStart = new Date(Date.UTC(currentYear, currentMonth + 1, 1));
+  const monthStartString = formatDateForSql(monthStart);
+  const nextMonthStartString = formatDateForSql(nextMonthStart);
   
   // Create expenses with due date on the 5th of the current month
   const fifthOfMonth = new Date(Date.UTC(currentYear, currentMonth, 5));
@@ -3056,10 +4180,11 @@ async function ensureMonthlyRecurringDebts() {
     if (startDate && today < startDate) return;
     if (endDate && today > endDate) return;
 
-    // Only create rent and garbage expenses on the 5th of each month
+    // Only create rent, garbage, and maintenance expenses on the 5th of each month
     const expenseTypes = [
       { key: "rent", amount: contract.monthly_rent },
       { key: "garbage", amount: contract.monthly_garbage },
+      { key: "maintenance", amount: contract.monthly_maintenance },
     ];
 
     expenseTypes.forEach(({ key, amount }) => {
@@ -3093,15 +4218,84 @@ async function ensureMonthlyRecurringDebts() {
 
   if (!payloads.length) return;
 
-  // Generate reference numbers for all expenses before inserting
-  for (let i = 0; i < payloads.length; i++) {
-    payloads[i].reference = await generateNextReferenceNumber();
+  // Group payloads by type and insert into correct tables
+  const payloadsByType = {};
+  for (const payload of payloads) {
+    if (!payloadsByType[payload.type]) {
+      payloadsByType[payload.type] = [];
+    }
+    payloadsByType[payload.type].push(payload);
   }
 
-  const { error } = await supabase.from("debts").insert(payloads);
-  if (error) {
-    throw error;
+  // Get starting reference number once, then increment for each expense
+  let nextRefNum = await getNextReferenceNumberValue();
+
+  // Check for existing bills in parallel for all types
+  const existingBillsPromises = Object.entries(payloadsByType).map(async ([type, typePayloads]) => {
+    const tableInfo = EXPENSE_TABLES[type];
+    if (!tableInfo) return { type, filteredPayloads: [] };
+
+    const uniqueContractIds = [
+      ...new Set(typePayloads.map((p) => p.contract_id).filter(Boolean)),
+    ];
+
+    if (uniqueContractIds.length === 0) {
+      return { type, filteredPayloads: typePayloads };
+    }
+
+    const { data: existingRows, error: existingError } = await supabase
+      .from(tableInfo.bills)
+      .select("id, contract_id, due_date, bill_date")
+      .in("contract_id", uniqueContractIds)
+      .gte("due_date", monthStartString)
+      .lt("due_date", nextMonthStartString);
+
+    if (existingError || !Array.isArray(existingRows)) {
+      return { type, filteredPayloads: typePayloads };
+    }
+
+    const existingByContract = new Set(
+      existingRows.map((row) => String(row.contract_id))
+    );
+
+    const filteredPayloads = typePayloads.filter(
+      (p) => !existingByContract.has(String(p.contract_id))
+    );
+
+    return { type, filteredPayloads };
+  });
+
+  const existingBillsResults = await Promise.all(existingBillsPromises);
+
+  // Insert into each split table
+  for (const { type, filteredPayloads } of existingBillsResults) {
+    if (!filteredPayloads.length) continue;
+
+    const tableInfo = EXPENSE_TABLES[type];
+    if (!tableInfo) continue;
+
+    // Transform payload for split table with sequential reference numbers
+    const splitPayloads = filteredPayloads.map(p => {
+      const ref = 'REF-' + String(nextRefNum).padStart(6, '0');
+      nextRefNum++;
+      return {
+        contract_id: p.contract_id,
+        tenant_id: p.tenant_id,
+        amount: p.amount,
+        bill_date: p.due_date,
+        due_date: p.due_date,
+        is_paid: p.is_paid,
+        notes: p.notes,
+        reference: ref,
+      };
+    });
+
+    const { error } = await supabase.from(tableInfo.bills).insert(splitPayloads);
+    if (error) {
+      throw error;
+    }
   }
+  
   await loadDebts();
 }
 
@@ -3160,38 +4354,1362 @@ function restoreLanguageAfterPdf() {
   if (state._previousLanguage) {
     state.language = state._previousLanguage;
     delete state._previousLanguage;
-    translateUI();
+    // Only update text translations, don't trigger view changes
+    const dictionary = translations[state.language] || translations.en;
+    document
+      .querySelectorAll("[data-i18n]")
+      .forEach((node) => (node.textContent = dictionary[node.dataset.i18n]));
+    document.title = dictionary.appTitle;
+  }
+}
+
+// Photo upload state
+let uploadedPhotos = [];
+let isDraggingPhoto = false;
+let apartmentMap = null;
+let apartmentMarker = null;
+
+function initializePhotoUpload() {
+  const photoInput = document.getElementById("apartmentPhotos");
+  const dropzone = document.getElementById("photoDropzone");
+  const previewContainer = document.getElementById("photoPreviewContainer");
+  
+  if (!photoInput || !dropzone || !previewContainer) return;
+
+  // Click to select files
+  dropzone.addEventListener("click", () => photoInput.click());
+  
+  // File input change
+  photoInput.addEventListener("change", (e) => handleFiles(e.target.files));
+  
+  // Drag and drop
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("drag-over");
+  });
+  
+  dropzone.addEventListener("dragleave", () => {
+    dropzone.classList.remove("drag-over");
+  });
+  
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("drag-over");
+    handleFiles(e.dataTransfer.files);
+  });
+  
+  // Initialize photo count
+  updatePhotoCount();
+}
+
+function handleFiles(files) {
+  const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+  
+  if (imageFiles.length === 0) {
+    notify("error", translate("photoUploadInvalid") || "Please select image files only.");
+    return;
+  }
+  
+  // Check current count and limit to 10 total
+  const maxPhotos = 10;
+  const remainingSlots = maxPhotos - uploadedPhotos.length;
+  
+  if (remainingSlots <= 0) {
+    notify("error", translate("photoUploadMaxReached") || `Maximum ${maxPhotos} photos allowed.`);
+    return;
+  }
+  
+  // Limit the number of files to upload based on remaining slots
+  const filesToProcess = imageFiles.slice(0, remainingSlots);
+  
+  if (filesToProcess.length < imageFiles.length) {
+    notify("info", translate("photoUploadLimitExceeded") || `Only ${filesToProcess.length} photo(s) added. Maximum ${maxPhotos} photos allowed.`);
+  }
+  
+  filesToProcess.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      uploadedPhotos.push(dataUrl);
+      addPhotoPreview(dataUrl, uploadedPhotos.length - 1);
+      updatePhotoCount();
+    };
+    reader.readAsDataURL(file);
+  });
+  
+  // Reset file input to allow selecting the same file again
+  const photoInput = document.getElementById("apartmentPhotos");
+  if (photoInput) {
+    photoInput.value = "";
+  }
+}
+
+function addPhotoPreview(dataUrl, index) {
+  const previewContainer = document.getElementById("photoPreviewContainer");
+  if (!previewContainer) return;
+  
+  const preview = document.createElement("div");
+  preview.className = "photo-preview-item";
+  preview.draggable = true;
+  preview.dataset.index = index;
+  preview.dataset.photoUrl = dataUrl;
+  preview.innerHTML = `
+    <img src="${dataUrl}" alt="Preview" class="photo-preview-img" data-index="${index}" draggable="false" />
+    <button type="button" class="photo-preview-remove" data-index="${index}">&times;</button>
+    <div class="photo-preview-drag-handle" title="Drag to reorder">⋮⋮</div>
+  `;
+  
+  // Click on image to review/zoom (but not when dragging)
+  preview.querySelector(".photo-preview-img").addEventListener("click", (e) => {
+    if (!isDraggingPhoto) {
+      e.stopPropagation();
+      openPhotoReview(index);
+    }
+  });
+  
+  // Remove button
+  preview.querySelector(".photo-preview-remove").addEventListener("click", (e) => {
+    e.stopPropagation();
+    uploadedPhotos.splice(index, 1);
+    preview.remove();
+    updatePhotoPreviews();
+    updatePhotoCount();
+  });
+  
+  // Drag and drop handlers for reordering
+  preview.addEventListener("dragstart", (e) => {
+    isDraggingPhoto = true;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/html", preview.outerHTML);
+    preview.classList.add("dragging");
+    preview.style.opacity = "0.5";
+  });
+  
+  preview.addEventListener("dragend", (e) => {
+    isDraggingPhoto = false;
+    preview.classList.remove("dragging");
+    preview.style.opacity = "";
+    // Remove drag-over class from all items
+    previewContainer.querySelectorAll(".photo-preview-item").forEach(item => {
+      item.classList.remove("drag-over");
+    });
+  });
+  
+  preview.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    
+    const afterElement = getDragAfterElement(previewContainer, e.clientX);
+    const dragging = previewContainer.querySelector(".dragging");
+    
+    if (afterElement == null) {
+      previewContainer.appendChild(dragging);
+    } else {
+      previewContainer.insertBefore(dragging, afterElement);
+    }
+    
+    preview.classList.add("drag-over");
+  });
+  
+  preview.addEventListener("dragleave", () => {
+    preview.classList.remove("drag-over");
+  });
+  
+  preview.addEventListener("drop", (e) => {
+    e.preventDefault();
+    preview.classList.remove("drag-over");
+    
+    // Reorder the uploadedPhotos array based on new DOM order
+    const items = Array.from(previewContainer.querySelectorAll(".photo-preview-item"));
+    
+    // Get the current order of photos from the DOM using data attribute
+    const newOrder = items.map(item => item.dataset.photoUrl).filter(url => url);
+    
+    // Verify we have the same number of photos
+    if (newOrder.length === uploadedPhotos.length) {
+      uploadedPhotos = newOrder;
+      updatePhotoPreviews();
+    }
+  });
+  
+  previewContainer.appendChild(preview);
+}
+
+function getDragAfterElement(container, x) {
+  const draggableElements = [...container.querySelectorAll(".photo-preview-item:not(.dragging)")];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = x - box.left - box.width / 2;
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Photo review modal for upload previews
+let currentReviewIndex = -1;
+
+function openPhotoReview(index) {
+  if (index < 0 || index >= uploadedPhotos.length) return;
+  
+  currentReviewIndex = index;
+  const modal = document.getElementById("photoReviewModal");
+  const image = document.getElementById("photoReviewImage");
+  
+  if (!modal || !image) return;
+  
+  image.src = uploadedPhotos[index];
+  image.classList.remove("zoomed");
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+
+function closePhotoReview() {
+  const modal = document.getElementById("photoReviewModal");
+  if (!modal) return;
+  
+  modal.style.display = "none";
+  document.body.style.overflow = "";
+  currentReviewIndex = -1;
+}
+
+function initializePhotoReview() {
+  const modal = document.getElementById("photoReviewModal");
+  const closeBtn = document.getElementById("photoReviewClose");
+  const deleteBtn = document.getElementById("photoReviewDelete");
+  const keepBtn = document.getElementById("photoReviewKeep");
+  const image = document.getElementById("photoReviewImage");
+  
+  if (!modal || !closeBtn) return;
+  
+  // Close button
+  closeBtn.addEventListener("click", closePhotoReview);
+  
+  // Keep button (just close)
+  if (keepBtn) {
+    keepBtn.addEventListener("click", () => {
+      closePhotoReview();
+    });
+  }
+  
+  // Delete button
+  if (deleteBtn) {
+    deleteBtn.addEventListener("click", () => {
+      if (currentReviewIndex >= 0 && currentReviewIndex < uploadedPhotos.length) {
+        uploadedPhotos.splice(currentReviewIndex, 1);
+        updatePhotoPreviews();
+        updatePhotoCount();
+        closePhotoReview();
+      }
+    });
+  }
+  
+  // Click outside to close
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closePhotoReview();
+  });
+  
+  // Zoom on image click
+  if (image) {
+    image.addEventListener("click", (e) => {
+      e.stopPropagation();
+      image.classList.toggle("zoomed");
+    });
+  }
+  
+  // Escape key to close
+  document.addEventListener("keydown", (e) => {
+    if (modal.style.display !== "none" && e.key === "Escape") {
+      closePhotoReview();
+    }
+  });
+}
+
+function updatePhotoPreviews() {
+  const previewContainer = document.getElementById("photoPreviewContainer");
+  if (!previewContainer) return;
+  
+  previewContainer.innerHTML = "";
+  uploadedPhotos.forEach((photo, index) => {
+    addPhotoPreview(photo, index);
+  });
+  
+  // Update photo count indicator
+  updatePhotoCount();
+}
+
+// Kosovo boundary coordinates (approximate polygon)
+const KOSOVO_BOUNDS = [
+  [41.85, 20.0],  // Southwest
+  [41.85, 21.8],  // Southeast
+  [43.3, 21.8],   // Northeast
+  [43.3, 20.0],   // Northwest
+  [41.85, 20.0]   // Close polygon
+];
+
+function isLocationInKosovo(lat, lng) {
+  // Kosovo approximate boundaries
+  // Latitude: 41.85 to 43.3
+  // Longitude: 20.0 to 21.8
+  return lat >= 41.85 && lat <= 43.3 && lng >= 20.0 && lng <= 21.8;
+}
+
+// Track if map is initialized to prevent multiple initializations
+let mapInitialized = false;
+
+function initializeApartmentMap() {
+  // Map functionality removed
+  return;
+  const mapContainer = document.getElementById("apartmentMap");
+  const latitudeInput = document.getElementById("apartmentLatitude");
+  const longitudeInput = document.getElementById("apartmentLongitude");
+  const clearPinBtn = document.getElementById("clearMapPin");
+  const getLocationBtn = document.getElementById("getMyLocation");
+  
+  if (!mapContainer) return;
+  
+  // If map is already initialized, just ensure it's visible and sized correctly
+  if (mapInitialized && apartmentMap) {
+    requestAnimationFrame(() => {
+      apartmentMap.invalidateSize();
+    });
+    return;
+  }
+  
+  // Check if Leaflet is loaded
+  if (typeof L === 'undefined') {
+    console.error("Leaflet is not loaded.");
+    mapContainer.innerHTML = '<p style="padding: 2rem; text-align: center; color: #dc2626;">Map library not loaded. Please refresh the page.</p>';
+    return;
+  }
+  
+  // Use Intersection Observer to lazy-load map only when visible
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !mapInitialized) {
+        observer.disconnect();
+        loadMap();
+      }
+    });
+  }, {
+    rootMargin: '50px' // Start loading slightly before it's visible
+  });
+  
+  // Check if map container is already visible
+  const isVisible = mapContainer.offsetParent !== null || 
+                    window.getComputedStyle(mapContainer).display !== 'none';
+  
+  if (isVisible) {
+    // Map is visible, load immediately
+    loadMap();
+  } else {
+    // Map is hidden, observe for when it becomes visible
+    observer.observe(mapContainer);
+  }
+  
+  function loadMap() {
+    if (mapInitialized) return;
+    
+    // Ensure map container has explicit dimensions
+    if (!mapContainer.style.height) {
+      mapContainer.style.height = '400px';
+    }
+    if (!mapContainer.style.width) {
+      mapContainer.style.width = '100%';
+    }
+    
+    // Show loading indicator
+    mapContainer.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 400px; color: #666;"><p>Loading map...</p></div>';
+    
+    // Use requestAnimationFrame to defer initialization slightly for better UX
+    requestAnimationFrame(() => {
+      // Initialize map centered on Kosovo (Prishtina) with lower initial zoom for faster loading
+      apartmentMap = L.map('apartmentMap', {
+        maxBounds: [[41.5, 19.5], [43.5, 22.0]], // Restrict view to Kosovo area
+        maxBoundsViscosity: 1.0, // Prevent panning outside bounds
+        preferCanvas: false,
+        zoomControl: true,
+        loadingControl: false,
+        fadeAnimation: true,
+        zoomAnimation: true
+      }).setView([42.6629, 21.1655], 6); // Even lower zoom level (6) for faster initial load
+      
+      // Add OpenStreetMap as default (faster loading than satellite)
+      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+        minZoom: 6,
+        tileSize: 256,
+        updateWhenIdle: true, // Only update when panning stops
+        keepBuffer: 2, // Keep fewer tiles in memory
+        crossOrigin: true
+      });
+      
+      // Add free satellite imagery with optimized settings (lazy load)
+      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri',
+        maxZoom: 19,
+        minZoom: 6,
+        tileSize: 256,
+        updateWhenIdle: true,
+        keepBuffer: 2,
+        crossOrigin: true
+      });
+      
+      // Add layer control to switch between satellite and street map
+      const baseMaps = {
+        "Satellite": satelliteLayer,
+        "Street Map": osmLayer
+      };
+      
+      // Start with OpenStreetMap (faster to load) instead of satellite
+      osmLayer.addTo(apartmentMap);
+      L.control.layers(baseMaps).addTo(apartmentMap);
+      
+      mapInitialized = true;
+      
+      // Optimized size invalidation - use single requestAnimationFrame instead of multiple timeouts
+      requestAnimationFrame(() => {
+        if (apartmentMap) {
+          apartmentMap.invalidateSize();
+        }
+      });
+      
+      // Also invalidate when the page becomes visible (handles tab switching)
+      const visibilityHandler = () => {
+        if (!document.hidden && apartmentMap) {
+          requestAnimationFrame(() => {
+            apartmentMap.invalidateSize();
+          });
+        }
+      };
+      document.addEventListener('visibilitychange', visibilityHandler);
+      
+      // Add Kosovo boundary polygon (defer to avoid blocking initial render)
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if (apartmentMap) {
+            const kosovoBoundary = L.polygon(KOSOVO_BOUNDS, {
+              color: '#08a88a',
+              fillColor: '#08a88a',
+              fillOpacity: 0.1,
+              weight: 2,
+              dashArray: '5, 5'
+            }).addTo(apartmentMap);
+          }
+        }, 500); // Reduced delay from 1000ms to 500ms
+      });
+      
+      // Function to add/update marker (with Kosovo validation)
+      const addMarker = (lat, lng) => {
+    if (!isLocationInKosovo(lat, lng)) {
+      notify("error", translate("locationOutsideKosovo") || "Location must be within Kosovo boundaries.");
+      return false;
+    }
+    
+    // Remove existing marker
+    if (apartmentMarker) {
+      apartmentMap.removeLayer(apartmentMarker);
+    }
+    
+    // Add new marker
+    apartmentMarker = L.marker([lat, lng], {
+      draggable: true
+    }).addTo(apartmentMap);
+    
+    // Update inputs
+    if (latitudeInput) latitudeInput.value = lat;
+    if (longitudeInput) longitudeInput.value = lng;
+    
+    // Show clear button
+    if (clearPinBtn) clearPinBtn.style.display = "block";
+    
+    // Allow dragging marker (with validation)
+    apartmentMarker.on('dragend', (e) => {
+      const position = apartmentMarker.getLatLng();
+      if (isLocationInKosovo(position.lat, position.lng)) {
+        if (latitudeInput) latitudeInput.value = position.lat;
+        if (longitudeInput) longitudeInput.value = position.lng;
+      } else {
+        // Revert to previous valid position
+        notify("error", translate("locationOutsideKosovo") || "Location must be within Kosovo boundaries.");
+        const prevLat = latitudeInput ? parseFloat(latitudeInput.value) : lat;
+        const prevLng = longitudeInput ? parseFloat(longitudeInput.value) : lng;
+        if (!isNaN(prevLat) && !isNaN(prevLng)) {
+          apartmentMarker.setLatLng([prevLat, prevLng]);
+        } else {
+          apartmentMap.removeLayer(apartmentMarker);
+          apartmentMarker = null;
+          if (clearPinBtn) clearPinBtn.style.display = "none";
+        }
+      }
+    });
+    
+    return true;
+  };
+  
+      // Add click handler to drop pin (only within Kosovo)
+      apartmentMap.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        addMarker(lat, lng);
+      });
+      
+      // Get current location button
+      if (getLocationBtn) {
+        getLocationBtn.addEventListener('click', () => {
+          if (!navigator.geolocation) {
+            notify("error", translate("geolocationNotSupported") || "Geolocation is not supported by your browser.");
+            return;
+          }
+          
+          getLocationBtn.disabled = true;
+          getLocationBtn.textContent = translate("gettingLocation") || "Getting location...";
+          
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const lat = position.coords.latitude;
+              const lng = position.coords.longitude;
+              
+              if (isLocationInKosovo(lat, lng)) {
+                addMarker(lat, lng);
+                apartmentMap.setView([lat, lng], 15);
+                notify("success", translate("locationFound") || "Location found!");
+              } else {
+                notify("error", translate("locationOutsideKosovo") || "Your location is outside Kosovo. Please select a location within Kosovo on the map.");
+                // Center map on Kosovo anyway
+                apartmentMap.setView([42.6629, 21.1655], 8);
+              }
+              
+              getLocationBtn.disabled = false;
+              getLocationBtn.textContent = translate("getMyLocation") || "Get My Location";
+            },
+            (error) => {
+              console.error("Geolocation error:", error);
+              notify("error", translate("geolocationError") || "Unable to get your location. Please select on the map.");
+              getLocationBtn.disabled = false;
+              getLocationBtn.textContent = translate("getMyLocation") || "Get My Location";
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
+            }
+          );
+        });
+      }
+      
+      // Clear pin button
+      if (clearPinBtn) {
+        clearPinBtn.addEventListener('click', () => {
+          if (apartmentMarker) {
+            apartmentMap.removeLayer(apartmentMarker);
+            apartmentMarker = null;
+          }
+          if (latitudeInput) latitudeInput.value = "";
+          if (longitudeInput) longitudeInput.value = "";
+          clearPinBtn.style.display = "none";
+        });
+      }
+      
+      // Load existing coordinates if editing
+      if (latitudeInput && longitudeInput && latitudeInput.value && longitudeInput.value) {
+        const lat = parseFloat(latitudeInput.value);
+        const lng = parseFloat(longitudeInput.value);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          if (isLocationInKosovo(lat, lng)) {
+            apartmentMarker = L.marker([lat, lng], {
+              draggable: true
+            }).addTo(apartmentMap);
+            apartmentMap.setView([lat, lng], 15);
+            if (clearPinBtn) clearPinBtn.style.display = "block";
+            
+            apartmentMarker.on('dragend', (e) => {
+              const position = apartmentMarker.getLatLng();
+              if (isLocationInKosovo(position.lat, position.lng)) {
+                if (latitudeInput) latitudeInput.value = position.lat;
+                if (longitudeInput) longitudeInput.value = position.lng;
+              } else {
+                notify("error", translate("locationOutsideKosovo") || "Location must be within Kosovo boundaries.");
+                apartmentMarker.setLatLng([lat, lng]);
+              }
+            });
+          }
+        }
+      }
+    });
+  }
+}
+
+function updatePhotoCount() {
+  const dropzone = document.getElementById("photoDropzone");
+  if (!dropzone) return;
+  
+  const maxPhotos = 10;
+  const currentCount = uploadedPhotos.length;
+  const hintText = dropzone.querySelector(".photo-upload-hint");
+  
+  if (hintText) {
+    if (currentCount >= maxPhotos) {
+      hintText.textContent = translate("photoUploadMaxReached") || `Maximum ${maxPhotos} photos reached.`;
+      hintText.style.color = "#dc2626";
+    } else {
+      hintText.textContent = (translate("photoUploadHint") || `You can select multiple photos (max ${maxPhotos})`) + ` (${currentCount}/${maxPhotos})`;
+      hintText.style.color = "";
+    }
+  }
+}
+
+function initializePhotoViewer() {
+  const modal = document.getElementById("photoViewerModal");
+  const closeBtn = document.getElementById("photoViewerClose");
+  const prevBtn = document.getElementById("photoViewerPrev");
+  const nextBtn = document.getElementById("photoViewerNext");
+  const image = document.getElementById("photoViewerImage");
+  const counter = document.getElementById("photoViewerCounter");
+  
+  if (!modal || !closeBtn) return;
+  
+  let currentPhotos = [];
+  let currentIndex = 0;
+  let autoSwipeTimer = null;
+  
+  window.openPhotoViewer = function(photos, startIndex = 0) {
+    if (!photos || photos.length === 0) return;
+    currentPhotos = Array.isArray(photos) ? photos : [photos];
+    currentIndex = Math.max(0, Math.min(startIndex, currentPhotos.length - 1));
+    clearAutoSwipeTimer();
+    updatePhotoViewer();
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  };
+  
+  function updatePhotoViewer() {
+    if (currentPhotos.length === 0) return;
+    
+    // Add fade transition
+    image.style.opacity = "0";
+    setTimeout(() => {
+      image.src = currentPhotos[currentIndex];
+      image.style.opacity = "1";
+    }, 150);
+    
+    counter.textContent = `${currentIndex + 1} / ${currentPhotos.length}`;
+    prevBtn.style.display = currentPhotos.length > 1 ? "block" : "none";
+    nextBtn.style.display = currentPhotos.length > 1 ? "block" : "none";
+    
+    // Update thumbnails
+    updateThumbnails();
+    
+    // Reset zoom state when changing photos
+    image.classList.remove("zoomed");
+    clearAutoSwipeTimer();
+  }
+  
+  function clearAutoSwipeTimer() {
+    if (autoSwipeTimer) {
+      clearTimeout(autoSwipeTimer);
+      autoSwipeTimer = null;
+    }
+  }
+  
+  function startAutoSwipeTimer() {
+    clearAutoSwipeTimer();
+    
+    // Only auto-swipe if there's more than one photo
+    if (currentPhotos.length <= 1) return;
+    
+    autoSwipeTimer = setTimeout(() => {
+      if (image.classList.contains("zoomed")) {
+        showNext();
+        // Restart timer for next photo if still zoomed
+        if (image.classList.contains("zoomed")) {
+          startAutoSwipeTimer();
+        }
+      }
+    }, 3000);
+  }
+  
+  function updateThumbnails() {
+    const thumbnailsContainer = document.getElementById("photoViewerThumbnails");
+    if (!thumbnailsContainer) return;
+    
+    if (currentPhotos.length <= 1) {
+      thumbnailsContainer.innerHTML = "";
+      return;
+    }
+    
+    thumbnailsContainer.innerHTML = currentPhotos
+      .map((photo, index) => `
+        <div class="photo-thumbnail-item ${index === currentIndex ? 'active' : ''}" data-index="${index}">
+          <img src="${photo}" alt="Thumbnail ${index + 1}" />
+        </div>
+      `)
+      .join("");
+    
+    // Add click handlers for thumbnails
+    thumbnailsContainer.querySelectorAll(".photo-thumbnail-item").forEach((thumb, index) => {
+      thumb.addEventListener("click", () => {
+        clearAutoSwipeTimer();
+        currentIndex = index;
+        updatePhotoViewer();
+        // Restart timer if still zoomed
+        if (image.classList.contains("zoomed")) {
+          startAutoSwipeTimer();
+        }
+      });
+    });
+  }
+  
+  // Add zoom functionality on image click
+  if (image) {
+    image.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const wasZoomed = image.classList.contains("zoomed");
+      image.classList.toggle("zoomed");
+      const isNowZoomed = image.classList.contains("zoomed");
+      
+      if (isNowZoomed && !wasZoomed) {
+        // Just zoomed - start auto-swipe timer
+        startAutoSwipeTimer();
+      } else if (!isNowZoomed && wasZoomed) {
+        // Just unzoomed - clear timer
+        clearAutoSwipeTimer();
+      }
+    });
+  }
+  
+  function closeViewer() {
+    clearAutoSwipeTimer();
+    image.classList.remove("zoomed");
+    modal.style.display = "none";
+    document.body.style.overflow = "";
+    currentPhotos = [];
+    currentIndex = 0;
+  }
+  
+  function showNext() {
+    clearAutoSwipeTimer();
+    currentIndex = (currentIndex + 1) % currentPhotos.length;
+    updatePhotoViewer();
+    // Restart timer if still zoomed
+    if (image.classList.contains("zoomed")) {
+      startAutoSwipeTimer();
+    }
+  }
+  
+  function showPrev() {
+    clearAutoSwipeTimer();
+    currentIndex = (currentIndex - 1 + currentPhotos.length) % currentPhotos.length;
+    updatePhotoViewer();
+    // Restart timer if still zoomed
+    if (image.classList.contains("zoomed")) {
+      startAutoSwipeTimer();
+    }
+  }
+  
+  closeBtn.addEventListener("click", closeViewer);
+  prevBtn.addEventListener("click", showPrev);
+  nextBtn.addEventListener("click", showNext);
+  
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeViewer();
+  });
+  
+  document.addEventListener("keydown", (e) => {
+    if (modal.style.display === "none") return;
+    if (e.key === "Escape") {
+      closeViewer();
+      return;
+    }
+    if (e.key === "ArrowLeft") {
+      showPrev();
+      return;
+    }
+    if (e.key === "ArrowRight") {
+      showNext();
+      return;
+    }
+  });
+}
+
+function editApartment(apartmentId) {
+  const apartment = state.apartments.find(a => equalsId(a.id, apartmentId));
+  if (!apartment) {
+    notify("error", translate("errorLoad"));
+    return;
+  }
+  
+  // Populate form fields
+  if (elements.apartmentId) elements.apartmentId.value = apartment.id;
+  if (elements.apartmentName) elements.apartmentName.value = apartment.name || "";
+  if (elements.apartmentAddress) elements.apartmentAddress.value = apartment.address || "";
+  if (elements.apartmentElectricityCode) elements.apartmentElectricityCode.value = apartment.electricity_code || "";
+  if (elements.apartmentHeatingCode) elements.apartmentHeatingCode.value = apartment.heating_code || "";
+  if (elements.apartmentWaterCode) elements.apartmentWaterCode.value = apartment.water_code || "";
+  if (elements.apartmentWasteCode) elements.apartmentWasteCode.value = apartment.waste_code || "";
+  
+  // Populate new fields if they exist (will be empty if columns don't exist in DB yet)
+  if (elements.apartmentCondition) elements.apartmentCondition.value = apartment.condition || "";
+  if (elements.apartmentRooms) elements.apartmentRooms.value = apartment.rooms || "";
+  if (elements.apartmentBalconies) elements.apartmentBalconies.value = apartment.balconies || "";
+  if (elements.apartmentBathrooms) elements.apartmentBathrooms.value = apartment.bathrooms || "";
+  if (elements.apartmentArea) elements.apartmentArea.value = apartment.area || "";
+  if (elements.apartmentMunicipality) elements.apartmentMunicipality.value = apartment.municipality || "";
+  if (elements.apartmentMonthlyRent) elements.apartmentMonthlyRent.value = apartment.monthly_rent || "";
+  if (elements.apartmentDescription) elements.apartmentDescription.value = apartment.description || "";
+  
+  // Populate features select
+  const featuresSelect = elements.apartmentForm.querySelector('select[name="features"]');
+  const featuresButtonsContainer = document.getElementById("apartmentFeaturesButtons");
+  
+  if (featuresSelect) {
+    Array.from(featuresSelect.options).forEach(option => {
+      option.selected = false;
+    });
+    
+    // Reset all feature buttons
+    if (featuresButtonsContainer) {
+      featuresButtonsContainer.querySelectorAll('.feature-button').forEach(button => {
+        button.classList.remove('selected');
+      });
+    }
+    
+    if (apartment.features) {
+      try {
+        const features = typeof apartment.features === 'string' 
+          ? (apartment.features.startsWith('[') ? JSON.parse(apartment.features) : apartment.features.split(',').map(f => f.trim()))
+          : apartment.features;
+        
+        if (Array.isArray(features)) {
+          features.forEach(feature => {
+            const option = Array.from(featuresSelect.options).find(opt => opt.value === feature);
+            if (option) {
+              option.selected = true;
+            }
+            
+            // Also update the corresponding button
+            if (featuresButtonsContainer) {
+              const button = featuresButtonsContainer.querySelector(`.feature-button[data-feature="${feature}"]`);
+              if (button) {
+                button.classList.add('selected');
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.error("Error parsing features:", e);
+      }
+    }
+  }
+  
+  // Also populate checkboxes for backward compatibility
+  const featuresCheckboxes = elements.apartmentForm.querySelectorAll('input[name="features"]');
+  featuresCheckboxes.forEach(checkbox => {
+    checkbox.checked = false;
+  });
+  
+  if (apartment.features) {
+    try {
+      const features = typeof apartment.features === 'string' 
+        ? (apartment.features.startsWith('[') ? JSON.parse(apartment.features) : apartment.features.split(',').map(f => f.trim()))
+        : apartment.features;
+      
+      if (Array.isArray(features)) {
+        features.forEach(feature => {
+          const checkbox = Array.from(featuresCheckboxes).find(cb => cb.value === feature);
+          if (checkbox) checkbox.checked = true;
+        });
+      }
+    } catch (e) {
+      console.error("Error parsing features:", e);
+    }
+  }
+  
+  // Load map coordinates if they exist
+  const latitudeInput = document.getElementById("apartmentLatitude");
+  const longitudeInput = document.getElementById("apartmentLongitude");
+  const clearPinBtn = document.getElementById("clearMapPin");
+  
+  // Ensure map is initialized when editing
+  if (!mapInitialized) {
+    // Map initialization removed
+  }
+  
+  if (apartment.latitude && apartment.longitude) {
+    if (latitudeInput) latitudeInput.value = apartment.latitude;
+    if (longitudeInput) longitudeInput.value = apartment.longitude;
+    
+    // Update map after it's initialized (use setTimeout to ensure map is ready)
+    const updateMapMarker = () => {
+      if (apartmentMap) {
+        const lat = parseFloat(apartment.latitude);
+        const lng = parseFloat(apartment.longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          if (apartmentMarker) {
+            apartmentMap.removeLayer(apartmentMarker);
+          }
+          apartmentMarker = L.marker([lat, lng], {
+            draggable: true
+          }).addTo(apartmentMap);
+          apartmentMap.setView([lat, lng], 15);
+          if (clearPinBtn) clearPinBtn.style.display = "block";
+          
+          apartmentMarker.on('dragend', (e) => {
+            const position = apartmentMarker.getLatLng();
+            if (latitudeInput) latitudeInput.value = position.lat;
+            if (longitudeInput) longitudeInput.value = position.lng;
+          });
+        }
+      } else {
+        // Map not ready yet, try again after a short delay
+        setTimeout(updateMapMarker, 100);
+      }
+    };
+    
+    // Wait a bit for map to initialize if it was just created
+    setTimeout(updateMapMarker, 200);
+  }
+  
+  // Load existing photos
+  uploadedPhotos = [];
+  let existingPhotos = [];
+  if (apartment.photos) {
+    try {
+      existingPhotos = typeof apartment.photos === 'string' 
+        ? (apartment.photos.startsWith('[') ? JSON.parse(apartment.photos) : apartment.photos.split(',').map(p => p.trim()))
+        : apartment.photos;
+    } catch (e) {
+      existingPhotos = apartment.photos.split(',').map(p => p.trim());
+    }
+  }
+  
+  // Keep all existing photos for display when editing
+  uploadedPhotos = existingPhotos;
+  
+  // Limit to 10 photos when editing
+  const maxPhotos = 10;
+  if (uploadedPhotos.length > maxPhotos) {
+    uploadedPhotos = uploadedPhotos.slice(0, maxPhotos);
+    notify("info", translate("photoUploadLimitExceeded") || `Limited to ${maxPhotos} photos.`);
+  }
+  
+  // Update photo previews
+  updatePhotoPreviews();
+  updatePhotoCount();
+  
+  // Update form button and show cancel
+  if (elements.apartmentSubmitBtn) {
+    elements.apartmentSubmitBtn.textContent = translate("updateApartment") || "Update Apartment";
+  }
+  if (elements.apartmentCancelBtn) {
+    elements.apartmentCancelBtn.classList.remove("hidden");
+  }
+  
+  // Scroll to form
+  elements.apartmentForm.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function cancelEditApartment() {
+  elements.apartmentForm.reset();
+  if (elements.apartmentId) elements.apartmentId.value = "";
+  uploadedPhotos = [];
+  const previewContainer = document.getElementById("photoPreviewContainer");
+  if (previewContainer) previewContainer.innerHTML = "";
+  
+  // Reset feature buttons
+  const featuresButtonsContainer = document.getElementById("apartmentFeaturesButtons");
+  if (featuresButtonsContainer) {
+    featuresButtonsContainer.querySelectorAll('.feature-button').forEach(button => {
+      button.classList.remove('selected');
+    });
+  }
+  
+  // Clear map
+  if (apartmentMarker) {
+    apartmentMap.removeLayer(apartmentMarker);
+    apartmentMarker = null;
+  }
+  const latitudeInput = document.getElementById("apartmentLatitude");
+  const longitudeInput = document.getElementById("apartmentLongitude");
+  const clearPinBtn = document.getElementById("clearMapPin");
+  if (latitudeInput) latitudeInput.value = "";
+  if (longitudeInput) longitudeInput.value = "";
+  if (clearPinBtn) clearPinBtn.style.display = "none";
+  if (apartmentMap) {
+    apartmentMap.setView([42.6629, 21.1655], 8);
+  }
+  
+  if (elements.apartmentSubmitBtn) {
+    elements.apartmentSubmitBtn.textContent = translate("addApartment") || "Add Apartment";
+  }
+  if (elements.apartmentCancelBtn) {
+    elements.apartmentCancelBtn.classList.add("hidden");
   }
 }
 
 async function onCreateApartment(event) {
   event.preventDefault();
+  
+  if (!state.currentUser) {
+    notify("error", "You must be logged in to create apartments.");
+    return;
+  }
+  
+  // Sync feature buttons with hidden select before form submission
+  syncFeatureButtonsToSelect();
+  
   const formData = new FormData(event.target);
+  const apartmentId = formData.get("apartment_id");
+  
+  // Use all photos from uploadedPhotos array (includes existing URLs and new data URLs)
+  let allPhotos = [...uploadedPhotos];
+  
+  // Filter out any invalid/empty photos
+  allPhotos = allPhotos.filter(photo => photo && typeof photo === 'string' && photo.trim().length > 0);
+  
+  // Enforce 10 photo limit
+  const maxPhotos = 10;
+  if (allPhotos.length > maxPhotos) {
+    allPhotos = allPhotos.slice(0, maxPhotos);
+    notify("info", translate("photoUploadLimitExceeded") || `Limited to ${maxPhotos} photos.`);
+  }
+  
+  let photos = null;
+  if (allPhotos.length > 0) {
+    photos = JSON.stringify(allPhotos);
+  }
+  
+  // Get selected features from buttons first, then fallback to select
+  let features = [];
+  const featuresButtonsContainer = document.getElementById("apartmentFeaturesButtons");
+  if (featuresButtonsContainer) {
+    const selectedButtons = featuresButtonsContainer.querySelectorAll('.feature-button.selected');
+    features = Array.from(selectedButtons).map(btn => btn.getAttribute("data-feature"));
+  }
+  
+  // Fallback to select if buttons didn't work
+  if (features.length === 0) {
+    const featuresSelect = event.target.querySelector('select[name="features"]');
+    if (featuresSelect) {
+      features = Array.from(featuresSelect.selectedOptions).map(opt => opt.value);
+    }
+  }
+  
+  // Also check checkboxes for backward compatibility
+  if (features.length === 0) {
+    const featuresCheckboxes = event.target.querySelectorAll('input[name="features"]:checked');
+    if (featuresCheckboxes.length > 0) {
+      features = Array.from(featuresCheckboxes).map(cb => cb.value);
+    }
+  }
+  
+  // Ensure features is always an array, even if empty
+  const featuresValue = features.length > 0 ? JSON.stringify(features) : null;
+  
+  // Build payload with core fields that definitely exist in database
+  // Based on loadApartments: id, name, address, electricity_code, heating_code, water_code, waste_code, photos
   const payload = {
-    name: formData.get("name")?.trim(),
+    name: formData.get("name")?.trim() || null,
     address: formData.get("address")?.trim() || null,
     electricity_code: formData.get("electricity_code")?.trim() || null,
     heating_code: formData.get("heating_code")?.trim() || null,
     water_code: formData.get("water_code")?.trim() || null,
     waste_code: formData.get("waste_code")?.trim() || null,
+    photos: photos,
   };
+  
+  // Only include features if it has a value (will be excluded if column doesn't exist)
+  if (featuresValue) {
+    payload.features = featuresValue;
+  }
+  
+  // Only include optional fields if they have values
+  // Note: Some of these fields may not exist in the database schema
+  // They will be excluded if they cause errors
+  const optionalFields = {
+    description: formData.get("description")?.trim(),
+    condition: formData.get("condition")?.trim(),
+    rooms: formData.get("rooms")?.trim(),
+    balconies: formData.get("balconies")?.trim() || null,
+    bathrooms: formData.get("bathrooms")?.trim() || null,
+    area: formData.get("area") ? parseFloat(formData.get("area")) : null,
+    municipality: formData.get("municipality")?.trim(),
+    monthly_rent: formData.get("monthly_rent") ? parseFloat(formData.get("monthly_rent")) : null,
+  };
+  
+  // Only add optional fields if they have actual values (not null/empty)
+  Object.keys(optionalFields).forEach(key => {
+    const value = optionalFields[key];
+    if (value !== null && value !== undefined && value !== '') {
+      // For numeric fields, also check if it's a valid number
+      if (key === 'area' || key === 'monthly_rent') {
+        if (!isNaN(value) && value > 0) {
+          payload[key] = value;
+        }
+      } else {
+        payload[key] = value;
+      }
+    }
+  });
+  
+  // Remove undefined values from payload
+  Object.keys(payload).forEach(key => {
+    if (payload[key] === undefined) {
+      delete payload[key];
+    }
+  });
 
   if (!payload.name) {
-    notify("error", translate("errorFieldRequired"));
+    notify("error", translate("errorFieldRequired") || "Name is required");
     return;
   }
 
-  const { error } = await supabase.from("apartments").insert(payload);
+  // Show loading state
+  const submitBtn = elements.apartmentSubmitBtn;
+  const originalText = submitBtn ? submitBtn.textContent : "";
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = apartmentId 
+      ? (translate("updating") || "Updating...") 
+      : (translate("adding") || "Adding...");
+  }
 
+  try {
+    // Update or insert
+    let error;
+    if (apartmentId) {
+      // Update existing apartment - don't include landlord_id in updates
+      const updatePayload = { ...payload };
+      delete updatePayload.landlord_id;
+      
+      // Try update with all fields first
+      ({ error } = await supabase
+        .from("apartments")
+        .update(updatePayload)
+        .eq("id", apartmentId));
+      
+      // If error is about missing columns, retry with only fields that definitely exist
+      if (error && error.code === 'PGRST204') {
+        console.warn("Some columns don't exist, retrying with core fields only");
+        // Only include fields that are confirmed to exist in the database
+        // Based on loadApartments select: id, name, address, electricity_code, heating_code, water_code, waste_code, photos
+        const corePayload = {
+          name: updatePayload.name,
+          address: updatePayload.address,
+          electricity_code: updatePayload.electricity_code,
+          heating_code: updatePayload.heating_code,
+          water_code: updatePayload.water_code,
+          waste_code: updatePayload.waste_code,
+          photos: updatePayload.photos,
+        };
+        
+        // Don't include features, description, or other optional fields that might not exist
+        
+        ({ error } = await supabase
+          .from("apartments")
+          .update(corePayload)
+          .eq("id", apartmentId));
+      }
+      
+      if (!error) {
+        notify("success", translate("successUpdateApartment") || "Apartment updated successfully!");
+      }
+    } else {
+      // Insert new apartment
+      payload.landlord_id = state.currentUser.id;
+      ({ error } = await supabase.from("apartments").insert(payload));
+      
+      if (!error) {
+        notify("success", translate("successAddApartment") || "Apartment added successfully!");
+      }
+    }
+
+    if (error) {
+      const errorMessage = error.message || JSON.stringify(error);
+      notify("error", translate("errorLoad") || "An error occurred");
+      console.error("onCreateApartment error:", error);
+      console.error("Error details:", errorMessage);
+      console.error("Payload sent:", payload);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+      return;
+    }
+
+    cancelEditApartment();
+    await loadApartments();
+    // Ensure apartments table is rendered after loading
+    if (state.contractsLoaded) {
+      renderApartmentsTable();
+    }
+  } catch (err) {
+    console.error("onCreateApartment exception:", err);
+    notify("error", translate("errorLoad") || "An error occurred");
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  }
+}
+
+let pendingDeleteApartmentId = null;
+let pendingDeleteApartmentName = null;
+
+function openDeleteApartmentModal(apartmentId) {
+  const apartment = state.apartments.find(a => equalsId(a.id, apartmentId));
+  if (!apartment) {
+    notify("error", translate("errorLoad"));
+    return;
+  }
+
+  // Check for active contracts
+  const hasActiveContracts = state.contracts.some(
+    (c) => equalsId(c.apartment_id, apartmentId) && c.is_active
+  );
+
+  if (hasActiveContracts) {
+    notify("error", translate("errorDeleteApartmentWithContract"));
+    return;
+  }
+  
+  // Check if apartment has any contracts (active or inactive)
+  const hasAnyContracts = state.contracts.some(
+    (c) => equalsId(c.apartment_id, apartmentId)
+  );
+  
+  pendingDeleteApartmentId = apartmentId;
+  pendingDeleteApartmentName = apartment.name;
+  
+  const modal = document.getElementById("deleteApartmentModal");
+  const message = document.getElementById("deleteApartmentMessage");
+  const input = document.getElementById("deleteApartmentNameInput");
+  const hint = document.getElementById("deleteApartmentHint");
+  const confirmBtn = document.getElementById("deleteApartmentConfirm");
+  const cancelBtn = document.getElementById("deleteApartmentCancel");
+  
+  if (!modal || !message || !input || !confirmBtn || !cancelBtn) return;
+  
+  // Build message
+  let messageText = translate("confirmDeleteApartment") || `Are you sure you want to delete "${apartment.name}"?`;
+  
+  if (hasAnyContracts) {
+    const contractCount = state.contracts.filter(c => equalsId(c.apartment_id, apartmentId)).length;
+    messageText += `\n\n${translate("warningDeleteApartmentWithContracts") || "Warning: This apartment has contracts. Deleting it may affect related data."}\n\nThis apartment has ${contractCount} contract(s) associated with it. Deleting the apartment will also delete all associated contracts, expenses, and payments. This action cannot be undone.`;
+  } else {
+    messageText += "\n\nThis action cannot be undone.";
+  }
+  
+  message.textContent = messageText;
+  const hintText = (translate("typeApartmentNameHint") || "Type \"{name}\" to confirm").replace("{name}", apartment.name);
+  hint.textContent = hintText;
+  input.value = "";
+  input.placeholder = apartment.name;
+  confirmBtn.disabled = true;
+  
+  // Show modal
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+  
+  // Focus input
+  setTimeout(() => input.focus(), 100);
+  
+  // Handle input changes
+  const checkInput = () => {
+    const inputValue = input.value.trim();
+    confirmBtn.disabled = inputValue !== apartment.name;
+  };
+  
+  // Remove old listeners and add new ones
+  input.removeEventListener("input", checkInput);
+  input.addEventListener("input", checkInput);
+  
+  // Handle Enter key
+  const handleEnter = (e) => {
+    if (e.key === "Enter" && !confirmBtn.disabled) {
+      confirmBtn.click();
+    }
+  };
+  input.removeEventListener("keydown", handleEnter);
+  input.addEventListener("keydown", handleEnter);
+  
+  // Handle confirm button
+  const handleConfirm = async () => {
+    if (confirmBtn.disabled) return;
+    await performDeleteApartment();
+  };
+  confirmBtn.removeEventListener("click", handleConfirm);
+  confirmBtn.addEventListener("click", handleConfirm);
+  
+  // Handle cancel button
+  const handleCancel = () => {
+    closeDeleteApartmentModal();
+  };
+  cancelBtn.removeEventListener("click", handleCancel);
+  cancelBtn.addEventListener("click", handleCancel);
+  
+  // Close on backdrop click
+  const handleBackdrop = (e) => {
+    if (e.target === modal) {
+      closeDeleteApartmentModal();
+    }
+  };
+  modal.removeEventListener("click", handleBackdrop);
+  modal.addEventListener("click", handleBackdrop);
+  
+  // Close on Escape key
+  const handleEscape = (e) => {
+    if (e.key === "Escape") {
+      closeDeleteApartmentModal();
+    }
+  };
+  document.removeEventListener("keydown", handleEscape);
+  document.addEventListener("keydown", handleEscape);
+}
+
+function closeDeleteApartmentModal() {
+  const modal = document.getElementById("deleteApartmentModal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "";
+  }
+  pendingDeleteApartmentId = null;
+  pendingDeleteApartmentName = null;
+}
+
+async function performDeleteApartment() {
+  if (!pendingDeleteApartmentId) return;
+  
+  const apartmentId = pendingDeleteApartmentId;
+  closeDeleteApartmentModal();
+  
+  // Delete the apartment
+  const { error } = await supabase
+    .from("apartments")
+    .delete()
+    .eq("id", apartmentId);
+  
   if (error) {
     notify("error", translate("errorLoad"));
-    console.error("onCreateApartment", error);
+    console.error("performDeleteApartment", error);
     return;
   }
+  
+  notify("success", translate("successDeleteApartment") || "Apartment deleted successfully!");
+  await loadApartments();
+  // Ensure apartments table is rendered after loading
+  if (state.contractsLoaded) {
+    renderApartmentsTable();
+  }
+}
 
-  event.target.reset();
-  notify("success", translate("successAddApartment"));
-  loadApartments();
+async function handleDeleteApartment(apartmentId) {
+  if (!apartmentId) return;
+  openDeleteApartmentModal(apartmentId);
 }
 
 async function onCreateTenant(event) {
@@ -3199,6 +5717,7 @@ async function onCreateTenant(event) {
   const formData = new FormData(event.target);
   const payload = {
     full_name: formData.get("full_name")?.trim(),
+    email: formData.get("email")?.trim() || null,
     phone: formData.get("phone")?.trim() || null,
   };
 
@@ -3263,9 +5782,22 @@ async function onCreateDebt(event) {
   if (!debtTypeValue && lockedType) {
     debtTypeValue = lockedType;
   }
+  
+  // Use global filter values if set (since disabled fields don't submit)
+  let contractId = formData.get("contract_id");
+  let tenantId = formData.get("tenant_id");
+  
+  if (state.globalContractFilter) {
+    contractId = state.globalContractFilter;
+    const contract = state.contracts.find(c => equalsId(c.id, state.globalContractFilter));
+    if (contract) {
+      tenantId = contract.tenant_id;
+    }
+  }
+  
   const basePayload = {
-    contract_id: formData.get("contract_id"),
-    tenant_id: formData.get("tenant_id"),
+    contract_id: contractId,
+    tenant_id: tenantId,
     type: debtTypeValue,
     amount: normalizeCurrency(formData.get("amount")),
     due_date: formData.get("due_date"),
@@ -3330,10 +5862,37 @@ async function onCreateDebt(event) {
     return;
   }
 
+  // Get the correct table for this expense type
+  const tableInfo = EXPENSE_TABLES[debtTypeValue];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown expense type:", debtTypeValue);
+    return;
+  }
+  
+  const isUtility = isUtilityType(debtTypeValue);
+
   if (isEditing) {
+    const billPayload = tableInfo.hasStatus
+      ? {
+          tenant_id: basePayload.tenant_id,
+          contract_id: basePayload.contract_id,
+          amount: basePayload.amount,
+          bill_date: basePayload.due_date,
+          due_date: basePayload.due_date,
+          notes: finalNotes || null,
+        }
+      : {
+          tenant_id: basePayload.tenant_id,
+          contract_id: basePayload.contract_id,
+          amount: basePayload.amount,
+          bill_date: basePayload.due_date,
+          notes: finalNotes || null,
+        };
+    
     const { error } = await supabase
-      .from("debts")
-      .update(payload)
+      .from(tableInfo.bills)
+      .update(billPayload)
       .eq("id", state.editingDebtId);
 
     if (error) {
@@ -3345,13 +5904,32 @@ async function onCreateDebt(event) {
     resetDebtForm();
     notify("success", translate("successUpdateDebt"), "edit");
   } else {
-    // Generate automatic reference number for new expense (store as integer)
-    const nextRefNumber = await generateNextReferenceNumber();
-    const reference = nextRefNumber; // Store as integer, format for display only
+    // Generate reference number for new expense
+    const reference = await generateNextReferenceNumber();
+    
+    const billPayload = tableInfo.hasStatus
+      ? {
+          tenant_id: basePayload.tenant_id,
+          contract_id: basePayload.contract_id,
+          amount: basePayload.amount,
+          bill_date: basePayload.due_date,
+          due_date: basePayload.due_date,
+          notes: finalNotes || null,
+          is_paid: false,
+          reference: reference,
+        }
+      : {
+          tenant_id: basePayload.tenant_id,
+          contract_id: basePayload.contract_id,
+          amount: basePayload.amount,
+          bill_date: basePayload.due_date,
+          notes: finalNotes || null,
+          reference: reference,
+        };
 
     const { error } = await supabase
-      .from("debts")
-      .insert({ ...payload, is_paid: false, reference });
+      .from(tableInfo.bills)
+      .insert(billPayload);
 
     if (error) {
       notify("error", translate("errorLoad"));
@@ -3406,20 +5984,35 @@ async function handleSaveDebt(debtId) {
     return;
   }
 
+  // Get the correct table for this debt type
+  const tableInfo = EXPENSE_TABLES[debt.type];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown debt type:", debt.type);
+    return;
+  }
+
   // Prepare the payload
-  const payload = {
-    type: debtType,
+  const payload = tableInfo.hasStatus
+    ? {
     amount: amount,
+        bill_date: dueDate,
     due_date: dueDate,
     notes: notes,
-    // Preserve the original relationships
+        contract_id: debt.contract_id,
+        tenant_id: debt.tenant_id,
+      }
+    : {
+        amount: amount,
+        bill_date: dueDate,
+        notes: notes,
     contract_id: debt.contract_id,
     tenant_id: debt.tenant_id,
   };
 
-  // Update the debt in Supabase
+  // Update the bill in the correct table
   const { error } = await supabase
-    .from("debts")
+    .from(tableInfo.bills)
     .update(payload)
     .eq("id", debtId);
 
@@ -3486,18 +6079,26 @@ async function onCreatePayment(event) {
     // Always use debt's reference
     const paymentReference = debt?.reference || null;
     
+    // Get the correct table for this payment type
+    const paymentType = existingPayment?.type || debt?.type;
+    const tableInfo = EXPENSE_TABLES[paymentType];
+    if (!tableInfo) {
+      notify("error", translate("errorLoad"));
+      console.error("Unknown payment type:", paymentType);
+      return;
+    }
+    
     const payload = {
-      debt_id: selectedValue || null,
+      bill_id: selectedValue || null,
       tenant_id: debt?.tenant_id || existingPayment?.tenant_id || null,
       contract_id: debt?.contract_id || existingPayment?.contract_id || null,
       amount: paymentAmount,
       payment_date: paymentDate,
       method,
-      reference: paymentReference,
     };
 
     const { error } = await supabase
-      .from("payments")
+      .from(tableInfo.payments)
       .update(payload)
       .eq("id", state.editingPaymentId);
 
@@ -3510,10 +6111,10 @@ async function onCreatePayment(event) {
     // Reload payments to calculate total payments for this debt after update
     await loadPayments();
     
-    if (debt) {
+    if (debt && tableInfo.hasStatus) {
       // Calculate total payments for this debt
       const debtPayments = (state.payments || []).filter(
-        (p) => equalsId(p.debt_id, debt.id)
+        (p) => equalsId(p.bill_id, debt.id)
       );
       const totalPaid = debtPayments.reduce(
         (sum, payment) => sum + normalizeCurrency(payment.amount),
@@ -3524,8 +6125,8 @@ async function onCreatePayment(event) {
       // Mark debt as paid only if total payments >= debt amount
       if (totalPaid >= debtAmount - 0.001) {
         const { error: debtUpdateError } = await supabase
-          .from("debts")
-          .update({ is_paid: true, paid_at: new Date().toISOString() })
+          .from(tableInfo.bills)
+          .update({ is_paid: true })
           .eq("id", debt.id);
         if (debtUpdateError) {
           console.error("onUpdatePayment.markDebtPaid", debtUpdateError);
@@ -3533,8 +6134,8 @@ async function onCreatePayment(event) {
       } else {
         // If total payments are less than debt amount, mark as unpaid
         const { error: debtUpdateError } = await supabase
-          .from("debts")
-          .update({ is_paid: false, paid_at: null })
+          .from(tableInfo.bills)
+          .update({ is_paid: false })
           .eq("id", debt.id);
         if (debtUpdateError) {
           console.error("onUpdatePayment.markDebtUnpaid", debtUpdateError);
@@ -3545,6 +6146,18 @@ async function onCreatePayment(event) {
     resetPaymentForm();
     notify("success", translate("successUpdatePayment"), "edit");
     await loadDebts();
+    return;
+  }
+
+  // Handle utility grouped payment (by tenant)
+  if (isUtilityGroupedValue(selectedValue)) {
+    await processUtilityTenantPayment({
+      utilityType: getUtilityGroupedType(selectedValue),
+      tenantId: getUtilityGroupedTenantId(selectedValue),
+      amount: paymentAmount,
+      paymentDate,
+      method,
+    });
     return;
   }
 
@@ -3559,18 +6172,42 @@ async function onCreatePayment(event) {
     return;
   }
 
+  // Handle direct payment for utility types (no expense required)
+  if (isDirectPaymentValue(selectedValue)) {
+    await processDirectUtilityPayment({
+      utilityType: getDirectPaymentType(selectedValue),
+      amount: paymentAmount,
+      paymentDate,
+      method,
+    });
+    return;
+  }
+
   if (!debt) {
     notify("error", translate("errorLoad"));
     return;
   }
 
   const debtAmount = normalizeCurrency(debt.amount);
-  const isFullyPaid = paymentAmount >= debtAmount - 0.001;
+  
+  // Calculate existing payments for this debt to get remaining amount
+  const existingPayments = (state.payments || []).filter(
+    (p) => equalsId(p.debt_id, selectedValue)
+  );
+  const totalPaidForDebt = existingPayments.reduce(
+    (sum, payment) => sum + normalizeCurrency(payment.amount),
+    0
+  );
+  const remainingDebtAmount = Math.max(0, normalizeCurrency(debtAmount - totalPaidForDebt));
 
   // Always use debt's reference (connected to expense)
   const paymentReference = debt.reference || null;
 
-  const payload = {
+  // Prepare payments array - will contain at least one payment for the selected debt
+  const paymentsPayload = [];
+  
+  // Record the full payment amount on the selected debt (allows overpayment/negative balance)
+  paymentsPayload.push({
     debt_id: selectedValue,
     tenant_id: debt.tenant_id || null,
     contract_id: debt.contract_id || null,
@@ -3578,9 +6215,78 @@ async function onCreatePayment(event) {
     payment_date: paymentDate,
     method,
     reference: paymentReference,
-  };
+  });
 
-  const { error } = await supabase.from("payments").insert(payload);
+  // Calculate excess for potential distribution to other debts (optional, keeping for future use)
+  let excessAmount = 0; // No longer distributing excess - full amount goes to selected debt
+
+  // If there's excess amount, distribute it to other unpaid debts of the same tenant
+  if (excessAmount > 0.001 && debt.tenant_id) {
+    // Find other unpaid debts for the same tenant (excluding the selected debt)
+    const otherUnpaidDebts = state.debts
+      .filter((d) => 
+        equalsId(d.tenant_id, debt.tenant_id) && 
+        !equalsId(d.id, selectedValue) && 
+        !d.is_paid
+      )
+      .sort(sortDebtsByDueDateAsc);
+
+    // Distribute excess to other debts
+    for (const otherDebt of otherUnpaidDebts) {
+      if (excessAmount <= 0.001) break;
+
+      const otherDebtAmount = normalizeCurrency(otherDebt.amount);
+      const otherDebtPayments = (state.payments || []).filter(
+        (p) => equalsId(p.debt_id, otherDebt.id)
+      );
+      const otherDebtTotalPaid = otherDebtPayments.reduce(
+        (sum, payment) => sum + normalizeCurrency(payment.amount),
+        0
+      );
+      const otherDebtRemaining = Math.max(0, normalizeCurrency(otherDebtAmount - otherDebtTotalPaid));
+
+      if (otherDebtRemaining > 0.001) {
+        const amountToApply = Math.min(excessAmount, otherDebtRemaining);
+        paymentsPayload.push({
+          debt_id: otherDebt.id,
+          tenant_id: otherDebt.tenant_id || null,
+          contract_id: otherDebt.contract_id || null,
+          amount: amountToApply,
+          payment_date: paymentDate,
+          method,
+          reference: otherDebt.reference || null,
+        });
+        excessAmount = normalizeCurrency(excessAmount - amountToApply);
+      }
+    }
+  }
+
+  if (paymentsPayload.length === 0) {
+    notify("error", translate("errorLoad"));
+    return;
+  }
+
+  // Get the correct payment table for this expense type
+  const debtType = debt.type;
+  const tableInfo = EXPENSE_TABLES[debtType];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown expense type:", debtType);
+    return;
+  }
+
+  // Transform payments for the split table (bill_id instead of debt_id)
+  const splitPaymentsPayload = paymentsPayload.map(p => ({
+    bill_id: p.debt_id,
+    tenant_id: p.tenant_id,
+    contract_id: p.contract_id,
+    amount: p.amount,
+    payment_date: p.payment_date,
+    method: p.method,
+  }));
+
+  // Insert payments into the correct split table
+  const { error } = await supabase.from(tableInfo.payments).insert(splitPaymentsPayload);
 
   if (error) {
     notify("error", translate("errorLoad"));
@@ -3588,26 +6294,36 @@ async function onCreatePayment(event) {
     return;
   }
 
-  // Reload payments to calculate total payments for this debt
+  // Reload payments to calculate total payments for all affected debts
   await loadPayments();
   
-  // Calculate total payments for this debt
-  const debtPayments = (state.payments || []).filter(
-    (p) => equalsId(p.debt_id, selectedValue)
-  );
-  const totalPaid = debtPayments.reduce(
-    (sum, payment) => sum + normalizeCurrency(payment.amount),
-    0
-  );
+  // Mark all affected bills as paid if they are fully paid (only for types with status)
+  if (tableInfo.hasStatus) {
+    const affectedBillIds = [...new Set(paymentsPayload.map(p => p.debt_id))];
+  
+    for (const billId of affectedBillIds) {
+      const affectedBill = state.debts.find((d) => equalsId(d.id, billId));
+      if (!affectedBill) continue;
 
-  // Mark debt as paid only if total payments >= debt amount
-  if (totalPaid >= debtAmount - 0.001) {
-    const { error: debtUpdateError } = await supabase
-      .from("debts")
-      .update({ is_paid: true, paid_at: new Date().toISOString() })
-      .eq("id", selectedValue);
-    if (debtUpdateError) {
-      console.error("autoMarkDebtPaid", debtUpdateError);
+      const affectedBillPayments = (state.payments || []).filter(
+        (p) => equalsId(p.bill_id, billId) || equalsId(p.debt_id, billId)
+    );
+      const affectedBillTotalPaid = affectedBillPayments.reduce(
+      (sum, payment) => sum + normalizeCurrency(payment.amount),
+      0
+    );
+      const affectedBillAmount = normalizeCurrency(affectedBill.amount);
+
+      // Mark bill as paid if total payments >= bill amount
+      if (affectedBillTotalPaid >= affectedBillAmount - 0.001) {
+        const { error: billUpdateError } = await supabase
+          .from(tableInfo.bills)
+          .update({ is_paid: true })
+          .eq("id", billId);
+        if (billUpdateError) {
+          console.error("autoMarkBillPaid", billUpdateError);
+        }
+      }
     }
   }
 
@@ -3615,6 +6331,132 @@ async function onCreatePayment(event) {
   notify("success", translate("successAddPayment"), "save");
   await loadDebts();
 }
+
+// Process utility payment grouped by tenant (shows total, pays toward bills)
+async function processUtilityTenantPayment({ utilityType, tenantId, amount, paymentDate, method }) {
+  if (!utilityType || !tenantId) {
+    notify("error", translate("errorFieldRequired"));
+    return;
+  }
+
+  // Get the correct payment table for this type
+  const tableInfo = EXPENSE_TABLES[utilityType];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown expense type:", utilityType);
+    return;
+  }
+
+  // Get contract from tenant
+  let contractId = state.globalContractFilter || null;
+  if (!contractId) {
+    const contract = state.contracts.find(c => equalsId(c.tenant_id, tenantId) && c.is_active);
+    if (contract) {
+      contractId = contract.id;
+    }
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  
+  // Insert into the correct payment table
+  const { error } = await supabase.from(tableInfo.payments).insert({
+    tenant_id: tenantId,
+    contract_id: contractId,
+    bill_id: null, // Payment applies to total, not specific bill
+    amount: amount,
+    payment_date: paymentDate || today,
+    method,
+  });
+
+  if (!error) {
+    resetPaymentForm();
+    notify("success", translate("successAddPayment"), "save");
+    await loadPayments();
+    await loadDebts();
+  } else {
+    notify("error", translate("errorLoad"));
+    console.error("processUtilityTenantPayment", error);
+  }
+}
+
+// Process direct utility payment (without requiring an expense)
+async function processDirectUtilityPayment({ utilityType, amount, paymentDate, method }) {
+  if (!utilityType) {
+    notify("error", translate("errorFieldRequired"));
+    return;
+  }
+
+  // Get the correct payment table for this type
+  const tableInfo = EXPENSE_TABLES[utilityType];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown expense type:", utilityType);
+    return;
+  }
+
+  // Try to get tenant from global filter, existing bills/debts, or from the expense form
+  let tenantId = null;
+  let contractId = state.globalContractFilter || elements.debtContract?.value || null;
+  
+  // Get tenant from contract if we have one
+  if (contractId) {
+    const contract = state.contracts.find(c => equalsId(c.id, contractId));
+    if (contract) {
+      tenantId = contract.tenant_id;
+    }
+  }
+  
+  // Fall back to form value
+  if (!tenantId) {
+    tenantId = elements.debtTenant?.value || null;
+  }
+  
+  // If no tenant selected in form, try to get from existing bills
+  if (!tenantId) {
+    const stateKey = EXPENSE_STATE_KEYS[utilityType];
+    const existingBill = state[stateKey.bills]?.find(b => b.tenant_id);
+    if (existingBill) {
+      tenantId = existingBill.tenant_id;
+      contractId = existingBill.contract_id || null;
+    }
+  }
+  
+  // If still no tenant, try to get from any active contract
+  if (!tenantId && state.contracts.length > 0) {
+    const activeContract = state.contracts.find(c => c.is_active);
+    if (activeContract) {
+      tenantId = activeContract.tenant_id;
+      contractId = activeContract.id;
+    }
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  
+  // Insert into the correct payment table
+  const { error } = await supabase.from(tableInfo.payments).insert({
+    tenant_id: tenantId,
+    contract_id: contractId || null,
+    bill_id: null, // Direct payment - no bill linked
+    amount: amount,
+    payment_date: paymentDate || today,
+    method,
+  });
+
+  if (!error) {
+    // Success
+    resetPaymentForm();
+    notify("success", translate("successAddPayment"), "save");
+    await loadPayments();
+    await loadDebts();
+    return;
+  }
+
+  // Error inserting payment
+  console.error("Error inserting payment:", error);
+  notify("error", translate("errorLoad"));
+  return;
+}
+
 
 async function processGroupedUtilityPayment({ groupType, amount, paymentDate, method }) {
   if (!groupType) {
@@ -3686,39 +6528,59 @@ async function processGroupedUtilityPayment({ groupType, amount, paymentDate, me
     return;
   }
 
-  const { error } = await supabase.from("payments").insert(paymentsPayload);
+  // Get the correct payment table for this type
+  const tableInfo = EXPENSE_TABLES[groupType];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown expense type:", groupType);
+    return;
+  }
+
+  // Transform payments for the split table (bill_id instead of debt_id)
+  const splitPaymentsPayload = paymentsPayload.map(p => ({
+    bill_id: p.debt_id,
+    tenant_id: p.tenant_id,
+    contract_id: p.contract_id,
+    amount: p.amount,
+    payment_date: p.payment_date,
+    method: p.method,
+  }));
+
+  const { error } = await supabase.from(tableInfo.payments).insert(splitPaymentsPayload);
   if (error) {
     notify("error", translate("errorLoad"));
     console.error("processGroupedUtilityPayment.insert", error);
     return;
   }
 
-  // Reload payments to calculate total payments for all affected debts
+  // Reload payments to calculate total payments for all affected bills
   await loadPayments();
 
-  // Calculate total payments for each affected debt and mark as paid if fully paid
-  const affectedDebtIds = [...new Set(paymentsPayload.map(p => p.debt_id))];
-  for (const debtId of affectedDebtIds) {
-    const debt = state.debts.find((d) => equalsId(d.id, debtId));
-    if (!debt) continue;
+  // Calculate total payments for each affected bill and mark as paid if fully paid (only for types with status)
+  if (tableInfo.hasStatus) {
+    const affectedBillIds = [...new Set(paymentsPayload.map(p => p.debt_id))];
+    for (const billId of affectedBillIds) {
+      const bill = state.debts.find((d) => equalsId(d.id, billId));
+      if (!bill) continue;
 
-    const debtPayments = (state.payments || []).filter(
-      (p) => equalsId(p.debt_id, debtId)
+      const billPayments = (state.payments || []).filter(
+        (p) => equalsId(p.bill_id, billId)
     );
-    const totalPaid = debtPayments.reduce(
+      const totalPaid = billPayments.reduce(
       (sum, payment) => sum + normalizeCurrency(payment.amount),
       0
     );
-    const debtAmount = normalizeCurrency(debt.amount);
+      const billAmount = normalizeCurrency(bill.amount);
 
-    // Mark debt as paid only if total payments >= debt amount
-    if (totalPaid >= debtAmount - 0.001) {
-      const { error: debtUpdateError } = await supabase
-        .from("debts")
-        .update({ is_paid: true, paid_at: new Date().toISOString() })
-        .eq("id", debtId);
-      if (debtUpdateError) {
-        console.error("processGroupedUtilityPayment.markDebtPaid", debtUpdateError);
+      // Mark bill as paid only if total payments >= bill amount
+      if (totalPaid >= billAmount - 0.001) {
+        const { error: billUpdateError } = await supabase
+          .from(tableInfo.bills)
+          .update({ is_paid: true })
+          .eq("id", billId);
+        if (billUpdateError) {
+          console.error("processGroupedUtilityPayment.markBillPaid", billUpdateError);
+        }
       }
     }
   }
@@ -3728,17 +6590,19 @@ async function processGroupedUtilityPayment({ groupType, amount, paymentDate, me
   await loadPayments();
   await loadDebts();
 
-  // Calculate outstanding total including partially paid debts
-  const remainingDebts = debtsOfType.filter(
-    (debt) => !fullyPaidDebtIds.includes(debt.id)
-  );
+  // Calculate outstanding total
   let outstandingTotal = 0;
-  for (const debt of remainingDebts) {
-    const partialDebt = partiallyPaidDebts.find((p) => p.id === debt.id);
-    if (partialDebt) {
-      outstandingTotal += partialDebt.newAmount;
-    } else {
-      outstandingTotal += normalizeCurrency(debt.amount);
+  for (const debt of debtsOfType) {
+    const debtPayments = (state.payments || []).filter(
+      (p) => equalsId(p.bill_id, debt.id)
+    );
+    const totalPaid = debtPayments.reduce(
+      (sum, payment) => sum + normalizeCurrency(payment.amount),
+      0
+    );
+    const remaining = normalizeCurrency(debt.amount) - totalPaid;
+    if (remaining > 0.001) {
+      outstandingTotal += remaining;
     }
   }
   if (outstandingTotal > 0.009) {
@@ -3778,10 +6642,17 @@ function handleMarkDebtPaid(debtId) {
     elements.markPaidAmount.value = parseFloat(debt.amount) || 0;
   }
 
-  // Set today's date
+  // Set today's date by default
+  const today = new Date();
+  const day = today.getDate();
+  const month = today.getMonth() + 1;
+  const year = today.getFullYear();
+  
+  if (elements.markPaidDay) elements.markPaidDay.value = day;
+  if (elements.markPaidMonth) elements.markPaidMonth.value = month;
+  if (elements.markPaidYear) elements.markPaidYear.value = year;
   if (elements.markPaidDate) {
-    const today = new Date().toISOString().split('T')[0];
-    elements.markPaidDate.value = today;
+    elements.markPaidDate.value = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
   // Reset payment method
@@ -3837,23 +6708,30 @@ async function submitMarkPaidPayment() {
     return;
   }
 
+  // Get the correct table for this debt type
+  const tableInfo = EXPENSE_TABLES[debt.type];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad"));
+    console.error("Unknown debt type:", debt.type);
+    return;
+  }
+
   // Get contract and tenant info from debt
   const contract = state.contracts.find((c) => equalsId(c.id, debt.contract_id));
   const tenantId = contract?.tenant_id || debt.tenant_id || null;
 
-  // Create payment
+  // Create payment in the correct table
   const paymentPayload = {
-    debt_id: debtId,
+    bill_id: debtId,
     tenant_id: tenantId,
     contract_id: debt.contract_id || null,
     amount: amount,
     payment_date: paymentDate,
     method: method,
-    reference: debt.reference || null,
   };
 
   const { error: paymentError } = await supabase
-    .from("payments")
+    .from(tableInfo.payments)
     .insert(paymentPayload);
 
   if (paymentError) {
@@ -3862,17 +6740,16 @@ async function submitMarkPaidPayment() {
     return;
   }
 
-  // Mark debt as fully paid
+  // Mark bill as fully paid (only for types with status)
+  if (tableInfo.hasStatus) {
   const { error: debtError } = await supabase
-    .from("debts")
-    .update({ 
-      is_paid: true, 
-      paid_at: new Date().toISOString() 
-    })
+      .from(tableInfo.bills)
+      .update({ is_paid: true })
     .eq("id", debtId);
 
   if (debtError) {
     console.error("submitMarkPaidPayment.debtUpdate", debtError);
+    }
   }
 
   // Close modal
@@ -4055,11 +6932,12 @@ function formatCurrency(amount) {
   if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
     return "-";
   }
-  return new Intl.NumberFormat(state.language === "sq" ? "sq-AL" : "en-US", {
-    style: "currency",
-    currency: "EUR",
+  const formatted = new Intl.NumberFormat(state.language === "sq" ? "sq-AL" : "en-US", {
+    style: "decimal",
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(Number(amount));
+  return `${formatted}€`;
 }
 
 function formatDate(value) {
@@ -4086,42 +6964,52 @@ function capitalize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-async function generateNextReferenceNumber() {
+async function getNextReferenceNumberValue() {
   try {
-    // Query all debts to find the highest reference number
-    const { data, error } = await supabase
-      .from("debts")
+    // Query all split bill tables to find the highest reference number
+    const tables = Object.values(EXPENSE_TABLES).map(t => t.bills);
+    const queries = tables.map(table => 
+      supabase
+        .from(table)
       .select("reference")
       .not("reference", "is", null)
       .order("reference", { ascending: false })
-      .limit(1);
+        .limit(1)
+    );
 
-    if (error) {
-      console.error("generateNextReferenceNumber", error);
-      // If error, return a default starting number
-      return 1;
+    const results = await Promise.all(queries);
+
+    let maxRef = 0;
+    for (const result of results) {
+      if (!result.error && result.data && result.data.length > 0) {
+        const ref = result.data[0].reference;
+        // Parse REF-000001 format or plain number
+        let refNum = 0;
+        if (typeof ref === 'string' && ref.startsWith('REF-')) {
+          refNum = parseInt(ref.replace('REF-', ''), 10) || 0;
+        } else {
+          refNum = typeof ref === 'number' ? ref : parseInt(ref, 10) || 0;
+        }
+        if (refNum > maxRef) maxRef = refNum;
+      }
     }
 
-    // Reference is now stored as integer, so we can use it directly
-    if (!data || data.length === 0 || !data[0].reference) {
-      return 1; // Start from 1 if no references exist
-    }
-
-    // Get the maximum reference number and increment
-    const maxNumber = typeof data[0].reference === 'number' 
-      ? data[0].reference 
-      : parseInt(data[0].reference, 10) || 0;
-    
-    return maxNumber + 1;
+    return maxRef + 1;
   } catch (error) {
-    console.error("generateNextReferenceNumber", error);
+    console.error("getNextReferenceNumberValue", error);
     return 1;
   }
 }
 
-function formatReferenceNumber(number) {
-  // Format number for display with "#" prefix
-  return typeof number === 'number' ? `#${number}` : `#${number || ''}`;
+async function generateNextReferenceNumber() {
+  const nextNum = await getNextReferenceNumberValue();
+  return 'REF-' + String(nextNum).padStart(6, '0');
+}
+
+function formatReferenceNumber(ref) {
+  // Display reference as-is (REF-000001 format)
+  if (!ref) return '';
+  return String(ref);
 }
 
 // Authentication Functions
@@ -4260,7 +7148,8 @@ async function handleLogout() {
     if (elements.paymentsTableBody) elements.paymentsTableBody.innerHTML = "";
     if (elements.apartmentsTableBody) elements.apartmentsTableBody.innerHTML = "";
     if (elements.tenantsTableBody) elements.tenantsTableBody.innerHTML = "";
-    if (elements.contractsTableBody) elements.contractsTableBody.innerHTML = "";
+    if (elements.contractsActiveTableBody) elements.contractsActiveTableBody.innerHTML = "";
+    if (elements.contractsInactiveTableBody) elements.contractsInactiveTableBody.innerHTML = "";
   } catch (error) {
     console.error("Logout error:", error);
     notify("error", translate("errorLoad"));
@@ -4285,9 +7174,6 @@ function updateAuthUI() {
     if (elements.authControls) elements.authControls.style.display = "flex";
     const statisticsLink = document.getElementById("statisticsLink");
     if (statisticsLink) statisticsLink.style.display = "flex";
-    if (elements.userEmail) {
-      elements.userEmail.textContent = state.currentUser.email || "";
-    }
   } else {
     if (elements.authControls) elements.authControls.style.display = "none";
     const statisticsLink = document.getElementById("statisticsLink");
@@ -4409,13 +7295,20 @@ async function loadTenantView() {
 }
 
 function renderTenantInfo(tenant) {
+  // Prefer contract start date as "entry" date; fall back to tenant.entry_date
+  const primaryContract = getPrimaryContractForTenant(tenant.id);
+  const entryDate =
+    (primaryContract && primaryContract.start_date) || tenant.entry_date;
+
   elements.tenantInfoList.innerHTML = `
     <dt>${translate("tenantFullName")}:</dt>
     <dd>${sanitize(tenant.full_name)}</dd>
+    <dt>${translate("tenantEmail")}:</dt>
+    <dd>${sanitize(tenant.email || "-")}</dd>
     <dt>${translate("tenantPhone")}:</dt>
     <dd>${sanitize(tenant.phone || "-")}</dd>
     <dt>${translate("tenantSince")}:</dt>
-    <dd>${formatDate(tenant.entry_date)}</dd>
+    <dd>${formatDate(entryDate)}</dd>
   `;
 }
 
@@ -4446,28 +7339,70 @@ function renderTenantContract(tenantId) {
 
 function renderTenantDebts() {
   const tenantId = state.selectedTenantId;
-  const targetDebts = state.debts.filter(
-    (debt) => equalsId(debt.tenant_id, tenantId) && !debt.is_paid
+  const allDebts = state.debts.filter(
+    (debt) => equalsId(debt.tenant_id, tenantId)
   );
-  if (!targetDebts.length) {
-    elements.tenantDebtsTableBody.innerHTML = `<tr><td colspan="4">${translate(
-      "noDebtsFound"
-    )}</td></tr>`;
-    return;
-  }
-  elements.tenantDebtsTableBody.innerHTML = targetDebts
-    .map((debt) => {
+  const tenantPayments = state.payments.filter(
+    (p) => equalsId(p.tenant_id, tenantId)
+  );
+  
+  // Separate regular debts (unpaid) from utility debts
+  const regularDebts = allDebts.filter(d => !isUtilityType(d.type) && !d.is_paid);
+  const utilityDebts = allDebts.filter(d => isUtilityType(d.type));
+  
+  // Calculate utility balances by type
+  const utilityBalances = {};
+  UTILITY_TYPES.forEach(type => {
+    const expenses = utilityDebts.filter(d => d.type === type)
+      .reduce((sum, d) => sum + normalizeCurrency(d.amount), 0);
+    const payments = tenantPayments.filter(p => p.type === type || 
+      (state.debts.find(d => equalsId(d.id, p.debt_id))?.type === type))
+      .reduce((sum, p) => sum + normalizeCurrency(p.amount), 0);
+    const balance = expenses - payments;
+    if (Math.abs(balance) > 0.01) {
+      utilityBalances[type] = balance;
+    }
+  });
+  
+  const rows = [];
+  
+  // Add regular debts with status
+  regularDebts.forEach((debt) => {
       const status = getDebtStatus(debt);
-      return `
+    rows.push(`
         <tr>
           <td>${sanitize(getDebtTypeLabel(debt))}</td>
           <td>${formatCurrency(debt.amount)}</td>
           <td>${formatDate(debt.due_date)}</td>
           <td><span class="tag ${status.class}">${status.label}</span></td>
+        <td>${formatReferenceNumber(debt.reference)}</td>
         </tr>
-      `;
-    })
-    .join("");
+    `);
+  });
+  
+  // Add utility balances as summary rows
+  Object.entries(utilityBalances).forEach(([type, balance]) => {
+    const typeLabel = translate(`debt${capitalize(type)}`) || type;
+    const balanceLabel = balance > 0 ? translate("owes") || "Owes" : translate("credit") || "Credit";
+    rows.push(`
+      <tr>
+        <td>${sanitize(typeLabel)}</td>
+        <td>${formatCurrency(Math.abs(balance))}</td>
+        <td>-</td>
+        <td><span class="tag ${balance > 0 ? 'tag-overdue' : 'tag-paid'}">${balanceLabel}</span></td>
+        <td>-</td>
+      </tr>
+    `);
+  });
+  
+  if (!rows.length) {
+    elements.tenantDebtsTableBody.innerHTML = `<tr><td colspan="5">${translate(
+      "noDebtsFound"
+    )}</td></tr>`;
+    return;
+  }
+  
+  elements.tenantDebtsTableBody.innerHTML = rows.join("");
 }
 
 function renderTenantPayments() {
@@ -4506,17 +7441,44 @@ function renderTenantFinancialSummary(tenantId) {
     (payment) => equalsId(payment.tenant_id, tenantId)
   );
 
-  const totalDebt = debts.reduce(
-    (sum, debt) => sum + (parseFloat(debt.amount) || 0),
-    0
+  // Separate regular and utility debts
+  const regularDebts = debts.filter(d => !isUtilityType(d.type));
+  const utilityDebts = debts.filter(d => isUtilityType(d.type));
+  
+  const regularPayments = payments.filter(p => {
+    if (isUtilityType(p.type)) return false;
+    const debt = state.debts.find(d => equalsId(d.id, p.debt_id));
+    return !debt || !isUtilityType(debt.type);
+  });
+  const utilityPayments = payments.filter(p => {
+    if (isUtilityType(p.type)) return true;
+    const debt = state.debts.find(d => equalsId(d.id, p.debt_id));
+    return debt && isUtilityType(debt.type);
+  });
+
+  const totalRegularDebt = regularDebts.reduce(
+    (sum, debt) => sum + (parseFloat(debt.amount) || 0), 0
   );
-  const totalPaid = payments.reduce(
-    (sum, payment) => sum + (parseFloat(payment.amount) || 0),
-    0
+  const totalUtilityDebt = utilityDebts.reduce(
+    (sum, debt) => sum + (parseFloat(debt.amount) || 0), 0
   );
-  const totalUnpaid = debts
+  const totalRegularPaid = regularPayments.reduce(
+    (sum, payment) => sum + (parseFloat(payment.amount) || 0), 0
+  );
+  const totalUtilityPaid = utilityPayments.reduce(
+    (sum, payment) => sum + (parseFloat(payment.amount) || 0), 0
+  );
+  
+  const totalDebt = totalRegularDebt + totalUtilityDebt;
+  const totalPaid = totalRegularPaid + totalUtilityPaid;
+  
+  // Unpaid regular + utility balance
+  const unpaidRegular = regularDebts
     .filter((debt) => !debt.is_paid)
     .reduce((sum, debt) => sum + (parseFloat(debt.amount) || 0), 0);
+  const utilityBalance = totalUtilityDebt - totalUtilityPaid;
+  const totalUnpaid = unpaidRegular + Math.max(0, utilityBalance);
+  
   const primaryContract = getPrimaryContractForTenant(tenantId);
 
   elements.tenantFinancialList.innerHTML = `
@@ -4549,9 +7511,16 @@ function exportDebtsToPdf() {
   }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "landscape" });
-  const startY = 20;
+  let currentY = 20;
+  
+  // Get currently selected expense category
+  const selectedCategory = state.expensesCategory || "all";
+  const categoryLabel = selectedCategory === "all" 
+    ? translate("debtsPaymentsTitle") 
+    : translate(`debt${capitalize(selectedCategory)}`) || selectedCategory;
+  
   doc.setFontSize(16);
-  doc.text(translate("debtsPaymentsTitle"), 14, 15);
+  doc.text(categoryLabel, 14, 15);
   doc.setFontSize(11);
 
   const headers = [
@@ -4560,26 +7529,34 @@ function exportDebtsToPdf() {
     translate("amount"),
     translate("dueDate"),
     translate("status"),
-    translate("notes"),
+    translate("reference") || "Reference",
   ];
 
-  const rows = state.debts.map((debt) => {
+  // Filter expenses by selected category and global tenant filter
+  let filteredDebts = getFilteredDebts();
+  if (selectedCategory !== "all") {
+    filteredDebts = filteredDebts.filter(debt => debt.type === selectedCategory);
+  }
+
+  // All expenses from split tables (combined in state.debts)
+  const allExpenses = filteredDebts.map((debt) => {
     const tenant = state.tenants.find((t) => equalsId(t.id, debt.tenant_id));
-    const status = getDebtStatus(debt);
+    const isUtility = isUtilityType(debt.type);
+    const status = isUtility ? { label: "-" } : getDebtStatus(debt);
     return [
       sanitize(tenant?.full_name || translate("unknown")),
       getDebtTypeLabel(debt),
       formatCurrency(debt.amount),
       formatDate(debt.due_date),
       status.label,
-      sanitize(stripElectricityCutMarker(debt.notes || "")),
+      formatReferenceNumber(debt.reference),
     ];
   });
 
   doc.autoTable({
-    startY,
+    startY: currentY,
     head: [headers],
-    body: rows,
+    body: allExpenses,
     styles: { fontSize: 9 },
     theme: "grid",
     headStyles: {
@@ -4588,384 +7565,46 @@ function exportDebtsToPdf() {
     },
   });
 
-  doc.save("debts-report.pdf");
+  // Include contract info in filename if filtered
+  let filename = selectedCategory === "all" ? "debts-report" : `${selectedCategory}-report`;
+  if (state.globalContractFilter) {
+    const contract = state.contracts.find(c => equalsId(c.id, state.globalContractFilter));
+    if (contract) {
+      const tenant = state.tenants.find(t => equalsId(t.id, contract.tenant_id));
+      if (tenant) {
+        filename += `-${tenant.full_name.replace(/\s+/g, '-')}`;
+      }
+    }
+  }
+  doc.save(`${filename}.pdf`);
   incrementPdfGeneratedCount();
 }
 
+// Wrapper function that passes dependencies to the PDF export module
 function exportTenantToPdf(language = "en", format = "normal") {
-  if (!state.selectedTenantId) {
-    notify("error", translate("noTenantSelected"));
-    return;
-  }
-  const tenant = state.tenants.find((t) =>
-    equalsId(t.id, state.selectedTenantId)
-  );
-  if (!tenant) return;
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  setTemporaryLanguage(language);
-
-  // Header
-  doc.setFillColor(8, 168, 138); // #08a88a
-  doc.rect(0, 0, 210, 36, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.text(`${tenant.full_name}`, 14, 18);
-  doc.setFontSize(11);
-  doc.text(translate("tenantDashboard"), 14, 26);
-
-  // Reset text color for body
-  doc.setTextColor(31, 41, 55);
-
-  const debts = state.debts.filter((debt) =>
-    equalsId(debt.tenant_id, tenant.id)
-  );
-  const unpaidDebts = debts.filter((debt) => !debt.is_paid);
-  const payments = state.payments.filter((payment) =>
-    equalsId(payment.tenant_id, tenant.id)
-  );
-  const debtsById = new Map(debts.map((debt) => [String(debt.id), debt]));
-
-  const totalUnpaid = unpaidDebts.reduce(
-    (sum, debt) => sum + (parseFloat(debt.amount) || 0),
-    0
-  );
-  const totalPaid = payments.reduce(
-    (sum, payment) => sum + (parseFloat(payment.amount) || 0),
-    0
-  );
-  const primaryContract = getPrimaryContractForTenant(tenant.id);
-
-  // Summary cards
-  const summaryStartY = 46;
-  const cardWidth = 60;
-  const cardHeight = 24;
-  const summaries = [
-    {
-      label: translate("tenantPhone"),
-      value: tenant.phone || "-",
-    },
-    {
-      label: translate("tenantSince"),
-      value: formatDate(tenant.entry_date),
-    },
-    {
-      label: translate("contractActive"),
-      value: primaryContract
-        ? primaryContract.is_active
-          ? translate("yes")
-          : translate("no")
-        : translate("unknown"),
-    },
-  ];
-
-  summaries.forEach((item, index) => {
-    const x = 14 + index * (cardWidth + 6);
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(x, summaryStartY, cardWidth, cardHeight, 3, 3, "F");
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(item.label, x + 4, summaryStartY + 8);
-    doc.setFontSize(11);
-    doc.setTextColor(30, 41, 59);
-    doc.text(item.value, x + 4, summaryStartY + 17);
-  });
-
-  const metricsStartY = summaryStartY + cardHeight + 16;
-  const metrics = [
-    {
-      label: translate("totalDebt"),
-      value: formatCurrency(totalUnpaid + totalPaid),
-    },
-    {
-      label: translate("totalPaid"),
-      value: formatCurrency(totalPaid),
-    },
-    {
-      label: translate("totalUnpaid"),
-      value: formatCurrency(totalUnpaid),
-    },
-  ];
-
-  metrics.forEach((item, index) => {
-    const x = 14 + index * (cardWidth + 6);
-    doc.setFillColor(8, 168, 138); // #08a88a
-    doc.roundedRect(x, metricsStartY, cardWidth, cardHeight, 3, 3, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
-    doc.text(item.label, x + 4, metricsStartY + 8);
-    doc.setFontSize(12);
-    doc.setTextColor(255, 255, 255);
-    doc.text(item.value, x + 4, metricsStartY + 17);
-  });
-
-  let cursorY = metricsStartY + cardHeight + 16;
-
-  const autoTableAvailable =
-    doc.autoTable && typeof doc.autoTable === "function";
-
-  // Create summary table of unpaid expenses by type
-  doc.setTextColor(30, 41, 59);
-  doc.setFontSize(12);
-  doc.text(translate("unpaidExpensesSummary") || "Unpaid Expenses Summary", 14, cursorY);
-  cursorY += 6;
-
-  // Group unpaid debts by type
-  const unpaidByType = new Map();
-  unpaidDebts.forEach((debt) => {
-    const type = debt.type;
-    if (!unpaidByType.has(type)) {
-      unpaidByType.set(type, []);
-    }
-    unpaidByType.get(type).push(debt);
-  });
-
-  // Calculate totals by type
-  const expenseSummary = [];
-  const typeOrder = ["rent", "garbage", "maintenance", "electricity", "water", "thermos", "damage", "other"];
-  
-  typeOrder.forEach((type) => {
-    if (unpaidByType.has(type)) {
-      const debtsOfType = unpaidByType.get(type);
-      const total = debtsOfType.reduce((sum, debt) => sum + normalizeCurrency(debt.amount), 0);
-      if (total > 0) {
-        const typeLabel = translate(`debt${capitalize(type)}`) || type;
-        expenseSummary.push({
-          type: typeLabel,
-          amount: total
-        });
-      }
-    }
-  });
-
-  // Add any other types not in the order
-  Array.from(unpaidByType.keys()).forEach((type) => {
-    if (!typeOrder.includes(type) && !expenseSummary.find(e => e.type === (translate(`debt${capitalize(type)}`) || type))) {
-      const debtsOfType = unpaidByType.get(type);
-      const total = debtsOfType.reduce((sum, debt) => sum + normalizeCurrency(debt.amount), 0);
-      if (total > 0) {
-        const typeLabel = translate(`debt${capitalize(type)}`) || type;
-        expenseSummary.push({
-          type: typeLabel,
-          amount: total
-        });
-      }
-    }
-  });
-
-  if (expenseSummary.length > 0) {
-    if (autoTableAvailable) {
-      doc.autoTable({
-        startY: cursorY,
-        head: [[translate("expenseType") || "Expense Type", translate("amount") || "Amount"]],
-        body: expenseSummary.map(item => [
-          item.type,
-          formatCurrency(item.amount)
-        ]),
-        styles: {
-          fontSize: 11,
-          cellPadding: 3,
-        },
-        headStyles: {
-          fillColor: [8, 168, 138], // #08a88a
-          textColor: [255, 255, 255],
-        },
-        columnStyles: {
-          0: { fontStyle: 'bold' },
-          1: { halign: 'right' }
-        }
-      });
-      cursorY = doc.lastAutoTable.finalY + 12;
+  if (typeof window._exportTenantToPdfInternal === "function") {
+    // Use the exported function from pdf-export.js
+    window._exportTenantToPdfInternal({
+      state,
+      translate,
+      formatCurrency,
+      formatDate,
+      equalsId,
+      isUtilityType,
+      normalizeCurrency,
+      capitalize,
+      formatReferenceNumber,
+      getPrimaryContractForTenant,
+      setTemporaryLanguage,
+      restoreLanguageAfterPdf,
+      incrementPdfGeneratedCount,
+      notify
+    }, language, format);
     } else {
-      doc.setFontSize(11);
-      expenseSummary.forEach((item, index) => {
-        const lineY = cursorY + index * 7;
-        doc.text(
-          `${item.type}: ${formatCurrency(item.amount)}`,
-          14,
-          lineY
-        );
-      });
-      cursorY += expenseSummary.length * 7 + 12;
-    }
+    // Fallback if pdf-export.js hasn't loaded yet
+    console.error("PDF export module not loaded");
+    notify("error", "PDF export module not loaded. Please refresh the page.");
   }
-
-  doc.setFontSize(12);
-  doc.setTextColor(30, 41, 59);
-  doc.text(translate("tenantDebts"), 14, cursorY);
-  cursorY += 4;
-
-  if (unpaidDebts.length) {
-    if (autoTableAvailable) {
-      doc.autoTable({
-        startY: cursorY,
-        head: [
-          [
-            translate("debtType"),
-            translate("amount"),
-            translate("dueDate"),
-            translate("status"),
-          ],
-        ],
-          body: unpaidDebts.map((debt) => {
-          const status = getDebtStatus(debt);
-          return [
-              getDebtTypeLabel(debt),
-            formatCurrency(debt.amount),
-            formatDate(debt.due_date),
-            status.label,
-          ];
-        }),
-        styles: {
-          fontSize: 10,
-          cellPadding: 2.5,
-        },
-        headStyles: {
-          fillColor: [8, 168, 138], // #08a88a
-          textColor: [255, 255, 255],
-        },
-      });
-      cursorY = doc.lastAutoTable.finalY + 12;
-    } else {
-      doc.setFontSize(10);
-      unpaidDebts.forEach((debt, index) => {
-        const status = getDebtStatus(debt);
-        const lineY = cursorY + index * 6;
-        doc.text(
-          `${getDebtTypeLabel(debt)} — ${formatCurrency(debt.amount)} — ${formatDate(
-            debt.due_date
-          )} — ${status.label}`,
-          14,
-          lineY
-        );
-      });
-      cursorY += unpaidDebts.length * 6 + 12;
-    }
-  } else {
-    doc.setFontSize(10);
-    doc.text(translate("summaryNoData"), 14, cursorY + 6);
-    cursorY += 18;
-  }
-
-  // Only show payments section in detailed format
-  if (format === "detailed") {
-    doc.setFontSize(12);
-    doc.setTextColor(30, 41, 59);
-    doc.text(translate("tenantPayments"), 14, cursorY);
-    cursorY += 4;
-
-    if (payments.length) {
-    const paymentTypeOrder = [
-      "rent",
-      "garbage",
-      "maintenance",
-      "electricity",
-      "water",
-      "thermos",
-    ];
-    const paymentsByType = new Map();
-
-    payments.forEach((payment) => {
-      const debt = payment.debt_id
-        ? debtsById.get(String(payment.debt_id)) || null
-        : null;
-      const typeKey = debt?.type || "__unknown__";
-      if (!paymentsByType.has(typeKey)) {
-        paymentsByType.set(typeKey, []);
-      }
-      paymentsByType.get(typeKey).push({ payment, debt });
-    });
-
-    const additionalTypes = Array.from(paymentsByType.keys()).filter(
-      (type) =>
-        !paymentTypeOrder.includes(type) && type !== "__unknown__"
-    );
-    if (paymentsByType.has("__unknown__")) {
-      additionalTypes.push("__unknown__");
-    }
-    const orderedTypes = paymentTypeOrder
-      .filter((type) => paymentsByType.has(type))
-      .concat(additionalTypes);
-
-    let hasRenderedPaymentTable = false;
-
-    orderedTypes.forEach((typeKey) => {
-      const entries = paymentsByType.get(typeKey);
-      if (!entries || !entries.length) return;
-      hasRenderedPaymentTable = true;
-
-      const sectionLabel =
-        typeKey === "__unknown__"
-          ? translate("unknown")
-          : translate(`debt${capitalize(typeKey)}`) || typeKey;
-
-      doc.setFontSize(11);
-      doc.setTextColor(30, 41, 59);
-      doc.text(sectionLabel, 14, cursorY);
-      cursorY += 4;
-
-      if (autoTableAvailable) {
-        doc.autoTable({
-          startY: cursorY,
-          head: [
-            [
-              translate("paymentDate"),
-              translate("dueDate"),
-              translate("amount"),
-              translate("paymentMethod"),
-              translate("paymentReference"),
-            ],
-          ],
-          body: entries.map(({ payment, debt }) => [
-            formatDate(payment.payment_date),
-            formatDate(debt?.due_date),
-            formatCurrency(payment.amount),
-            payment.method || "-",
-            formatReferenceForDisplay(payment.reference),
-          ]),
-          styles: {
-            fontSize: 10,
-            cellPadding: 2.5,
-          },
-          headStyles: {
-            fillColor: [8, 168, 138], // #08a88a
-            textColor: [255, 255, 255],
-          },
-        });
-        cursorY = doc.lastAutoTable.finalY + 8;
-      } else {
-        doc.setFontSize(10);
-        entries.forEach(({ payment, debt }, index) => {
-          const lineY = cursorY + 6 + index * 6;
-          doc.text(
-            `${formatDate(payment.payment_date)} — ${formatDate(
-              debt?.due_date
-            )} — ${formatCurrency(payment.amount)} — ${payment.method || "-"} (${
-              formatReferenceForDisplay(payment.reference)
-            })`,
-            14,
-            lineY
-          );
-        });
-        cursorY += entries.length * 6 + 8;
-      }
-    });
-
-    if (!hasRenderedPaymentTable) {
-      doc.setFontSize(10);
-      doc.text(translate("summaryNoData"), 14, cursorY + 6);
-    }
-    } else {
-      doc.setFontSize(10);
-      doc.text(translate("summaryNoData"), 14, cursorY + 6);
-    }
-  }
-
-  doc.save(`tenant-${tenant.id}.pdf`);
-  incrementPdfGeneratedCount();
-  restoreLanguageAfterPdf();
 }
 
 // Polyfill for autoTable if the plugin is not included by default in jspdf bundle
@@ -4973,6 +7612,7 @@ if (!window.jspdf.jsPDF.API.autoTable) {
   const script = document.createElement("script");
   script.src =
     "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js";
+  script.crossOrigin = "anonymous";
   script.onload = () => console.info("jsPDF AutoTable plugin loaded.");
   document.head.appendChild(script);
 }

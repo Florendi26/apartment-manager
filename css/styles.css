@@ -81,6 +81,19 @@ body::after {
   gap: 1.5rem;
 }
 
+.administrator-option {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem clamp(1.5rem, 3vw, 3rem);
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+body.dark-theme .administrator-option {
+  background: #1e293b;
+  border-bottom-color: #334155;
+}
+
 .header-main h1 {
   margin: 0 0 0.25rem;
   font-size: clamp(1.8rem, 3vw, 2.4rem);
@@ -105,6 +118,62 @@ body::after {
 
 .control label {
   margin-bottom: 0.25rem;
+}
+
+.header-buttons {
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.header-buttons .button-secondary {
+  text-align: center;
+}
+
+.tenant-header-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 0.5rem;
+  width: auto;
+  min-width: 200px;
+}
+
+.tenant-header-grid .button-secondary {
+  text-decoration: none;
+  display: block;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  min-width: 160px;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.tenant-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 0.5rem;
+  width: auto;
+  min-width: 200px;
+}
+
+.tenant-nav-grid .button-secondary {
+  text-decoration: none;
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  min-width: auto !important;
+  width: 100%;
+  text-align: center;
+}
+
+/* Ensure all header buttons (links or real buttons) look identical */
+.app-header .button-secondary {
+  display: block;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  min-width: 160px;
 }
 
 select,
@@ -132,6 +201,20 @@ button {
   color: #ffffff;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Login/signup switch buttons (Login/Sign Up under the forms) */
+.login-view .button-link {
+  background-color: #08a88a;
+  color: #ffffff;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.login-view .button-link:hover {
+  background-color: #079578;
+  box-shadow: 0 6px 14px rgba(8, 168, 138, 0.3);
+  transform: translateY(-1px);
 }
 
 button:hover {
@@ -237,6 +320,374 @@ main {
   visibility: visible !important;
 }
 
+/* Dark theme base */
+body.dark-theme {
+  background: #020617;
+  color: #bbf7d0; /* soft green text */
+}
+
+body.dark-theme .app-header {
+  background: #020617;
+  border-bottom: 1px solid #1f2937;
+}
+
+body.dark-theme .card,
+body.dark-theme .login-card,
+body.dark-theme .admin-summary {
+  background: #020617; /* deep navy/black card */
+  border-color: #111827; /* dark grey border */
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+}
+
+body.dark-theme .subtitle,
+body.dark-theme .muted-text {
+  color: #6ee7b7; /* softer green for secondary text */
+}
+
+/* Green glow for headings and key numbers in dark mode */
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4,
+body.dark-theme h5,
+body.dark-theme h6,
+body.dark-theme .metric-value,
+body.dark-theme .metric-label {
+  color: #bbf7d0;
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+}
+
+body.dark-theme .button-secondary {
+  background-color: #020617;
+  color: #bbf7d0;
+  border: 1px solid #374151;
+}
+
+body.dark-theme .button-secondary:hover {
+  background-color: #111827;
+}
+
+/* Dark theme: keep login/signup switch buttons green */
+body.dark-theme .login-view .button-link {
+  background-color: #16a34a;
+  border-color: #22c55e;
+  color: #022c22;
+}
+
+body.dark-theme .login-view .button-link:hover {
+  background-color: #22c55e;
+  border-color: #22c55e;
+}
+
+body.dark-theme input,
+body.dark-theme select,
+body.dark-theme textarea {
+  background-color: #020617;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+body.dark-theme input::placeholder,
+body.dark-theme textarea::placeholder {
+  color: #6b7280;
+}
+
+body.dark-theme table {
+  background-color: #020617;
+  color: #bbf7d0;
+}
+
+body.dark-theme th {
+  background-color: #111827;
+}
+
+body.dark-theme td {
+  border-color: #1f2937;
+}
+
+/* Dark rows / boxes instead of white */
+body.dark-theme .summary-panel tbody tr:nth-child(even),
+body.dark-theme tbody tr:nth-child(even) {
+  background-color: #020617;
+}
+
+body.dark-theme tbody tr:hover {
+  background-color: #020617;
+}
+
+/* Metric cards darker in dark mode */
+body.dark-theme .metric-card {
+  background: #020617;
+  border-color: #064e3b;
+}
+
+body.dark-theme .metric-card.metric-amount {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 78, 59, 0.8));
+  border-color: #16a34a;
+}
+
+/* Global filter bar darker */
+body.dark-theme .global-tenant-filter {
+  background: #020617;
+  border-color: #16a34a;
+  box-shadow: 0 6px 18px rgba(6, 95, 70, 0.7);
+}
+
+body.dark-theme .global-tenant-filter.has-filter {
+  background: #022c22;
+  border-color: #22c55e;
+}
+
+body.dark-theme .global-tenant-filter label {
+  color: #bbf7d0;
+}
+
+body.dark-theme .global-tenant-filter select {
+  background-color: #020617;
+  color: #bbf7d0;
+  border-color: #16a34a;
+}
+
+body.dark-theme .global-tenant-filter button,
+body.dark-theme .global-tenant-filter .button-secondary {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+  border-color: #16a34a;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  min-height: 2.5rem;
+  border: 1px solid #16a34a;
+}
+
+body.dark-theme .global-tenant-filter button:hover,
+body.dark-theme .global-tenant-filter .button-secondary:hover {
+  background-color: #22c55e !important;
+  border-color: #22c55e;
+  color: #ffffff !important;
+}
+
+/* Tenant nav grid dark theme */
+body.dark-theme .tenant-nav-grid .button-secondary {
+  background-color: #020617;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+body.dark-theme .tenant-nav-grid .button-secondary:hover {
+  background-color: rgba(22, 163, 74, 0.1);
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+/* Tenant header grid dark theme */
+body.dark-theme .tenant-header-grid .button-secondary {
+  background-color: #020617;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+body.dark-theme .tenant-header-grid .button-secondary:hover {
+  background-color: rgba(22, 163, 74, 0.1);
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+/* Tenant main nav dark theme (legacy, kept for compatibility) */
+body.dark-theme .tenant-main-nav .button-secondary {
+  background-color: #020617;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+body.dark-theme .tenant-main-nav .button-secondary:hover {
+  background-color: rgba(22, 163, 74, 0.1);
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+body.dark-theme .tenant-main-nav .button-secondary.active {
+  background-color: #16a34a;
+  color: #022c22;
+  border-color: #22c55e;
+  cursor: default;
+  pointer-events: none;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+}
+
+body.dark-theme .tenant-main-nav .button-secondary.active:hover {
+  background-color: #16a34a;
+  color: #022c22;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+}
+
+/* Admin nav pills darker */
+body.dark-theme .admin-nav button {
+  background-color: #020617;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+body.dark-theme .admin-nav button.active {
+  background-color: #16a34a;
+  border-color: #22c55e;
+  color: #022c22;
+}
+
+/* Match key expense buttons to nav pills in dark mode */
+body.dark-theme .form-toggle button {
+  background-color: #020617;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+body.dark-theme .form-toggle button.active {
+  background-color: #16a34a;
+  border-color: #22c55e;
+  color: #022c22;
+}
+
+body.dark-theme .summary-controls button,
+body.dark-theme #debtFormSubmit {
+  background-color: #16a34a;
+  border-color: #22c55e;
+  color: #022c22;
+}
+
+body.dark-theme .summary-controls button:hover,
+body.dark-theme #debtFormSubmit:hover {
+  background-color: #22c55e;
+  border-color: #22c55e;
+}
+
+/* Inline edit inputs darker */
+body.dark-theme .inline-edit-input,
+body.dark-theme .inline-edit-input select {
+  background-color: #020617;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+/* Mark Paid modal & payment buttons in dark mode */
+body.dark-theme .mark-paid-modal-content {
+  background-color: #020617;
+  color: #bbf7d0;
+  border: 1px solid #111827;
+}
+
+body.dark-theme .mark-paid-form label {
+  color: #bbf7d0;
+}
+
+body.dark-theme .change-password-modal-content {
+  background-color: #020617;
+  color: #bbf7d0;
+  border: 1px solid #111827;
+}
+
+body.dark-theme .change-password-close {
+  color: #bbf7d0;
+}
+
+body.dark-theme .change-password-close:hover {
+  background-color: #1f2937;
+  color: #22c55e;
+}
+
+body.dark-theme .change-password-modal-content h3 {
+  color: #bbf7d0;
+}
+
+body.dark-theme .password-step label {
+  color: #bbf7d0;
+}
+
+body.dark-theme .password-step .form-input {
+  background-color: #020617;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+body.dark-theme .password-step .form-input:focus {
+  border-color: #16a34a;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+}
+
+body.dark-theme .payment-method-btn {
+  background-color: #020617;
+  border-color: #374151;
+  color: #bbf7d0;
+}
+
+body.dark-theme .payment-method-btn:hover {
+  border-color: #16a34a;
+  color: #bbf7d0;
+}
+
+body.dark-theme .payment-method-btn.active {
+  background-color: #16a34a;
+  border-color: #16a34a;
+  color: #022c22;
+}
+
+/* Feature buttons dark theme */
+body.dark-theme .feature-button {
+  background-color: #020617;
+  border-color: #374151;
+  color: #bbf7d0;
+}
+
+body.dark-theme .feature-button:hover {
+  border-color: #16a34a;
+  color: #bbf7d0;
+}
+
+body.dark-theme .feature-button.selected {
+  background-color: #16a34a;
+  border-color: #16a34a;
+  color: #022c22;
+}
+
+/* Dark mode: primary action buttons use green pill style */
+body.dark-theme .button-primary,
+body.dark-theme .summary-controls button,
+body.dark-theme #debtFormSubmit,
+body.dark-theme #paymentFormSubmit,
+body.dark-theme #refreshDebts,
+body.dark-theme #refreshApartments,
+body.dark-theme #refreshTenants,
+body.dark-theme #refreshContracts,
+body.dark-theme #exportDebtsPdf,
+body.dark-theme #markPaidSubmit,
+body.dark-theme [data-i18n="addApartment"],
+body.dark-theme [data-i18n="addTenant"],
+body.dark-theme [data-i18n="addContract"],
+body.dark-theme [data-i18n="loadTenant"] {
+  background-color: #16a34a;
+  border-color: #22c55e;
+  color: #022c22;
+}
+
+body.dark-theme .button-primary:hover,
+body.dark-theme .summary-controls button:hover,
+body.dark-theme #debtFormSubmit:hover,
+body.dark-theme #paymentFormSubmit:hover,
+body.dark-theme #refreshDebts:hover,
+body.dark-theme #refreshApartments:hover,
+body.dark-theme #refreshTenants:hover,
+body.dark-theme #refreshContracts:hover,
+body.dark-theme #exportDebtsPdf:hover,
+body.dark-theme #markPaidSubmit:hover,
+body.dark-theme [data-i18n="addApartment"]:hover,
+body.dark-theme [data-i18n="addTenant"]:hover,
+body.dark-theme [data-i18n="addContract"]:hover,
+body.dark-theme [data-i18n="loadTenant"]:hover {
+  background-color: #22c55e;
+  border-color: #22c55e;
+}
+
 .confirmation-animation-container canvas {
   width: 300px !important;
   height: 300px !important;
@@ -244,6 +695,150 @@ main {
   max-height: 300px !important;
   display: block !important;
   visibility: visible !important;
+}
+
+/* Profile page layout */
+.profile-layout {
+  display: block;
+  margin-top: 1rem;
+}
+
+.profile-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.avatar-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #08a88a, #0f766e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1.5rem;
+  box-shadow: 0 10px 25px rgba(8, 168, 138, 0.35);
+}
+
+.muted-text {
+  margin: 0.15rem 0 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.definition-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 1.5rem 0 0;
+}
+
+@media (max-width: 900px) {
+  .definition-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .definition-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.definition-list dt {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin-bottom: 0.1rem;
+}
+
+.definition-list dd {
+  margin: 0;
+  font-weight: 500;
+  color: #111827;
+}
+
+/* Better contrast for profile details in dark mode */
+body.dark-theme .definition-list dt {
+  color: #6ee7b7;
+}
+
+body.dark-theme .definition-list dd {
+  color: #bbf7d0;
+}
+
+.profile-actions {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.profile-actions .button-secondary {
+  background-color: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+}
+
+.profile-actions .button-secondary:hover {
+  background-color: #f9fafb;
+}
+
+/* Make profile card actions show 3 buttons per row on wide screens */
+.profile-actions .button-secondary,
+.profile-actions .button-primary {
+  flex: 1 1 calc(33.333% - 0.75rem);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .profile-actions .button-secondary,
+  .profile-actions .button-primary {
+    flex-basis: 100%;
+  }
+}
+
+.profile-side {
+  background: linear-gradient(135deg, #ecfdf5, #f9fafb);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+}
+
+.profile-side h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  color: #111827;
+}
+
+.activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-item {
+  padding: 0.6rem 0.2rem;
+  border-bottom: 1px dashed #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
 }
 
 @keyframes fadeIn {
@@ -281,6 +876,69 @@ main {
   to {
     opacity: 0;
   }
+}
+
+/* Delete Apartment Confirmation Modal */
+.delete-confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  background-color: rgba(0, 0, 0, 0.6);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.delete-confirmation-content {
+  background-color: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.3s ease-out;
+}
+
+.delete-confirmation-content h3 {
+  margin: 0 0 1rem 0;
+  color: #dc2626;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.delete-confirmation-message {
+  margin: 0 0 1.5rem 0;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.delete-confirmation-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.delete-confirmation-actions button {
+  min-width: 100px;
+  padding: 0.75rem 1.5rem;
+}
+
+.delete-confirmation-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
 }
 
 /* Mark Paid Modal */
@@ -371,11 +1029,138 @@ main {
   color: white;
 }
 
+/* Feature buttons styling */
+.features-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.feature-button {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #d1d5db;
+  background-color: white;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.feature-button:hover {
+  border-color: #08a88a;
+  color: #08a88a;
+}
+
+.feature-button.selected {
+  background-color: #08a88a;
+  border-color: #08a88a;
+  color: white;
+}
+
 .mark-paid-form .form-actions {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
   margin-top: 2rem;
+}
+
+/* Change Password Modal */
+.change-password-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.change-password-modal-content {
+  background-color: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.3s ease-out;
+  position: relative;
+}
+
+.change-password-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #6b7280;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.change-password-close:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.change-password-modal-content h3 {
+  margin: 0 0 1.5rem 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+}
+
+.password-step .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.password-step label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.password-step .form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.password-step .form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.password-step .form-actions button {
+  min-width: 100px;
+  padding: 0.75rem 1.5rem;
+}
+
+.error-message {
+  display: block;
+  margin-top: 0.5rem;
+  color: #dc2626;
+  font-size: 0.875rem;
 }
 
 @keyframes scaleOut {
@@ -395,6 +1180,217 @@ main {
 
 .view.active {
   display: block;
+}
+
+/* Global Tenant Filter */
+.global-tenant-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #08a88a;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(8, 168, 138, 0.1);
+  width: fit-content;
+}
+
+.global-tenant-filter label {
+  font-weight: 600;
+  color: #065f46;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.global-tenant-filter select {
+  flex: 0 1 auto;
+  min-width: 200px;
+  max-width: 300px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #08a88a;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  background: white;
+}
+
+.global-tenant-filter button,
+.global-tenant-filter .button-secondary {
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: #ffffff !important;
+  background-color: #475569 !important;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  min-height: 2.5rem;
+  border: none;
+}
+
+.global-tenant-filter button:hover,
+.global-tenant-filter .button-secondary:hover {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+.button-danger {
+  background-color: #ef4444;
+  color: white;
+  border: 1px solid #dc2626;
+}
+
+.button-danger:hover {
+  background-color: #dc2626;
+  border-color: #b91c1c;
+}
+
+.button-danger:active {
+  background-color: #b91c1c;
+}
+
+body.dark-theme .button-danger {
+  background-color: #dc2626;
+  border-color: #b91c1c;
+}
+
+body.dark-theme .button-danger:hover {
+  background-color: #b91c1c;
+  border-color: #991b1b;
+}
+
+.button-small {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.global-tenant-filter.has-filter {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-color: #059669;
+}
+
+.global-tenant-filter .filter-active-label {
+  font-weight: 600;
+  color: #059669;
+  margin-left: auto;
+}
+
+/* Date Input Group - typeable inputs */
+.date-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Password show/hide on login & signup */
+.password-field .password-input-wrapper {
+  position: relative;
+}
+
+.password-field input[type="password"],
+.password-field input[type="text"] {
+  width: 100%;
+  padding-right: 2.5rem; /* space for eye icon */
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.4rem;
+}
+
+.password-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+.password-toggle .icon-eye-closed {
+  display: none;
+}
+
+.password-toggle.is-visible .icon-eye-open {
+  display: none !important;
+}
+
+.password-toggle.is-visible .icon-eye-closed {
+  display: block !important;
+}
+
+.password-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+  display: block;
+}
+
+.date-input {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.date-input.date-day,
+.date-input.date-month {
+  width: 60px;
+}
+
+.date-input.date-year {
+  width: 80px;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #08a88a;
+  box-shadow: 0 0 0 2px rgba(8, 168, 138, 0.2);
+}
+
+/* Hide number input spinners */
+.date-input::-webkit-outer-spin-button,
+.date-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.date-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.tenant-main-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.tenant-main-nav .button-secondary {
+  text-decoration: none;
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  min-width: auto;
+}
+
+.tenant-main-nav .button-secondary.active {
+  background-color: #08a88a;
+  color: #ffffff;
+  border-color: #08a88a;
+  cursor: default;
+  pointer-events: none;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(8, 168, 138, 0.3);
+}
+
+.tenant-main-nav .button-secondary.active:hover {
+  background-color: #08a88a;
+  color: #ffffff;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(8, 168, 138, 0.3);
 }
 
 .admin-nav {
@@ -604,6 +1600,30 @@ main {
   opacity: 0.9;
 }
 
+/* Dark theme styles for tenant PDF controls */
+body.dark-theme .pdf-buttons span {
+  color: #bbf7d0;
+}
+
+body.dark-theme .pdf-format-selector label {
+  color: #bbf7d0;
+}
+
+body.dark-theme .pdf-format-selector input[type="radio"] {
+  accent-color: #22c55e;
+}
+
+body.dark-theme .pdf-buttons button {
+  background-color: #16a34a;
+  border-color: #22c55e;
+  color: #022c22;
+}
+
+body.dark-theme .pdf-buttons button:hover {
+  background-color: #22c55e;
+  border-color: #22c55e;
+}
+
 .card {
   background-color: #ffffff;
   border-radius: 1rem;
@@ -612,6 +1632,32 @@ main {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* Tenant apartments grid cards */
+.apartment-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.apartment-image-wrapper {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+}
+
+.apartment-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.apartment-content {
+  padding: 1rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .admin-summary {
@@ -754,6 +1800,15 @@ main {
   color: #ffffff;
 }
 
+/* Make all main buttons share the same base size and alignment */
+.button-primary,
+.button-secondary,
+.button-danger,
+.button-muted {
+  min-width: 160px;
+  text-align: center;
+}
+
 .button-secondary:hover {
   box-shadow: 0 6px 14px rgba(71, 85, 105, 0.25);
 }
@@ -809,6 +1864,382 @@ tbody tr:nth-child(even) {
 
 tbody tr:hover {
   background-color: #f3f4f6;
+}
+
+tbody tr.view-active {
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+tbody tr.view-active:hover {
+  background-color: rgba(34, 197, 94, 0.15);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-badge.available {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.status-badge.occupied {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.status-badge.pending {
+  background-color: rgba(251, 191, 36, 0.1);
+  color: #d97706;
+}
+
+.status-badge.accepted {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.status-badge.rejected {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.apartment-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.apartment-actions button {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Photo Upload Styles */
+.photo-upload-area {
+  margin-top: 0.5rem;
+}
+
+.photo-upload-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #f9fafb;
+}
+
+.photo-upload-dropzone:hover {
+  border-color: #08a88a;
+  background-color: #f0fdfa;
+}
+
+.photo-upload-dropzone.drag-over {
+  border-color: #08a88a;
+  background-color: #ecfdf5;
+  border-style: solid;
+}
+
+.photo-upload-dropzone p {
+  margin: 0.5rem 0;
+  color: #64748b;
+}
+
+.photo-upload-hint {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.photo-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.photo-preview-item {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+}
+
+.photo-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-preview-img {
+  cursor: zoom-in;
+}
+
+.photo-review-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.photo-review-actions button {
+  min-width: 120px;
+  padding: 0.75rem 1.5rem;
+}
+
+#photoReviewImage {
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+  max-width: 90vw;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+#photoReviewImage.zoomed {
+  cursor: zoom-out;
+  transform: scale(2.5);
+  max-width: none;
+  max-height: none;
+}
+
+.photo-review-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  padding: 0 1rem;
+}
+
+.photo-review-actions button {
+  min-width: 120px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.photo-review-actions .button-danger {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+}
+
+.photo-review-actions .button-danger:hover {
+  background-color: #dc2626;
+}
+
+.photo-review-actions .button-primary {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+}
+
+.photo-review-actions .button-primary:hover {
+  background-color: #2563eb;
+}
+
+.photo-preview-remove {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.photo-preview-remove:hover {
+  background-color: rgba(220, 38, 38, 1);
+}
+
+.apartment-photo-thumbnail {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.apartment-photo-thumbnail:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  position: relative;
+}
+
+/* Photo Viewer Modal */
+.photo-viewer-modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.95);
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-viewer-content {
+  position: relative;
+  max-width: 95%;
+  max-height: 95%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.photo-viewer-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 90vw;
+  max-height: 75vh;
+}
+
+.photo-viewer-content img {
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+
+.photo-viewer-content img.zoomed {
+  cursor: zoom-out;
+  transform: scale(1.5);
+  max-width: none;
+  max-height: none;
+}
+
+.photo-viewer-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 3rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  transition: transform 0.2s;
+}
+
+.photo-viewer-close:hover {
+  transform: scale(1.2);
+}
+
+.photo-viewer-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 3rem;
+  cursor: pointer;
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+  display: none;
+}
+
+.photo-viewer-nav:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.photo-viewer-prev {
+  left: -80px;
+}
+
+.photo-viewer-next {
+  right: -80px;
+}
+
+.photo-viewer-info {
+  color: white;
+  font-size: 1rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.photo-viewer-thumbnails {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 90vw;
+  padding: 0.5rem;
+  overflow-x: auto;
+  max-height: 120px;
+}
+
+.photo-thumbnail-item {
+  width: 80px;
+  height: 80px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.photo-thumbnail-item:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.photo-thumbnail-item.active {
+  border-color: #08a88a;
+  box-shadow: 0 0 10px rgba(8, 168, 138, 0.5);
+}
+
+.photo-thumbnail-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .photo-viewer-prev {
+    left: 10px;
+  }
+  
+  .photo-viewer-next {
+    right: 10px;
+  }
+  
+  .photo-viewer-close {
+    top: 10px;
+    right: 10px;
+  }
 }
 
 tr.editing-row {
@@ -893,6 +2324,12 @@ select.inline-edit-input {
   background-color: #ffffff;
 }
 
+/* Dark theme toolbar (filters row) */
+body.dark-theme .toolbar {
+  background-color: #020617;
+  border-color: #111827;
+}
+
 .toolbar-actions {
   display: flex;
   gap: 0.75rem;
@@ -918,6 +2355,29 @@ dl dd {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+/* Make Actions column narrower in tables */
+th[data-i18n="actions"],
+td[data-label="Actions"] {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  white-space: nowrap;
+  padding: 0.4rem;
+}
+
+.actions-group {
+  gap: 0.3rem;
+}
+
+.actions-group button {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  min-width: auto;
+  white-space: nowrap;
 }
 
 .payment-summary {
@@ -992,12 +2452,134 @@ dl dd {
   color: #166534;
 }
 
+.total-payment-summary-value.payment-summary-credit,
+.payment-summary-value.payment-summary-credit {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Utility Summary Section */
+.utility-summary-section {
+  margin-bottom: 1.5rem;
+}
+
+.utility-summary-header h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+}
+
+.utility-summary-totals {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.utility-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.utility-summary-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.utility-summary-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.utility-summary-difference .utility-summary-value {
+  font-size: 1.5rem;
+}
+
+.utility-summary-difference .utility-summary-value.positive {
+  color: #dc2626;
+}
+
+.utility-summary-difference .utility-summary-value.negative {
+  color: #166534;
+}
+
+.utility-summary-difference .utility-summary-value.zero {
+  color: #6b7280;
+}
+
+/* Dark theme styling for utility summary */
+body.dark-theme .utility-summary-totals {
+  background: #020617;
+  border-radius: 0.75rem;
+  box-shadow: 0 0 0 1px #111827;
+}
+
+body.dark-theme .utility-summary-label {
+  color: #a7f3d0;
+}
+
+body.dark-theme .utility-summary-value {
+  color: #bbf7d0;
+}
+
+body.dark-theme .utility-summary-difference .utility-summary-value.zero {
+  color: #bbf7d0;
+}
+
+.utility-tables-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.utility-table-wrapper h5 {
+  margin: 0 0 0.75rem 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.utility-table-wrapper table {
+  width: 100%;
+}
+
+.utility-table-wrapper .actions-group {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.utility-table-wrapper .actions-group button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .utility-tables-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .utility-summary-totals {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
 .app-footer {
   padding: 1.5rem clamp(1.5rem, 3vw, 3rem);
   text-align: center;
   color: #6b7280;
   background-color: #ffffff;
   border-top: 1px solid #e5e7eb;
+}
+
+/* Dark theme footer */
+body.dark-theme .app-footer {
+  background-color: #020617;
+  border-top-color: #111827;
+  color: #9ca3af;
 }
 
 @media (max-width: 600px) {
@@ -1030,13 +2612,15 @@ dl dd {
 }
 
 /* Date Picker Styles */
-.date-picker {
+.date-picker,
+.date-select-group {
   display: flex;
   gap: 0.5rem;
   align-items: center;
 }
 
-.date-picker select {
+.date-picker select,
+.date-select-group select {
   flex: 1;
   padding: 0.55rem 0.7rem;
   border: 1px solid #d1d5db;
@@ -1047,29 +2631,310 @@ dl dd {
   cursor: pointer;
 }
 
-.date-picker .date-day {
+.date-picker .date-day,
+.date-select-group .date-day {
   max-width: 80px;
   flex: 0 0 auto;
 }
 
-.date-picker .date-month {
+.date-picker .date-month,
+.date-select-group .date-month {
   flex: 2;
   min-width: 120px;
 }
 
-.date-picker .date-year {
+.date-picker .date-year,
+.date-select-group .date-year {
   max-width: 100px;
   flex: 0 0 auto;
 }
 
-.date-picker select:focus {
+.date-picker select:focus,
+.date-select-group select:focus {
   outline: none;
   border-color: #08a88a;
   box-shadow: 0 0 0 3px rgba(8, 168, 138, 0.1);
 }
 
-.date-picker select:disabled {
+.date-picker select:disabled,
+.date-select-group select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Apartment Details Modal Popup */
+.apartment-details-modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75);
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.apartment-details-content {
+  position: relative;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.apartment-details-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.apartment-details-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.apartment-details-header {
+  padding: 2rem 2rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.apartment-details-header h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.apartment-details-body {
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.apartment-details-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.apartment-detail-photo {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid #e5e7eb;
+}
+
+.apartment-detail-photo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.apartment-details-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.apartment-details-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.apartment-details-section h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+  font-weight: 600;
+  border-bottom: 2px solid #08a88a;
+  padding-bottom: 0.5rem;
+}
+
+.apartment-details-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.apartment-details-list dt {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.apartment-details-list dd {
+  margin: 0;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.apartment-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.feature-badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  background-color: rgba(8, 168, 138, 0.1);
+  color: #08a88a;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.apartment-description {
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border-left: 4px solid #08a88a;
+}
+
+.apartment-details-actions {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.apartment-details-actions .button-primary,
+.apartment-details-actions .button-secondary {
+  min-width: 150px;
+}
+
+/* Dark theme support */
+body.dark-theme .apartment-details-content {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+body.dark-theme .apartment-details-header {
+  border-bottom-color: #334155;
+}
+
+body.dark-theme .apartment-details-header h2 {
+  color: #e2e8f0;
+}
+
+body.dark-theme .apartment-details-section h3 {
+  color: #e2e8f0;
+  border-bottom-color: #08a88a;
+}
+
+body.dark-theme .apartment-details-list dt {
+  color: #94a3b8;
+}
+
+body.dark-theme .apartment-details-list dd {
+  color: #e2e8f0;
+}
+
+body.dark-theme .apartment-description {
+  background-color: #0f172a;
+  color: #cbd5e1;
+  border-left-color: #08a88a;
+}
+
+body.dark-theme .apartment-details-actions {
+  border-top-color: #334155;
+}
+
+body.dark-theme .apartment-detail-photo {
+  border-color: #334155;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .apartment-details-content {
+    max-width: 100%;
+    margin: 0.5rem;
+    max-height: 95vh;
+  }
+
+  .apartment-details-header,
+  .apartment-details-body,
+  .apartment-details-actions {
+    padding: 1rem;
+  }
+
+  .apartment-details-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .apartment-details-photos {
+    grid-template-columns: 1fr;
+  }
+
+  .apartment-details-list {
+    grid-template-columns: 1fr;
+  }
+
+  .apartment-details-actions {
+    flex-direction: column;
+  }
+
+  .apartment-details-actions .button-primary,
+  .apartment-details-actions .button-secondary {
+    width: 100%;
+  }
 }
 

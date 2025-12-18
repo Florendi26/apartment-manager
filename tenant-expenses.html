@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tenant - My Expenses</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-main">
+        <h1 data-i18n="tenantExpensesTitle">My Expenses &amp; Payments</h1>
+        <p class="subtitle" data-i18n="tenantExpensesSubtitle">
+          See totals and a detailed breakdown of your expenses and payments.
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="control header-buttons tenant-header-grid">
+          <button
+            type="button"
+            id="tenantThemeToggleBtn"
+            class="button-secondary"
+          >
+            Dark
+          </button>
+          <a href="statistics.html" class="button-secondary" data-i18n="statistics" style="text-decoration: none; display: inline-block; text-align: center;">Statistics</a>
+          <button
+            type="button"
+            id="tenantLanguageToggleBtn"
+            class="button-secondary"
+          >
+            En
+          </button>
+          <a href="profile.html" class="button-secondary" data-i18n="tenantProfileNav" style="text-decoration: none; display: inline-block; text-align: center;">Profile</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="tenantNotificationArea" aria-live="polite"></section>
+
+      <nav class="tenant-main-nav">
+        <a href="tenant-apartments.html" class="button-secondary" data-i18n="tenantApartmentsNav">Apartments</a>
+        <a href="tenant-contracts.html" class="button-secondary" data-i18n="tenantContractsNav">Contracts</a>
+        <a href="tenant-expenses.html" class="button-secondary" data-i18n="tenantExpensesNav">My Expenses</a>
+      </nav>
+
+      <section class="view active">
+        <article class="card">
+          <header>
+            <h3 data-i18n="tenantExpensesSummary">Summary</h3>
+          </header>
+          <div class="grid">
+            <div class="summary-card">
+              <h4 data-i18n="tenantExpensesTotalExpenses">Total Expenses</h4>
+              <p id="tenantTotalExpenses">€0.00</p>
+            </div>
+            <div class="summary-card">
+              <h4 data-i18n="tenantExpensesTotalPayments">Total Payments</h4>
+              <p id="tenantTotalPayments">€0.00</p>
+            </div>
+            <div class="summary-card">
+              <h4 data-i18n="tenantExpensesBalance">Balance</h4>
+              <p id="tenantBalance">€0.00</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <header>
+            <h3 data-i18n="tenantExpensesByType">By Type</h3>
+          </header>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="tenantExpensesType">Type</th>
+                  <th data-i18n="tenantExpensesTotalExpenses">Expenses</th>
+                  <th data-i18n="tenantExpensesTotalPayments">Payments</th>
+                  <th data-i18n="tenantExpensesBalance">Balance</th>
+                </tr>
+              </thead>
+              <tbody id="tenantTypeSummaryBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <header>
+            <h3 data-i18n="tenantExpensesAllExpenses">All Expenses</h3>
+          </header>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="tenantExpensesType">Type</th>
+                  <th data-i18n="tenantExpensesAmount">Amount</th>
+                  <th data-i18n="tenantExpensesDueDate">Due Date</th>
+                  <th data-i18n="tenantExpensesStatus">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tenantExpensesBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <header>
+            <h3 data-i18n="tenantExpensesAllPayments">All Payments</h3>
+          </header>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="tenantExpensesType">Type</th>
+                  <th data-i18n="tenantExpensesAmount">Amount</th>
+                  <th data-i18n="tenantExpensesDate">Date</th>
+                  <th data-i18n="tenantExpensesMethod">Method</th>
+                </tr>
+              </thead>
+              <tbody id="tenantPaymentsBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <small>
+        Powered by Florend Ramusa. Built for property managers and tenants.
+      </small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/languages.js"></script>
+    <script src="js/tenant-common.js"></script>
+    <script src="js/tenant-expenses.js"></script>
+  </body>
+  </html>
+
+
