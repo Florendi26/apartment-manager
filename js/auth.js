@@ -2,7 +2,8 @@
 const SUPABASE_URL = window.APP_CONFIG?.SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = window.APP_CONFIG?.SUPABASE_ANON_KEY || "";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Use var to allow redeclaration if loaded multiple times (prevents SyntaxError)
+var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Phone number formatting function: +383-xx-xxx-xxx
 function formatPhoneNumber(value) {
