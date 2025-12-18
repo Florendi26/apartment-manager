@@ -54,24 +54,68 @@ const EXPENSE_STATE_KEYS = {
 };
 
 // Translations (loaded from central languages.js)
-const translations = window.STATS_TRANSLATIONS || {};
+// Use main TRANSLATIONS for common items, STATS_TRANSLATIONS for statistics-specific
+// Merge translations: prefer STATS_TRANSLATIONS for stats-specific keys, otherwise use main TRANSLATIONS
+function getTranslations() {
+  const mainTranslations = window.TRANSLATIONS || {};
+  const statsTranslations = window.STATS_TRANSLATIONS || {};
+  const merged = { en: {}, sq: {} };
+  
+  // Start with main translations
+  if (mainTranslations.en) {
+    Object.assign(merged.en, mainTranslations.en);
+  }
+  if (mainTranslations.sq) {
+    Object.assign(merged.sq, mainTranslations.sq);
+  }
+  
+  // Override with stats-specific translations
+  if (statsTranslations.en) {
+    Object.assign(merged.en, statsTranslations.en);
+  }
+  if (statsTranslations.sq) {
+    Object.assign(merged.sq, statsTranslations.sq);
+  }
+  
+  return merged;
+}
 
 function translate(key) {
-  return translations[currentLanguage]?.[key] || translations.en[key] || key;
+  const merged = getTranslations();
+  return merged[currentLanguage]?.[key] || merged.en[key] || key;
 }
 
 function translateUI() {
+  const merged = getTranslations();
+  
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     const key = element.getAttribute("data-i18n");
+    if (!key) return;
+    
     const translation = translate(key);
-    if (element.tagName === "INPUT" && element.placeholder) {
-      element.placeholder = translation;
-    } else if (element.tagName === "A" && element.href) {
-      element.textContent = translation;
-    } else {
-      element.textContent = translation;
+    // Only update if we got a valid translation (not the key itself)
+    if (translation && translation !== key) {
+      if (element.tagName === "INPUT" && element.placeholder) {
+        element.placeholder = translation;
+      } else if (element.tagName === "A" && element.href) {
+        element.textContent = translation;
+      } else {
+        element.textContent = translation;
+      }
     }
   });
+  
+  // Update document title if it has data-i18n
+  const titleElement = document.querySelector("title[data-i18n]");
+  if (titleElement) {
+    const titleKey = titleElement.getAttribute("data-i18n");
+    if (titleKey) {
+      const titleTranslation = translate(titleKey);
+      if (titleTranslation && titleTranslation !== titleKey) {
+        document.title = titleTranslation;
+      }
+    }
+  }
 }
 
 function formatCurrency(value) {
@@ -637,6 +681,10 @@ async function init() {
       }
       localStorage.setItem("language", currentLanguage);
       translateUI();
+      // Re-setup navigation to apply translations
+      const role = currentUser?.user_metadata?.role || "Property Owner / Landlord";
+      setupTopNavigationForStats(role);
+      updateTopNavActiveForStats();
     });
   }
 
@@ -675,12 +723,15 @@ async function init() {
 
   translateUI();
   
+  // Setup navigation based on role
+  const role = currentUser?.user_metadata?.role || "Property Owner / Landlord";
+  setupTopNavigationForStats(role);
+  
   // Update top navigation active state
   updateTopNavActiveForStats();
   
   // Update back link for tenants after translation (in case translateUI overrides it)
   if (backLink) {
-    const role = user.user_metadata?.role || "Property Owner / Landlord";
     if (role === "Tenant") {
       backLink.href = "tenant-apartments.html";
       backLink.textContent = "Back to Tenant Portal";
@@ -721,16 +772,91 @@ async function init() {
   await loadInitialData();
 }
 
+function setupTopNavigationForStats(role) {
+  const navContainer = document.getElementById("topNavContainer");
+  if (!navContainer) return;
+  
+  const isTenant = role === "Tenant";
+  
+  // Clear existing navigation
+  navContainer.innerHTML = "";
+  
+  // Statistics button (always shown)
+  const statsBtn = document.createElement("button");
+  statsBtn.className = "top-nav-btn active";
+  statsBtn.id = "topNavStatistics";
+  statsBtn.onclick = () => window.location.href = "statistics.html";
+  statsBtn.innerHTML = '<span data-i18n="floatingNavStatistics">Statistics</span>';
+  navContainer.appendChild(statsBtn);
+  
+  // Divider
+  const divider1 = document.createElement("div");
+  divider1.className = "top-nav-divider";
+  navContainer.appendChild(divider1);
+  
+  if (isTenant) {
+    // Tenant navigation: Tenant - Apartment | Tenant Contracts | Tenant Expenses
+    const tenantApartmentsBtn = document.createElement("button");
+    tenantApartmentsBtn.className = "top-nav-btn";
+    tenantApartmentsBtn.id = "topNavTenantApartments";
+    tenantApartmentsBtn.onclick = () => window.location.href = "tenant-apartments.html";
+    tenantApartmentsBtn.innerHTML = '<span data-i18n="floatingNavTenantApartments">Tenant - Apartment</span>';
+    navContainer.appendChild(tenantApartmentsBtn);
+    
+    const tenantContractsBtn = document.createElement("button");
+    tenantContractsBtn.className = "top-nav-btn";
+    tenantContractsBtn.id = "topNavTenantContracts";
+    tenantContractsBtn.onclick = () => window.location.href = "tenant-contracts.html";
+    tenantContractsBtn.innerHTML = '<span data-i18n="floatingNavTenantContracts">Tenant Contracts</span>';
+    navContainer.appendChild(tenantContractsBtn);
+    
+    const tenantExpensesBtn = document.createElement("button");
+    tenantExpensesBtn.className = "top-nav-btn";
+    tenantExpensesBtn.id = "topNavTenantExpenses";
+    tenantExpensesBtn.onclick = () => window.location.href = "tenant-expenses.html";
+    tenantExpensesBtn.innerHTML = '<span data-i18n="floatingNavTenantExpenses">Tenant Expenses</span>';
+    navContainer.appendChild(tenantExpensesBtn);
+  } else {
+    // Landlord navigation: Administrator | Tenant View
+    const adminBtn = document.createElement("button");
+    adminBtn.className = "top-nav-btn";
+    adminBtn.id = "topNavAdmin";
+    adminBtn.onclick = () => window.location.href = "index.html";
+    adminBtn.innerHTML = '<span data-i18n="floatingNavAdmin">Administrator</span>';
+    navContainer.appendChild(adminBtn);
+    
+    const tenantViewBtn = document.createElement("button");
+    tenantViewBtn.className = "top-nav-btn";
+    tenantViewBtn.id = "topNavTenant";
+    tenantViewBtn.onclick = () => window.location.href = "index.html?view=tenant";
+    tenantViewBtn.innerHTML = '<span data-i18n="floatingNavTenant">Tenant View</span>';
+    navContainer.appendChild(tenantViewBtn);
+  }
+  
+  // Divider before Profile
+  const divider2 = document.createElement("div");
+  divider2.className = "top-nav-divider";
+  navContainer.appendChild(divider2);
+  
+  // Profile button (always shown)
+  const profileBtn = document.createElement("button");
+  profileBtn.className = "top-nav-btn";
+  profileBtn.id = "topNavProfile";
+  profileBtn.onclick = () => window.location.href = "profile.html";
+  profileBtn.innerHTML = '<span data-i18n="floatingNavProfile">Profile</span>';
+  navContainer.appendChild(profileBtn);
+  
+  // Apply translations
+  translateUI();
+}
+
 function updateTopNavActiveForStats() {
+  // Remove active from all buttons
+  const allButtons = document.querySelectorAll("#topNavContainer .top-nav-btn");
+  allButtons.forEach(btn => btn.classList.remove("active"));
+  
+  // Set Statistics as active
   const statisticsBtn = document.getElementById("topNavStatistics");
-  const adminBtn = document.getElementById("topNavAdmin");
-  const tenantBtn = document.getElementById("topNavTenant");
-  const profileBtn = document.getElementById("topNavProfile");
-
-  [statisticsBtn, adminBtn, tenantBtn, profileBtn].forEach(btn => {
-    if (btn) btn.classList.remove("active");
-  });
-
   if (statisticsBtn) statisticsBtn.classList.add("active");
 }
 

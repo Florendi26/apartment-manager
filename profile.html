@@ -305,25 +305,14 @@
     </footer>
 
     <!-- Top Center Navigation Container -->
-    <div class="top-nav-container">
-      <button class="top-nav-btn" id="topNavStatistics" onclick="window.location.href='statistics.html'">
-        <span data-i18n="floatingNavStatistics">Statistics</span>
-      </button>
-      <div class="top-nav-divider"></div>
-      <button class="top-nav-btn" id="topNavAdmin" onclick="window.location.href='index.html'">
-        <span data-i18n="floatingNavAdmin">Administrator</span>
-      </button>
-      <button class="top-nav-btn" id="topNavTenant" onclick="window.location.href='index.html?view=tenant'">
-        <span data-i18n="floatingNavTenant">Tenant View</span>
-      </button>
-      <div class="top-nav-divider"></div>
-      <button class="top-nav-btn" id="topNavProfile" onclick="window.location.href='profile.html'">
-        <span data-i18n="floatingNavProfile">Profile</span>
-      </button>
+    <div class="top-nav-container" id="topNavContainer">
+      <!-- Navigation will be populated by JavaScript based on user role -->
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
+    <!-- Load shared translations before auth.js -->
+    <script src="js/languages.js"></script>
     <script src="js/auth.js"></script>
     <script>
       // Simple profile bootstrap using existing auth.js helpers
@@ -371,8 +360,20 @@
         if (emailDetailEl) emailDetailEl.textContent = email;
 
         const roleEl = document.getElementById("profileRoleDetail");
+        const roleBadgeEl = document.getElementById("profileRole");
         const effectiveRole = meta.role || "Property Owner / Landlord";
         if (roleEl) roleEl.textContent = effectiveRole;
+        if (roleBadgeEl) {
+          // Display shorter version in badge
+          if (effectiveRole === "Tenant") {
+            roleBadgeEl.textContent = "Tenant";
+          } else {
+            roleBadgeEl.textContent = "Landlord";
+          }
+        }
+        
+        // Setup navigation based on role
+        setupTopNavigationForProfile(effectiveRole);
 
         // Adjust header links depending on role (landlord vs tenant)
         const backLink = document.getElementById("profileBackLink");
@@ -847,27 +848,105 @@
         }
 
 
-        // Reuse language preference
+        // Reuse language preference and ensure translations are applied
+        // Call translateUI after all initialization is complete
         if (typeof translateUI === "function") {
           translateUI();
         }
-
-        // Update top navigation active state
-        updateTopNavActiveForProfile();
       });
 
-      function updateTopNavActiveForProfile() {
-        const statisticsBtn = document.getElementById("topNavStatistics");
-        const adminBtn = document.getElementById("topNavAdmin");
-        const tenantBtn = document.getElementById("topNavTenant");
-        const profileBtn = document.getElementById("topNavProfile");
-
-        [statisticsBtn, adminBtn, tenantBtn, profileBtn].forEach(btn => {
-          if (btn) btn.classList.remove("active");
-        });
-
-        if (profileBtn) profileBtn.classList.add("active");
+      window.setupTopNavigationForProfile = function(role) {
+        const navContainer = document.getElementById("topNavContainer");
+        if (!navContainer) return;
+        
+        const isTenant = role === "Tenant";
+        
+        // Clear existing navigation
+        navContainer.innerHTML = "";
+        
+        // Statistics button (always shown)
+        const statsBtn = document.createElement("button");
+        statsBtn.className = "top-nav-btn";
+        statsBtn.id = "topNavStatistics";
+        statsBtn.onclick = () => window.location.href = "statistics.html";
+        statsBtn.innerHTML = '<span data-i18n="floatingNavStatistics">Statistics</span>';
+        navContainer.appendChild(statsBtn);
+        
+        // Divider
+        const divider1 = document.createElement("div");
+        divider1.className = "top-nav-divider";
+        navContainer.appendChild(divider1);
+        
+        if (isTenant) {
+          // Tenant navigation: Tenant - Apartment | Tenant Contracts | Tenant Expenses
+          const tenantApartmentsBtn = document.createElement("button");
+          tenantApartmentsBtn.className = "top-nav-btn";
+          tenantApartmentsBtn.id = "topNavTenantApartments";
+          tenantApartmentsBtn.onclick = () => window.location.href = "tenant-apartments.html";
+          tenantApartmentsBtn.innerHTML = '<span data-i18n="floatingNavTenantApartments">Tenant - Apartment</span>';
+          navContainer.appendChild(tenantApartmentsBtn);
+          
+          const tenantContractsBtn = document.createElement("button");
+          tenantContractsBtn.className = "top-nav-btn";
+          tenantContractsBtn.id = "topNavTenantContracts";
+          tenantContractsBtn.onclick = () => window.location.href = "tenant-contracts.html";
+          tenantContractsBtn.innerHTML = '<span data-i18n="floatingNavTenantContracts">Tenant Contracts</span>';
+          navContainer.appendChild(tenantContractsBtn);
+          
+          const tenantExpensesBtn = document.createElement("button");
+          tenantExpensesBtn.className = "top-nav-btn";
+          tenantExpensesBtn.id = "topNavTenantExpenses";
+          tenantExpensesBtn.onclick = () => window.location.href = "tenant-expenses.html";
+          tenantExpensesBtn.innerHTML = '<span data-i18n="floatingNavTenantExpenses">Tenant Expenses</span>';
+          navContainer.appendChild(tenantExpensesBtn);
+        } else {
+          // Landlord navigation: Administrator | Tenant View
+          const adminBtn = document.createElement("button");
+          adminBtn.className = "top-nav-btn";
+          adminBtn.id = "topNavAdmin";
+          adminBtn.onclick = () => window.location.href = "index.html";
+          adminBtn.innerHTML = '<span data-i18n="floatingNavAdmin">Administrator</span>';
+          navContainer.appendChild(adminBtn);
+          
+          const tenantViewBtn = document.createElement("button");
+          tenantViewBtn.className = "top-nav-btn";
+          tenantViewBtn.id = "topNavTenant";
+          tenantViewBtn.onclick = () => window.location.href = "index.html?view=tenant";
+          tenantViewBtn.innerHTML = '<span data-i18n="floatingNavTenant">Tenant View</span>';
+          navContainer.appendChild(tenantViewBtn);
+        }
+        
+        // Divider before Profile
+        const divider2 = document.createElement("div");
+        divider2.className = "top-nav-divider";
+        navContainer.appendChild(divider2);
+        
+        // Profile button (always shown)
+        const profileBtn = document.createElement("button");
+        profileBtn.className = "top-nav-btn";
+        profileBtn.id = "topNavProfile";
+        profileBtn.onclick = () => window.location.href = "profile.html";
+        profileBtn.innerHTML = '<span data-i18n="floatingNavProfile">Profile</span>';
+        navContainer.appendChild(profileBtn);
+        
+        // Apply translations
+        if (typeof translateUI === "function") {
+          translateUI();
+        }
+        
+        // Set active state
+        updateTopNavActiveForProfile(isTenant);
       }
+
+      function updateTopNavActiveForProfile(isTenant) {
+        // Remove active from all buttons
+        const allButtons = document.querySelectorAll("#topNavContainer .top-nav-btn");
+        allButtons.forEach(btn => btn.classList.remove("active"));
+        
+        // Set Profile as active
+        const profileBtn = document.getElementById("topNavProfile");
+        if (profileBtn) profileBtn.classList.add("active");
+      };
     </script>
   </body>
 </html>

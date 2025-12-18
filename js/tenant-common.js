@@ -119,6 +119,43 @@ function tenantTranslateUI() {
       }
     }
   });
+  
+  // Update document title if it has data-i18n
+  const titleElement = document.querySelector("title[data-i18n]");
+  if (titleElement) {
+    const titleKey = titleElement.getAttribute("data-i18n");
+    if (titleKey && dictionary[titleKey]) {
+      document.title = dictionary[titleKey];
+    }
+  }
+}
+
+// Update top navigation active state for tenant pages
+function updateTenantTopNavActive() {
+  const currentPath = window.location.pathname;
+  const statisticsBtn = document.getElementById("topNavStatistics");
+  const tenantApartmentsBtn = document.getElementById("topNavTenantApartments");
+  const tenantContractsBtn = document.getElementById("topNavTenantContracts");
+  const tenantExpensesBtn = document.getElementById("topNavTenantExpenses");
+  const profileBtn = document.getElementById("topNavProfile");
+
+  // Remove active class from all buttons
+  [statisticsBtn, tenantApartmentsBtn, tenantContractsBtn, tenantExpensesBtn, profileBtn].forEach(btn => {
+    if (btn) btn.classList.remove("active");
+  });
+
+  // Set active based on current page
+  if (currentPath.includes("tenant-apartments.html") && tenantApartmentsBtn) {
+    tenantApartmentsBtn.classList.add("active");
+  } else if (currentPath.includes("tenant-contracts.html") && tenantContractsBtn) {
+    tenantContractsBtn.classList.add("active");
+  } else if (currentPath.includes("tenant-expenses.html") && tenantExpensesBtn) {
+    tenantExpensesBtn.classList.add("active");
+  } else if (currentPath.includes("statistics.html") && statisticsBtn) {
+    statisticsBtn.classList.add("active");
+  } else if (currentPath.includes("profile.html") && profileBtn) {
+    profileBtn.classList.add("active");
+  }
 }
 
 // Simple language toggle button for tenant pages.
@@ -149,6 +186,10 @@ function tenantSetupLanguageToggle(buttonId) {
     applyLabel(next);
     // Apply translations immediately
     tenantTranslateUI();
+    // Update top navigation active state (in case it needs re-rendering)
+    if (typeof updateTenantTopNavActive === "function") {
+      updateTenantTopNavActive();
+    }
     // Also trigger a custom event for pages that need to update dynamic content
     window.dispatchEvent(new CustomEvent("tenantLanguageChanged", { detail: { language: next } }));
   });

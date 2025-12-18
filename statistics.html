@@ -228,21 +228,8 @@
     </footer>
 
     <!-- Top Center Navigation Container -->
-    <div class="top-nav-container">
-      <button class="top-nav-btn" id="topNavStatistics" onclick="window.location.href='statistics.html'">
-        <span data-i18n="floatingNavStatistics">Statistics</span>
-      </button>
-      <div class="top-nav-divider"></div>
-      <button class="top-nav-btn" id="topNavAdmin" onclick="window.location.href='index.html'">
-        <span data-i18n="floatingNavAdmin">Administrator</span>
-      </button>
-      <button class="top-nav-btn" id="topNavTenant" onclick="window.location.href='index.html?view=tenant'">
-        <span data-i18n="floatingNavTenant">Tenant View</span>
-      </button>
-      <div class="top-nav-divider"></div>
-      <button class="top-nav-btn" id="topNavProfile" onclick="window.location.href='profile.html'">
-        <span data-i18n="floatingNavProfile">Profile</span>
-      </button>
+    <div class="top-nav-container" id="topNavContainer">
+      <!-- Navigation will be populated by JavaScript based on user role -->
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

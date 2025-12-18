@@ -9,12 +9,22 @@ async function tenantApartmentsInit() {
 
   // Mark current page in navigation immediately (doesn't need async)
   markActiveNavButton('tenant-apartments.html');
+  
+  // Update top navigation active state
+  if (typeof updateTenantTopNavActive === "function") {
+    updateTenantTopNavActive();
+  }
 
   // Initialize photo viewer (doesn't need async)
   initializeTenantPhotoViewer();
 
   tenantSetupLanguageToggle("tenantLanguageToggleBtn");
   tenantSetupThemeToggle("tenantThemeToggleBtn");
+  
+  // Apply translations to top navigation
+  if (typeof tenantTranslateUI === "function") {
+    tenantTranslateUI();
+  }
 
   // Listen for language changes to reload apartments with new translations
   window.addEventListener("tenantLanguageChanged", () => {

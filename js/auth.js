@@ -63,8 +63,8 @@ function setupPhoneFormatting(inputId) {
   });
 }
 
-// Import translations from app.js structure
-const translations = {
+// Use main TRANSLATIONS object if available, otherwise fallback to local translations
+const translations = window.TRANSLATIONS || {
   en: {
     appTitle: "Apartment Management",
     appSubtitle: "Manage contracts, deposits, debts and payments with ease.",
@@ -92,6 +92,13 @@ const translations = {
     signupSuccess: "Account created successfully! Please login.",
     logoutSuccess: "Logged out successfully.",
     footerNote: "Powered by Florend Ramusa. Built for property managers and tenants.",
+    logoTextEn: "Apartment for you",
+    logoTextSq: "Banesë për Ty",
+    floatingNavStatistics: "Statistics",
+    floatingNavProfile: "Profile",
+    floatingNavTenant: "Tenant View",
+    floatingNavAdmin: "Administrator",
+    profileTitle: "Profile - Apartment Management",
   },
   sq: {
     appTitle: "Menaxhimi i Banesave",
@@ -120,25 +127,68 @@ const translations = {
     signupSuccess: "Llogaria u krijua me sukses! Ju lutem hyni.",
     logoutSuccess: "Dilja u realizua me sukses.",
     footerNote: "Krijuar nga Florend Ramusa. Ndërtuar për menaxherët e pronave dhe Qeramarrësit.",
+    logoTextEn: "Apartment for you",
+    logoTextSq: "Banesë për Ty",
+    floatingNavStatistics: "Statistikat",
+    floatingNavProfile: "Profili",
+    floatingNavTenant: "Pamja e Qeramarrësit",
+    floatingNavAdmin: "Administratori",
+    profileTitle: "Profili - Menaxhimi i Banesave",
   },
 };
 
 let currentLanguage = localStorage.getItem("language") || "en";
 
+// Update translations object if window.TRANSLATIONS is available
+function updateTranslations() {
+  if (window.TRANSLATIONS) {
+    // Merge window.TRANSLATIONS into local translations, preferring window.TRANSLATIONS
+    Object.keys(window.TRANSLATIONS).forEach(lang => {
+      if (!translations[lang]) {
+        translations[lang] = {};
+      }
+      Object.assign(translations[lang], window.TRANSLATIONS[lang]);
+    });
+  }
+}
+
 function translate(key) {
+  updateTranslations(); // Ensure we have the latest translations
   return translations[currentLanguage]?.[key] || translations.en[key] || key;
 }
 
 function translateUI() {
+  // Reload translations in case window.TRANSLATIONS was loaded after auth.js
+  if (window.TRANSLATIONS && !translations.en.logoTextEn) {
+    Object.assign(translations, window.TRANSLATIONS);
+  }
+  
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     const key = element.getAttribute("data-i18n");
+    if (!key) return;
+    
     const translation = translate(key);
-    if (element.tagName === "INPUT" && element.placeholder) {
-      element.placeholder = translation;
-    } else {
-      element.textContent = translation;
+    // Only update if we got a valid translation (not the key itself)
+    if (translation && translation !== key) {
+      if (element.tagName === "INPUT" && element.placeholder) {
+        element.placeholder = translation;
+      } else {
+        element.textContent = translation;
+      }
     }
   });
+  
+  // Update document title if it has data-i18n
+  const titleElement = document.querySelector("title[data-i18n]");
+  if (titleElement) {
+    const titleKey = titleElement.getAttribute("data-i18n");
+    if (titleKey) {
+      const titleTranslation = translate(titleKey);
+      if (titleTranslation && titleTranslation !== titleKey) {
+        document.title = titleTranslation;
+      }
+    }
+  }
 }
 
 function notify(type, message) {
@@ -372,6 +422,20 @@ async function init() {
       }
       localStorage.setItem("language", currentLanguage);
       translateUI();
+      
+      // Refresh navigation if on profile page
+      const currentPath = window.location.pathname;
+      if (currentPath.includes("profile.html") && typeof window.setupTopNavigationForProfile === "function") {
+        // Get user role and refresh navigation
+        if (typeof supabase !== "undefined") {
+          supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+              const role = user.user_metadata?.role || "Property Owner / Landlord";
+              window.setupTopNavigationForProfile(role);
+            }
+          });
+        }
+      }
     });
   }
 

@@ -194,8 +194,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("view") === "tenant") {
     state.role = "tenant";
-    const roleToggleBtn = document.getElementById("roleToggleBtnBottom");
-    if (roleToggleBtn) roleToggleBtn.textContent = translate("roleTenant");
   }
 
   // If authenticated, load data and show appropriate view
@@ -593,6 +591,8 @@ function attachEventListeners() {
 
   // Top Navigation Container
   setupTopNavContainer();
+  // Ensure top nav is translated after setup
+  translateUI();
 
   if (elements.adminNav) {
     elements.adminNav.addEventListener("click", handleAdminNavClick);
@@ -986,8 +986,6 @@ function updateTopNavActive() {
 window.switchToAdminView = function() {
   if (state.role !== "admin") {
     state.role = "admin";
-    const roleToggleBtn = document.getElementById("roleToggleBtnBottom");
-    if (roleToggleBtn) roleToggleBtn.textContent = translate("roleAdmin");
     toggleViews();
     updateTopNavActive();
   }
@@ -996,8 +994,6 @@ window.switchToAdminView = function() {
 window.switchToTenantView = function() {
   if (state.role !== "tenant") {
     state.role = "tenant";
-    const roleToggleBtn = document.getElementById("roleToggleBtnBottom");
-    if (roleToggleBtn) roleToggleBtn.textContent = translate("roleTenant");
     toggleViews();
     updateTopNavActive();
   }
@@ -1290,14 +1286,14 @@ function getExpenseCategoryFromTypeValue(value) {
 }
 
 function translateUI() {
-  const dictionary = translations[state.language] || translations.en;
+  const dictionary = translations[state.language] || translations.en || {};
   const currentLang = state.language || "en";
   
   document
     .querySelectorAll("[data-i18n]")
     .forEach((node) => {
       const key = node.dataset.i18n;
-      if (dictionary[key]) {
+      if (key && dictionary[key]) {
         if (node.tagName === "OPTION") {
           // For option elements, check if there's a language-specific attribute
           const langKey = currentLang === "sq" ? "data-i18n-sq" : "data-i18n-en";
@@ -1308,7 +1304,11 @@ function translateUI() {
             node.textContent = dictionary[key] || node.textContent;
           }
         } else {
-          node.textContent = dictionary[key];
+          // Only update if we have a valid translation
+          const translation = dictionary[key];
+          if (translation && translation !== key) {
+            node.textContent = translation;
+          }
         }
       }
     });

@@ -32,8 +32,18 @@ async function tenantExpensesInit() {
   const user = await tenantCheckAuth();
   if (!user) return;
 
+  // Update top navigation active state
+  if (typeof updateTenantTopNavActive === "function") {
+    updateTenantTopNavActive();
+  }
+
   tenantSetupLanguageToggle("tenantLanguageToggleBtn");
   tenantSetupThemeToggle("tenantThemeToggleBtn");
+  
+  // Apply translations to top navigation
+  if (typeof tenantTranslateUI === "function") {
+    tenantTranslateUI();
+  }
 
   // Listen for language changes to reload expenses with new translations
   window.addEventListener("tenantLanguageChanged", () => {
