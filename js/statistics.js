@@ -898,11 +898,12 @@ function setupTopNavigationForStats(role) {
   // Clear existing navigation
   navContainer.innerHTML = "";
   
-  // Statistics button (always shown)
+  // Statistics button (always shown, but disabled on statistics page)
   const statsBtn = document.createElement("button");
   statsBtn.className = "top-nav-btn active";
   statsBtn.id = "topNavStatistics";
-  statsBtn.onclick = () => window.location.href = "statistics.html";
+  statsBtn.disabled = true;
+  // Don't add onclick handler since we're already on statistics page
   statsBtn.innerHTML = '<span data-i18n="floatingNavStatistics">Statistics</span>';
   navContainer.appendChild(statsBtn);
   

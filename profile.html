@@ -886,11 +886,17 @@
         // Clear existing navigation
         navContainer.innerHTML = "";
         
-        // Statistics button (always shown)
+        // Statistics button (always shown, but disabled if already on statistics page)
         const statsBtn = document.createElement("button");
         statsBtn.className = "top-nav-btn";
         statsBtn.id = "topNavStatistics";
-        statsBtn.onclick = () => window.location.href = "statistics.html";
+        const currentPath = window.location.pathname;
+        if (currentPath.includes("statistics.html")) {
+          statsBtn.disabled = true;
+          statsBtn.classList.add("active");
+        } else {
+          statsBtn.onclick = () => window.location.href = "statistics.html";
+        }
         statsBtn.innerHTML = '<span data-i18n="floatingNavStatistics">Statistics</span>';
         navContainer.appendChild(statsBtn);
         

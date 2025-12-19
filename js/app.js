@@ -479,10 +479,8 @@ function cacheElements() {
     apartmentSubmitBtn: document.getElementById("apartmentSubmitBtn"),
     apartmentCancelBtn: document.getElementById("apartmentCancelBtn"),
     apartmentsTableBody: document.getElementById("apartmentsTableBody"),
-    refreshApartments: document.getElementById("refreshApartments"),
     tenantForm: document.getElementById("tenantForm"),
     tenantsTableBody: document.getElementById("tenantsTableBody"),
-    refreshTenants: document.getElementById("refreshTenants"),
     contractForm: document.getElementById("contractForm"),
     contractApartment: document.getElementById("contractApartment"),
     contractTenant: document.getElementById("contractTenant"),
@@ -491,7 +489,6 @@ function cacheElements() {
     contractActive: document.getElementById("contractActive"),
     contractsActiveTableBody: document.getElementById("contractsActiveTableBody"),
     contractsInactiveTableBody: document.getElementById("contractsInactiveTableBody"),
-    refreshContracts: document.getElementById("refreshContracts"),
     debtForm: document.getElementById("debtForm"),
     debtType: document.getElementById("debtType"),
     debtAmount: document.getElementById("debtAmount"),
@@ -527,10 +524,7 @@ function cacheElements() {
     expensesHeading: document.getElementById("expensesHeading"),
     expensesSubheading: document.getElementById("expensesSubheading"),
     paymentsTableBody: document.getElementById("paymentsTableBody"),
-    refreshDebts: document.getElementById("refreshDebts"),
-    refreshPayments: document.getElementById("refreshPayments"),
     requestsTableBody: document.getElementById("requestsTableBody"),
-    refreshRequests: document.getElementById("refreshRequests"),
     tenantSelector: document.getElementById("tenantSelector"),
     tenantSelect: document.getElementById("tenantSelect"),
     tenantInfoList: document.getElementById("tenantInfoList"),
@@ -716,7 +710,6 @@ function attachEventListeners() {
   }
 
   elements.apartmentForm.addEventListener("submit", onCreateApartment);
-  elements.refreshApartments.addEventListener("click", loadApartments);
   
   // Feature buttons click handlers
   setupFeatureButtons();
@@ -739,10 +732,8 @@ function attachEventListeners() {
   // Map initialization removed
 
   elements.tenantForm.addEventListener("submit", onCreateTenant);
-  elements.refreshTenants.addEventListener("click", loadTenants);
 
   elements.contractForm.addEventListener("submit", onCreateContract);
-  elements.refreshContracts.addEventListener("click", loadContracts);
 
   elements.debtForm.addEventListener("submit", onCreateDebt);
   if (elements.debtContract) {
@@ -785,16 +776,6 @@ function attachEventListeners() {
     });
   }
   elements.paymentForm.addEventListener("submit", onCreatePayment);
-  elements.refreshDebts.addEventListener("click", () => {
-    loadDebts();
-    loadPayments();
-  });
-  if (elements.refreshPayments) {
-    elements.refreshPayments.addEventListener("click", loadPayments);
-  }
-  if (elements.refreshRequests) {
-    elements.refreshRequests.addEventListener("click", loadRequests);
-  }
 
   elements.debtsFilterStatus.addEventListener("change", renderDebtsTable);
   elements.debtsFilterType.addEventListener("change", onDebtsTypeFilterChange);
@@ -1082,7 +1063,19 @@ function updateTopNavActive() {
 
   if (activeView === "statistics" && statisticsBtn) {
     statisticsBtn.classList.add("active");
-  } else if (activeView === "admin" && adminBtn) {
+    statisticsBtn.disabled = true;
+    // Remove onclick handler to prevent navigation
+    statisticsBtn.onclick = null;
+    statisticsBtn.removeAttribute("onclick");
+  } else if (statisticsBtn) {
+    statisticsBtn.disabled = false;
+    // Restore onclick handler if it was removed
+    if (!statisticsBtn.onclick) {
+      statisticsBtn.onclick = () => window.location.href = "statistics.html";
+    }
+  }
+  
+  if (activeView === "admin" && adminBtn) {
     adminBtn.classList.add("active");
   } else if (activeView === "tenant" && tenantBtn) {
     tenantBtn.classList.add("active");
@@ -1122,6 +1115,23 @@ function setAdminPage(page, expenseCategory = state.expensesCategory) {
   updateAdminNavActive(page, expenseCategory);
   if (page === "expenses") {
     applyExpensesCategory(expenseCategory);
+  }
+  
+  // Show/hide global contract filter based on page
+  const filterContainer = document.querySelector('.global-tenant-filter');
+  if (filterContainer) {
+    // Hide filter on: apartments, tenants, contracts, requests
+    // Show filter on: expenses, payments, and other pages
+    const pagesWithoutFilter = ['apartments', 'tenants', 'contracts', 'requests'];
+    if (pagesWithoutFilter.includes(page)) {
+      filterContainer.style.display = 'none';
+      // Clear the filter when switching to pages that don't need it
+      if (state.globalContractFilter) {
+        clearGlobalContractFilter();
+      }
+    } else {
+      filterContainer.style.display = '';
+    }
   }
   
   // Initialize map when apartments page is shown (lazy loading)

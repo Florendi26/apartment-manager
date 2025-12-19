@@ -753,10 +753,6 @@ body.dark-theme .button-primary,
 body.dark-theme .summary-controls button,
 body.dark-theme #debtFormSubmit,
 body.dark-theme #paymentFormSubmit,
-body.dark-theme #refreshDebts,
-body.dark-theme #refreshApartments,
-body.dark-theme #refreshTenants,
-body.dark-theme #refreshContracts,
 body.dark-theme #exportDebtsPdf,
 body.dark-theme #markPaidSubmit,
 body.dark-theme [data-i18n="addApartment"],
@@ -772,10 +768,6 @@ body.dark-theme .button-primary:hover,
 body.dark-theme .summary-controls button:hover,
 body.dark-theme #debtFormSubmit:hover,
 body.dark-theme #paymentFormSubmit:hover,
-body.dark-theme #refreshDebts:hover,
-body.dark-theme #refreshApartments:hover,
-body.dark-theme #refreshTenants:hover,
-body.dark-theme #refreshContracts:hover,
 body.dark-theme #exportDebtsPdf:hover,
 body.dark-theme #markPaidSubmit:hover,
 body.dark-theme [data-i18n="addApartment"]:hover,
@@ -2730,6 +2722,13 @@ body.dark-theme .utility-summary-difference .utility-summary-value.zero {
   background: linear-gradient(135deg, #08a88a 0%, #06c9a3 100%);
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(8, 168, 138, 0.3);
+}
+
+.top-nav-btn:disabled,
+.top-nav-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .top-nav-divider {

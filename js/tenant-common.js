@@ -228,8 +228,21 @@ function updateTenantTopNavActive() {
     tenantExpensesBtn.classList.add("active");
   } else if (currentPath.includes("statistics.html") && statisticsBtn) {
     statisticsBtn.classList.add("active");
+    statisticsBtn.disabled = true;
+    // Remove onclick handler to prevent navigation
+    statisticsBtn.onclick = null;
+    statisticsBtn.removeAttribute("onclick");
   } else if (currentPath.includes("profile.html") && profileBtn) {
     profileBtn.classList.add("active");
+  }
+  
+  // Ensure Statistics button is enabled if not on statistics page
+  if (statisticsBtn && !currentPath.includes("statistics.html")) {
+    statisticsBtn.disabled = false;
+    // Restore onclick handler if it was removed
+    if (!statisticsBtn.onclick && !statisticsBtn.hasAttribute("onclick")) {
+      statisticsBtn.onclick = () => window.location.href = "statistics.html";
+    }
   }
 }
 
