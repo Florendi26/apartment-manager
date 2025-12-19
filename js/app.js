@@ -303,15 +303,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("view") === "tenant") {
     state.role = "tenant";
+  } else if (state.currentUser) {
+    // Ensure role is set correctly based on user metadata
+    const userRole = state.currentUser.user_metadata?.role || "Property Owner / Landlord";
+    if (userRole === "Tenant") {
+      state.role = "tenant";
+    } else {
+      state.role = "admin";
+    }
   }
 
   // If authenticated, load data and show appropriate view
-  if (state.role === "tenant") {
-    toggleViews();
-  } else {
-    showAdminView();
-    setAdminPage(state.adminPage, state.expensesCategory);
-  }
+  // Use toggleViews to properly initialize the view (it handles both admin and tenant)
+  toggleViews();
   loadInitialData();
 });
 
@@ -1034,15 +1038,34 @@ function onDebtsTypeFilterChange() {
 
 function toggleViews() {
   if (state.role === "admin") {
-    elements.adminView.classList.add("active");
-    elements.tenantView.classList.remove("active");
+    // Ensure admin view is visible
+    if (elements.adminView) {
+      elements.adminView.classList.add("active");
+      elements.adminView.style.display = "";
+    }
+    if (elements.tenantView) {
+      elements.tenantView.classList.remove("active");
+      elements.tenantView.style.display = "none";
+    }
     if (elements.adminNav) {
       elements.adminNav.style.display = "";
     }
+    // Ensure main is visible
+    const main = document.querySelector("main");
+    if (main) {
+      main.classList.remove("hidden");
+      main.style.display = "";
+    }
     setAdminPage(state.adminPage, state.expensesCategory);
   } else {
-    elements.tenantView.classList.add("active");
-    elements.adminView.classList.remove("active");
+    if (elements.tenantView) {
+      elements.tenantView.classList.add("active");
+      elements.tenantView.style.display = "";
+    }
+    if (elements.adminView) {
+      elements.adminView.classList.remove("active");
+      elements.adminView.style.display = "none";
+    }
     if (elements.adminNav) {
       elements.adminNav.style.display = "none";
     }
@@ -7397,6 +7420,11 @@ function showAdminView() {
   if (elements.adminView) elements.adminView.classList.add("active");
   if (elements.tenantView) elements.tenantView.classList.remove("active");
   document.querySelector("main")?.classList.remove("hidden");
+  // Ensure role is set to admin and views are properly toggled
+  if (state.role !== "admin") {
+    state.role = "admin";
+  }
+  toggleViews();
   updateAuthUI();
 }
 
