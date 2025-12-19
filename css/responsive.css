@@ -470,6 +470,11 @@
     padding: 1rem;
     margin-bottom: 1rem;
     width: 100% !important;
+  }
+  
+  /* Only show if not hidden by JavaScript */
+  .global-tenant-filter:not([style*="display: none"]):not([data-hidden="true"]),
+  .global-contract-filter:not([style*="display: none"]):not([data-hidden="true"]) {
     display: flex !important;
   }
 

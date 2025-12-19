@@ -692,6 +692,25 @@ function attachEventListeners() {
     });
   }
 
+  // Reset app button
+  const resetAppBtn = document.getElementById("resetAppBtn");
+  if (resetAppBtn) {
+    resetAppBtn.addEventListener("click", () => {
+      if (confirm("Are you sure you want to reset the app? This will clear all local storage and reload the page.")) {
+        try {
+          // Clear all localStorage
+          localStorage.clear();
+          // Reload the page
+          window.location.reload();
+        } catch (error) {
+          console.error("Error resetting app:", error);
+          // Fallback: just reload
+          window.location.reload();
+        }
+      }
+    });
+  }
+
   // Top Navigation Container
   setupTopNavContainer();
   // Ensure top nav is translated after setup
@@ -1125,12 +1144,14 @@ function setAdminPage(page, expenseCategory = state.expensesCategory) {
     const pagesWithoutFilter = ['apartments', 'tenants', 'contracts', 'requests'];
     if (pagesWithoutFilter.includes(page)) {
       filterContainer.style.display = 'none';
+      filterContainer.setAttribute('data-hidden', 'true');
       // Clear the filter when switching to pages that don't need it
       if (state.globalContractFilter) {
         clearGlobalContractFilter();
       }
     } else {
       filterContainer.style.display = '';
+      filterContainer.removeAttribute('data-hidden');
     }
   }
   
