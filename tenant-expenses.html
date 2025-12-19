@@ -11,43 +11,68 @@
     <link rel="stylesheet" href="css/responsive.css" />
   </head>
   <body>
-    <header class="app-header">
-      <div class="header-main">
-        <h1 data-i18n="tenantExpensesTitle">My Expenses &amp; Payments</h1>
-        <p class="subtitle" data-i18n="tenantExpensesSubtitle">
-          See totals and a detailed breakdown of your expenses and payments.
-        </p>
-      </div>
-      <div class="header-controls">
-        <div class="control header-buttons tenant-header-grid">
-          <button
-            type="button"
-            id="tenantThemeToggleBtn"
-            class="button-secondary"
-          >
-            Dark
-          </button>
-          <a href="statistics.html" class="button-secondary" data-i18n="statistics" style="text-decoration: none; display: inline-block; text-align: center;">Statistics</a>
-          <button
-            type="button"
-            id="tenantLanguageToggleBtn"
-            class="button-secondary"
-          >
-            En
-          </button>
-          <a href="profile.html" class="button-secondary" data-i18n="tenantProfileNav" style="text-decoration: none; display: inline-block; text-align: center;">Profile</a>
+    <div class="logo-bar">
+      <a href="statistics.html" class="logo-link">
+        <img src="logo/logo.svg" alt="Logo" class="logo-image" />
+        <div class="logo-text">
+          <span class="logo-text-en" data-i18n="logoTextEn">Apartment for you</span>
+          <span class="logo-text-sq" data-i18n="logoTextSq">Banesë për Ty</span>
         </div>
+      </a>
+      <div class="logo-bar-controls">
+        <button
+          type="button"
+          id="tenantLanguageToggleBtn"
+          class="icon-button"
+          title="Language"
+          aria-label="Toggle Language"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </button>
+        <button
+          type="button"
+          id="tenantThemeToggleBtn"
+          class="icon-button"
+          title="Theme"
+          aria-label="Toggle Theme"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-light">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-dark" style="display: none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        <button
+          type="button"
+          id="menuToggleBtn"
+          class="menu-toggle-btn"
+          title="Menu"
+          aria-label="Toggle Menu"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </div>
-    </header>
+    </div>
 
     <main>
       <section id="tenantNotificationArea" aria-live="polite"></section>
-
-      <nav class="tenant-main-nav">
-        <a href="tenant-apartments.html" class="button-secondary" data-i18n="tenantApartmentsNav">Apartments</a>
-        <a href="tenant-contracts.html" class="button-secondary" data-i18n="tenantContractsNav">Contracts</a>
-        <a href="tenant-expenses.html" class="button-secondary" data-i18n="tenantExpensesNav">My Expenses</a>
-      </nav>
 
       <section class="view active">
         <article class="card">
@@ -156,7 +181,7 @@
       </button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     <script src="js/config.js"></script>
     <script src="js/languages.js"></script>
     <script src="js/tenant-common.js"></script>

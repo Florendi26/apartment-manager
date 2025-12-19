@@ -40,6 +40,11 @@ async function tenantExpensesInit() {
   tenantSetupLanguageToggle("tenantLanguageToggleBtn");
   tenantSetupThemeToggle("tenantThemeToggleBtn");
   
+  // Setup mobile menu toggle
+  if (typeof setupMobileMenuToggle === "function") {
+    setupMobileMenuToggle();
+  }
+  
   // Apply translations to top navigation
   if (typeof tenantTranslateUI === "function") {
     tenantTranslateUI();
@@ -65,26 +70,6 @@ async function tenantExpensesInit() {
   }
 
   await tenantLoadExpensesAndPayments();
-  
-  // Mark current page in navigation
-  markActiveNavButton('tenant-expenses.html');
-}
-
-function markActiveNavButton(currentPage) {
-  const navLinks = document.querySelectorAll('.tenant-main-nav a');
-  navLinks.forEach(link => {
-    const href = link.getAttribute('href');
-    if (href === currentPage || (currentPage === 'tenant-expenses.html' && href.includes('tenant-expenses.html'))) {
-      link.classList.add('active');
-      link.setAttribute('aria-current', 'page');
-      // Prevent clicking on the active link
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      });
-    }
-  });
 }
 
 async function tenantLoadExpensesAndPayments() {

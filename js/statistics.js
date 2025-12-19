@@ -729,7 +729,12 @@ async function init() {
   
   // Update top navigation active state
   updateTopNavActiveForStats();
-  
+
+  // Setup mobile menu toggle
+  if (typeof setupMobileMenuToggle === "function") {
+    setupMobileMenuToggle();
+  }
+
   // Update back link for tenants after translation (in case translateUI overrides it)
   if (backLink) {
     if (role === "Tenant") {

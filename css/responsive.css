@@ -115,9 +115,32 @@
     font-size: 0.8rem;
   }
 
+  /* Responsive text for main content */
+  main {
+    font-size: 0.95rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
+  p, span, div {
+    font-size: 0.9rem;
+  }
+
   .logo-bar-controls {
     width: 100%;
     justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   /* Header - Stack vertically on mobile */
@@ -611,6 +634,27 @@
   table td {
     padding: 0.4rem 0;
     font-size: 0.8rem;
+  }
+
+  /* Responsive text for small mobile */
+  main {
+    font-size: 0.9rem;
+  }
+
+  h1 {
+    font-size: 1.25rem;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
+
+  p, span, div {
+    font-size: 0.85rem;
   }
 
   table td:before {

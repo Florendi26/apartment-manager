@@ -18,6 +18,11 @@ async function tenantContractsInit() {
   tenantSetupLanguageToggle("tenantLanguageToggleBtn");
   tenantSetupThemeToggle("tenantThemeToggleBtn");
   
+  // Setup mobile menu toggle
+  if (typeof setupMobileMenuToggle === "function") {
+    setupMobileMenuToggle();
+  }
+  
   // Apply translations to top navigation
   if (typeof tenantTranslateUI === "function") {
     tenantTranslateUI();
@@ -43,26 +48,6 @@ async function tenantContractsInit() {
   }
 
   await tenantLoadContracts();
-  
-  // Mark current page in navigation
-  markActiveNavButton('tenant-contracts.html');
-}
-
-function markActiveNavButton(currentPage) {
-  const navLinks = document.querySelectorAll('.tenant-main-nav a');
-  navLinks.forEach(link => {
-    const href = link.getAttribute('href');
-    if (href === currentPage || (currentPage === 'tenant-contracts.html' && href.includes('tenant-contracts.html'))) {
-      link.classList.add('active');
-      link.setAttribute('aria-current', 'page');
-      // Prevent clicking on the active link
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      });
-    }
-  });
 }
 
 async function tenantLoadContracts() {

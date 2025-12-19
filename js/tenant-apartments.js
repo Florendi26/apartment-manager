@@ -7,9 +7,6 @@ async function tenantApartmentsInit() {
   const user = await tenantCheckAuth();
   if (!user) return;
 
-  // Mark current page in navigation immediately (doesn't need async)
-  markActiveNavButton('tenant-apartments.html');
-  
   // Update top navigation active state
   if (typeof updateTenantTopNavActive === "function") {
     updateTenantTopNavActive();
@@ -20,6 +17,11 @@ async function tenantApartmentsInit() {
 
   tenantSetupLanguageToggle("tenantLanguageToggleBtn");
   tenantSetupThemeToggle("tenantThemeToggleBtn");
+  
+  // Setup mobile menu toggle
+  if (typeof setupMobileMenuToggle === "function") {
+    setupMobileMenuToggle();
+  }
   
   // Apply translations to top navigation
   if (typeof tenantTranslateUI === "function") {
@@ -52,23 +54,6 @@ async function tenantApartmentsInit() {
 
   // Load apartments (this is the slow async operation)
   await tenantLoadAvailableApartmentsWithPictures();
-}
-
-function markActiveNavButton(currentPage) {
-  const navLinks = document.querySelectorAll('.tenant-main-nav a');
-  navLinks.forEach(link => {
-    const href = link.getAttribute('href');
-    if (href === currentPage || (currentPage === 'tenant-apartments.html' && href.includes('tenant-apartments.html'))) {
-      link.classList.add('active');
-      link.setAttribute('aria-current', 'page');
-      // Prevent clicking on the active link
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      });
-    }
-  });
 }
 
 function initializeTenantPhotoViewer() {

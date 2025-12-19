@@ -78,12 +78,17 @@ function tenantSetupThemeToggle(buttonId, storageKey = "tenantTheme") {
   if (!btn) return;
 
   const applyTheme = (theme) => {
+    const lightIcon = btn.querySelector(".theme-icon-light");
+    const darkIcon = btn.querySelector(".theme-icon-dark");
+    
     if (theme === "dark") {
       document.body.classList.add("dark-theme");
-      btn.textContent = "Light";
+      if (lightIcon) lightIcon.style.display = "none";
+      if (darkIcon) darkIcon.style.display = "block";
     } else {
       document.body.classList.remove("dark-theme");
-      btn.textContent = "Dark";
+      if (lightIcon) lightIcon.style.display = "block";
+      if (darkIcon) darkIcon.style.display = "none";
       theme = "light";
     }
     try {
@@ -100,6 +105,76 @@ function tenantSetupThemeToggle(buttonId, storageKey = "tenantTheme") {
     const isDark = document.body.classList.contains("dark-theme");
     applyTheme(isDark ? "light" : "dark");
   });
+}
+
+// Mobile menu toggle function (global)
+window.setupMobileMenuToggle = function setupMobileMenuToggle() {
+  const menuToggleBtn = document.getElementById("menuToggleBtn");
+  const topNavContainer = document.querySelector(".top-nav-container");
+  
+  if (menuToggleBtn && topNavContainer) {
+    // Create backdrop overlay
+    let backdrop = document.querySelector(".menu-backdrop");
+    if (!backdrop) {
+      backdrop = document.createElement("div");
+      backdrop.className = "menu-backdrop";
+      document.body.appendChild(backdrop);
+    }
+
+    // Create close button
+    let closeBtn = topNavContainer.querySelector(".menu-close-btn");
+    if (!closeBtn) {
+      closeBtn = document.createElement("button");
+      closeBtn.className = "menu-close-btn";
+      closeBtn.setAttribute("type", "button");
+      closeBtn.setAttribute("title", "Close Menu");
+      closeBtn.setAttribute("aria-label", "Close Menu");
+      closeBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      `;
+      topNavContainer.appendChild(closeBtn);
+    }
+
+    const openMenu = () => {
+      topNavContainer.classList.add("menu-open");
+      backdrop.classList.add("active");
+      menuToggleBtn.classList.add("menu-open");
+      document.body.classList.add("menu-open");
+    };
+
+    const closeMenu = () => {
+      topNavContainer.classList.remove("menu-open");
+      backdrop.classList.remove("active");
+      menuToggleBtn.classList.remove("menu-open");
+      document.body.classList.remove("menu-open");
+    };
+
+    // Hamburger button toggles menu
+    menuToggleBtn.addEventListener("click", () => {
+      if (topNavContainer.classList.contains("menu-open")) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    // Close button closes menu
+    closeBtn.addEventListener("click", closeMenu);
+
+    // Backdrop click closes menu
+    backdrop.addEventListener("click", closeMenu);
+
+    // Close menu when clicking on a nav button
+    const navButtons = topNavContainer.querySelectorAll(".top-nav-btn");
+    navButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        setTimeout(closeMenu, 300);
+      });
+    });
+  }
 }
 
 // Translation function for tenant pages

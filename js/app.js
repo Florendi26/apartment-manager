@@ -170,10 +170,83 @@ const EXPENSE_STATE_KEYS = {
 
 const elements = {};
 
+// Mobile menu toggle function (standalone version for index.html)
+function setupMobileMenuToggle() {
+  const menuToggleBtn = document.getElementById("menuToggleBtn");
+  const topNavContainer = document.querySelector(".top-nav-container");
+  
+  if (menuToggleBtn && topNavContainer) {
+    // Create backdrop overlay
+    let backdrop = document.querySelector(".menu-backdrop");
+    if (!backdrop) {
+      backdrop = document.createElement("div");
+      backdrop.className = "menu-backdrop";
+      document.body.appendChild(backdrop);
+    }
+
+    // Create close button
+    let closeBtn = topNavContainer.querySelector(".menu-close-btn");
+    if (!closeBtn) {
+      closeBtn = document.createElement("button");
+      closeBtn.className = "menu-close-btn";
+      closeBtn.setAttribute("type", "button");
+      closeBtn.setAttribute("title", "Close Menu");
+      closeBtn.setAttribute("aria-label", "Close Menu");
+      closeBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      `;
+      topNavContainer.appendChild(closeBtn);
+    }
+
+    const openMenu = () => {
+      topNavContainer.classList.add("menu-open");
+      backdrop.classList.add("active");
+      menuToggleBtn.classList.add("menu-open");
+      document.body.classList.add("menu-open");
+    };
+
+    const closeMenu = () => {
+      topNavContainer.classList.remove("menu-open");
+      backdrop.classList.remove("active");
+      menuToggleBtn.classList.remove("menu-open");
+      document.body.classList.remove("menu-open");
+    };
+
+    // Hamburger button toggles menu
+    menuToggleBtn.addEventListener("click", () => {
+      if (topNavContainer.classList.contains("menu-open")) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    // Close button closes menu
+    closeBtn.addEventListener("click", closeMenu);
+
+    // Backdrop click closes menu
+    backdrop.addEventListener("click", closeMenu);
+
+    // Close menu when clicking on a nav button
+    const navButtons = topNavContainer.querySelectorAll(".top-nav-btn");
+    navButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        setTimeout(closeMenu, 300);
+      });
+    });
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
   attachEventListeners();
   translateUI();
+  
+  // Setup mobile menu toggle
+  setupMobileMenuToggle();
   
   // Setup date inputs with year limits (2020-2030)
   setupDateInputs();

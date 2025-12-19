@@ -471,6 +471,11 @@ async function init() {
       applyTheme(isDark ? "light" : "dark");
     });
   }
+
+  // Setup mobile menu toggle
+  if (typeof setupMobileMenuToggle === "function") {
+    setupMobileMenuToggle();
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);
