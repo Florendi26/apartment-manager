@@ -9,17 +9,16 @@
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="stylesheet" href="css/responsive.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.1/lottie.min.js"></script>
   </head>
   <body>
     <div class="logo-bar">
-      <a href="statistics.html" class="logo-link">
+      <div class="logo-link">
         <img src="logo/logo.svg" alt="Logo" class="logo-image" />
         <div class="logo-text">
           <span class="logo-text-en" data-i18n="logoTextEn">Apartment for you</span>
           <span class="logo-text-sq" data-i18n="logoTextSq">Banesë për Ty</span>
         </div>
-      </a>
+      </div>
       <div class="logo-bar-controls">
         <button
           type="button"
@@ -387,6 +386,16 @@
         
         // Setup navigation based on role
         setupTopNavigationForProfile(effectiveRole);
+        
+        // Setup mobile menu toggle AFTER navigation is populated
+        // This will re-attach listeners to the dynamically created nav buttons
+        const menuToggleFn = window.setupMobileMenuToggle || setupMobileMenuToggle;
+        if (typeof menuToggleFn === "function") {
+          // Use setTimeout to ensure navigation buttons are in DOM
+          setTimeout(() => {
+            menuToggleFn();
+          }, 100);
+        }
 
         // Adjust header links depending on role (landlord vs tenant)
         const backLink = document.getElementById("profileBackLink");

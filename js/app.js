@@ -176,6 +176,18 @@ function setupMobileMenuToggle() {
   const topNavContainer = document.querySelector(".top-nav-container");
   
   if (menuToggleBtn && topNavContainer) {
+    // Prevent duplicate setup by checking for existing data attribute
+    if (menuToggleBtn.dataset.menuToggleSetup === "true") {
+      // Re-attach listeners to dynamically created nav buttons
+      if (window._attachNavButtonListeners) {
+        window._attachNavButtonListeners();
+      }
+      return;
+    }
+    
+    // Mark as set up
+    menuToggleBtn.dataset.menuToggleSetup = "true";
+    
     // Create backdrop overlay
     let backdrop = document.querySelector(".menu-backdrop");
     if (!backdrop) {
@@ -215,28 +227,52 @@ function setupMobileMenuToggle() {
       document.body.classList.remove("menu-open");
     };
 
-    // Hamburger button toggles menu
-    menuToggleBtn.addEventListener("click", () => {
-      if (topNavContainer.classList.contains("menu-open")) {
-        closeMenu();
-      } else {
-        openMenu();
-      }
-    });
+    // Store closeMenu function for reuse
+    window._closeMobileMenu = closeMenu;
 
-    // Close button closes menu
-    closeBtn.addEventListener("click", closeMenu);
-
-    // Backdrop click closes menu
-    backdrop.addEventListener("click", closeMenu);
-
-    // Close menu when clicking on a nav button
-    const navButtons = topNavContainer.querySelectorAll(".top-nav-btn");
-    navButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        setTimeout(closeMenu, 300);
+    // Hamburger button toggles menu (only attach once)
+    if (!menuToggleBtn.dataset.menuToggleListener) {
+      menuToggleBtn.addEventListener("click", () => {
+        if (topNavContainer.classList.contains("menu-open")) {
+          closeMenu();
+        } else {
+          openMenu();
+        }
       });
-    });
+      menuToggleBtn.dataset.menuToggleListener = "true";
+    }
+
+    // Close button closes menu (only attach once)
+    if (!closeBtn.dataset.closeBtnListener) {
+      closeBtn.addEventListener("click", closeMenu);
+      closeBtn.dataset.closeBtnListener = "true";
+    }
+
+    // Backdrop click closes menu (only attach once)
+    if (!backdrop.dataset.backdropListener) {
+      backdrop.addEventListener("click", closeMenu);
+      backdrop.dataset.backdropListener = "true";
+    }
+
+    // Helper function to attach listeners to nav buttons (can be called multiple times)
+    const attachNavButtonListeners = () => {
+      const navButtons = topNavContainer.querySelectorAll(".top-nav-btn");
+      navButtons.forEach(btn => {
+        // Only attach if not already attached
+        if (!btn.dataset.navBtnListener) {
+          btn.addEventListener("click", () => {
+            setTimeout(closeMenu, 300);
+          });
+          btn.dataset.navBtnListener = "true";
+        }
+      });
+    };
+    
+    // Store function globally for re-attaching after dynamic content
+    window._attachNavButtonListeners = attachNavButtonListeners;
+    
+    // Attach listeners to existing navigation buttons
+    attachNavButtonListeners();
   }
 }
 

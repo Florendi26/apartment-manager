@@ -647,6 +647,113 @@ async function loadInitialData() {
   renderStatistics();
 }
 
+// Mobile menu toggle function for statistics.html
+// Define this BEFORE init() so it's available when init runs
+window.setupMobileMenuToggle = function setupMobileMenuToggleForStats() {
+  const menuToggleBtn = document.getElementById("menuToggleBtn");
+  const topNavContainer = document.querySelector(".top-nav-container");
+  
+  if (menuToggleBtn && topNavContainer) {
+    // Prevent duplicate setup by checking for existing data attribute
+    if (menuToggleBtn.dataset.menuToggleSetup === "true") {
+      // Re-attach listeners to dynamically created nav buttons
+      if (window._attachNavButtonListeners) {
+        window._attachNavButtonListeners();
+      }
+      return;
+    }
+    
+    // Mark as set up
+    menuToggleBtn.dataset.menuToggleSetup = "true";
+    
+    // Create backdrop overlay
+    let backdrop = document.querySelector(".menu-backdrop");
+    if (!backdrop) {
+      backdrop = document.createElement("div");
+      backdrop.className = "menu-backdrop";
+      document.body.appendChild(backdrop);
+    }
+
+    // Create close button
+    let closeBtn = topNavContainer.querySelector(".menu-close-btn");
+    if (!closeBtn) {
+      closeBtn = document.createElement("button");
+      closeBtn.className = "menu-close-btn";
+      closeBtn.setAttribute("type", "button");
+      closeBtn.setAttribute("title", "Close Menu");
+      closeBtn.setAttribute("aria-label", "Close Menu");
+      closeBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      `;
+      topNavContainer.appendChild(closeBtn);
+    }
+
+    const openMenu = () => {
+      topNavContainer.classList.add("menu-open");
+      backdrop.classList.add("active");
+      menuToggleBtn.classList.add("menu-open");
+      document.body.classList.add("menu-open");
+    };
+
+    const closeMenu = () => {
+      topNavContainer.classList.remove("menu-open");
+      backdrop.classList.remove("active");
+      menuToggleBtn.classList.remove("menu-open");
+      document.body.classList.remove("menu-open");
+    };
+
+    // Store closeMenu function for reuse
+    window._closeMobileMenu = closeMenu;
+
+    // Hamburger button toggles menu (only attach once)
+    if (!menuToggleBtn.dataset.menuToggleListener) {
+      menuToggleBtn.addEventListener("click", () => {
+        if (topNavContainer.classList.contains("menu-open")) {
+          closeMenu();
+        } else {
+          openMenu();
+        }
+      });
+      menuToggleBtn.dataset.menuToggleListener = "true";
+    }
+
+    // Close button closes menu (only attach once)
+    if (!closeBtn.dataset.closeBtnListener) {
+      closeBtn.addEventListener("click", closeMenu);
+      closeBtn.dataset.closeBtnListener = "true";
+    }
+
+    // Backdrop click closes menu (only attach once)
+    if (!backdrop.dataset.backdropListener) {
+      backdrop.addEventListener("click", closeMenu);
+      backdrop.dataset.backdropListener = "true";
+    }
+
+    // Helper function to attach listeners to nav buttons (can be called multiple times)
+    const attachNavButtonListeners = () => {
+      const navButtons = topNavContainer.querySelectorAll(".top-nav-btn");
+      navButtons.forEach(btn => {
+        // Only attach if not already attached
+        if (!btn.dataset.navBtnListener) {
+          btn.addEventListener("click", () => {
+            setTimeout(closeMenu, 300);
+          });
+          btn.dataset.navBtnListener = "true";
+        }
+      });
+    };
+    
+    // Store function globally for re-attaching after dynamic content
+    window._attachNavButtonListeners = attachNavButtonListeners;
+    
+    // Attach listeners to existing navigation buttons
+    attachNavButtonListeners();
+  }
+};
+
 async function init() {
   // Check authentication
   const user = await checkAuth();
@@ -730,9 +837,14 @@ async function init() {
   // Update top navigation active state
   updateTopNavActiveForStats();
 
-  // Setup mobile menu toggle
-  if (typeof setupMobileMenuToggle === "function") {
-    setupMobileMenuToggle();
+  // Setup mobile menu toggle AFTER navigation is populated
+  // This will re-attach listeners to the dynamically created nav buttons
+  const menuToggleFn = window.setupMobileMenuToggle || setupMobileMenuToggle;
+  if (typeof menuToggleFn === "function") {
+    // Use setTimeout to ensure navigation buttons are in DOM
+    setTimeout(() => {
+      menuToggleFn();
+    }, 100);
   }
 
   // Update back link for tenants after translation (in case translateUI overrides it)
