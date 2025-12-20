@@ -141,6 +141,108 @@ body::after {
   height: 20px;
 }
 
+/* Theme Switch - Neumorphic Style */
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.theme-switch-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.theme-switch-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 64px;
+  height: 36px;
+  background: #e5e7eb;
+  border-radius: 50px;
+  padding: 4px;
+  box-shadow: 
+    inset 4px 4px 8px rgba(0, 0, 0, 0.1),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-switch-toggle {
+  position: absolute;
+  left: 4px;
+  width: 28px;
+  height: 28px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    4px 4px 8px rgba(0, 0, 0, 0.15),
+    -2px -2px 4px rgba(255, 255, 255, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+}
+
+.theme-switch-toggle svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+  transition: opacity 0.3s ease;
+}
+
+.theme-switch-icon-dark {
+  position: absolute;
+  opacity: 0;
+  color: #1e293b;
+}
+
+.theme-switch-icon-light {
+  position: absolute;
+  opacity: 1;
+  color: #fbbf24;
+}
+
+/* Dark mode active state */
+.theme-switch-input:checked + .theme-switch-container {
+  background: #1e293b;
+  box-shadow: 
+    inset 4px 4px 8px rgba(0, 0, 0, 0.3),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.05);
+}
+
+.theme-switch-input:checked + .theme-switch-container .theme-switch-toggle {
+  left: calc(100% - 32px);
+  background: #0f172a;
+  box-shadow: 
+    4px 4px 8px rgba(0, 0, 0, 0.4),
+    -2px -2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.theme-switch-input:checked + .theme-switch-container .theme-switch-icon-light {
+  opacity: 0;
+}
+
+.theme-switch-input:checked + .theme-switch-container .theme-switch-icon-dark {
+  opacity: 1;
+  color: #e2e8f0;
+}
+
+.theme-switch:hover .theme-switch-container {
+  box-shadow: 
+    inset 4px 4px 8px rgba(0, 0, 0, 0.12),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.95);
+}
+
+.theme-switch-input:checked:hover + .theme-switch-container {
+  box-shadow: 
+    inset 4px 4px 8px rgba(0, 0, 0, 0.35),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.08);
+}
+
 body.dark-theme .logo-bar {
   background: transparent;
   color: #bbf7d0;
@@ -1394,6 +1496,8 @@ body.dark-theme .button-danger:hover {
 /* Password show/hide on login & signup */
 .password-field .password-input-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .password-field input[type="password"],
@@ -1407,10 +1511,25 @@ body.dark-theme .button-danger:hover {
   top: 50%;
   right: 0.5rem;
   transform: translateY(-50%);
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding-inline: 0.4rem;
+  padding: 0.25rem;
+  margin: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease;
+  line-height: 1;
+  height: auto;
+  width: auto;
+  min-width: auto;
+  vertical-align: middle;
+}
+
+.password-toggle:hover {
+  color: #08a88a;
 }
 
 .password-toggle svg {
@@ -1436,6 +1555,17 @@ body.dark-theme .button-danger:hover {
   height: 1rem;
   fill: currentColor;
   display: block;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+}
+
+body.dark-theme .password-toggle {
+  color: #9ca3af;
+}
+
+body.dark-theme .password-toggle:hover {
+  color: #08a88a;
 }
 
 .date-input {
@@ -1860,6 +1990,11 @@ body.dark-theme .pdf-buttons button:hover {
   gap: 1rem;
 }
 
+.card header #toggleApartmentFormBtn,
+.card header #toggleContractFormBtn {
+  flex-shrink: 0;
+}
+
 .card h3 {
   margin: 0;
   font-size: 1.2rem;
@@ -1868,6 +2003,12 @@ body.dark-theme .pdf-buttons button:hover {
 .card h4 {
   margin: 0;
   font-size: 1.05rem;
+}
+
+#apartmentForm,
+#contractForm {
+  transition: opacity 0.3s ease, max-height 0.3s ease;
+  overflow: hidden;
 }
 
 .form-grid {

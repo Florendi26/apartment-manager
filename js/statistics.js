@@ -768,7 +768,6 @@ async function init() {
   // Set up event listeners
   const logoutButton = document.getElementById("logoutButton");
   const languageToggleBtn = document.getElementById("languageToggleBtn");
-  const themeToggleBtn = document.getElementById("themeToggleBtn");
   const backLink = document.getElementById("statisticsBackLink");
 
   if (logoutButton) {
@@ -795,21 +794,16 @@ async function init() {
     });
   }
 
-  // Theme toggle button (light / dark)
-  if (themeToggleBtn) {
+  // Theme toggle switch (light / dark)
+  const themeToggleSwitch = document.getElementById("themeToggleSwitch");
+  if (themeToggleSwitch) {
     const applyTheme = (theme) => {
       if (theme === "dark") {
         document.body.classList.add("dark-theme");
-        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
-        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
-        if (lightIcon) lightIcon.style.display = "none";
-        if (darkIcon) darkIcon.style.display = "block";
+        themeToggleSwitch.checked = true;
       } else {
         document.body.classList.remove("dark-theme");
-        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
-        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
-        if (lightIcon) lightIcon.style.display = "block";
-        if (darkIcon) darkIcon.style.display = "none";
+        themeToggleSwitch.checked = false;
         theme = "light";
       }
       try {
@@ -822,9 +816,9 @@ async function init() {
       "light";
     applyTheme(storedTheme);
 
-    themeToggleBtn.addEventListener("click", () => {
-      const isDark = document.body.classList.contains("dark-theme");
-      applyTheme(isDark ? "light" : "dark");
+    themeToggleSwitch.addEventListener("change", () => {
+      const isDark = themeToggleSwitch.checked;
+      applyTheme(isDark ? "dark" : "light");
     });
   }
 

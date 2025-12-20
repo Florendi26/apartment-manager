@@ -475,7 +475,6 @@ async function init() {
   const showSignup = document.getElementById("showSignup");
   const showLogin = document.getElementById("showLogin");
   const languageToggleBtn = document.getElementById("languageToggleBtn");
-  const themeToggleBtn = document.getElementById("themeToggleBtn");
   const passwordToggles = document.querySelectorAll(".password-toggle");
 
   if (loginForm) {
@@ -519,14 +518,30 @@ async function init() {
 
   // Language toggle button
   if (languageToggleBtn) {
-    languageToggleBtn.textContent = currentLanguage === "en" ? "En" : "Sq";
+    // Update title attribute for icon button
+    languageToggleBtn.setAttribute("title", currentLanguage === "en" ? "English" : "Albanian");
+    languageToggleBtn.setAttribute("aria-label", `Current language: ${currentLanguage === "en" ? "English" : "Albanian"}`);
+    
+    // If it's a text button (old style), update text content
+    if (!languageToggleBtn.querySelector("svg")) {
+      languageToggleBtn.textContent = currentLanguage === "en" ? "En" : "Sq";
+    }
+    
     languageToggleBtn.addEventListener("click", () => {
       if (currentLanguage === "en") {
         currentLanguage = "sq";
-        languageToggleBtn.textContent = "Sq";
+        languageToggleBtn.setAttribute("title", "Albanian");
+        languageToggleBtn.setAttribute("aria-label", "Current language: Albanian");
+        if (!languageToggleBtn.querySelector("svg")) {
+          languageToggleBtn.textContent = "Sq";
+        }
       } else {
         currentLanguage = "en";
-        languageToggleBtn.textContent = "En";
+        languageToggleBtn.setAttribute("title", "English");
+        languageToggleBtn.setAttribute("aria-label", "Current language: English");
+        if (!languageToggleBtn.querySelector("svg")) {
+          languageToggleBtn.textContent = "En";
+        }
       }
       localStorage.setItem("language", currentLanguage);
       translateUI();
@@ -547,21 +562,16 @@ async function init() {
     });
   }
 
-  // Theme toggle button (shared with index / profile)
-  if (themeToggleBtn) {
+  // Theme toggle switch (shared with index / profile)
+  const themeToggleSwitch = document.getElementById("themeToggleSwitch");
+  if (themeToggleSwitch) {
     const applyTheme = (theme) => {
       if (theme === "dark") {
         document.body.classList.add("dark-theme");
-        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
-        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
-        if (lightIcon) lightIcon.style.display = "none";
-        if (darkIcon) darkIcon.style.display = "block";
+        themeToggleSwitch.checked = true;
       } else {
         document.body.classList.remove("dark-theme");
-        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
-        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
-        if (lightIcon) lightIcon.style.display = "block";
-        if (darkIcon) darkIcon.style.display = "none";
+        themeToggleSwitch.checked = false;
         theme = "light";
       }
       try {
@@ -574,9 +584,9 @@ async function init() {
       "light";
     applyTheme(storedTheme);
 
-    themeToggleBtn.addEventListener("click", () => {
-      const isDark = document.body.classList.contains("dark-theme");
-      applyTheme(isDark ? "light" : "dark");
+    themeToggleSwitch.addEventListener("change", () => {
+      const isDark = themeToggleSwitch.checked;
+      applyTheme(isDark ? "dark" : "light");
     });
   }
 

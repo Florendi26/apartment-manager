@@ -482,10 +482,12 @@ function cacheElements() {
     apartmentDescription: document.getElementById("apartmentDescription"),
     apartmentSubmitBtn: document.getElementById("apartmentSubmitBtn"),
     apartmentCancelBtn: document.getElementById("apartmentCancelBtn"),
+    toggleApartmentFormBtn: document.getElementById("toggleApartmentFormBtn"),
     apartmentsTableBody: document.getElementById("apartmentsTableBody"),
     tenantForm: document.getElementById("tenantForm"),
     tenantsTableBody: document.getElementById("tenantsTableBody"),
     contractForm: document.getElementById("contractForm"),
+    toggleContractFormBtn: document.getElementById("toggleContractFormBtn"),
     contractApartment: document.getElementById("contractApartment"),
     contractTenant: document.getElementById("contractTenant"),
     contractGarbage: document.getElementById("contractGarbage"),
@@ -642,26 +644,20 @@ function attachEventListeners() {
     });
   }
 
-  // Theme toggle button (light / dark)
-  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  // Theme toggle switch (light / dark)
+  const themeToggleSwitch = document.getElementById("themeToggleSwitch");
   function applyTheme(theme) {
     const body = document.body;
     if (!body) return;
     if (theme === "dark") {
       body.classList.add("dark-theme");
-      if (themeToggleBtn) {
-        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
-        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
-        if (lightIcon) lightIcon.style.display = "none";
-        if (darkIcon) darkIcon.style.display = "block";
+      if (themeToggleSwitch) {
+        themeToggleSwitch.checked = true;
       }
     } else {
       body.classList.remove("dark-theme");
-      if (themeToggleBtn) {
-        const lightIcon = themeToggleBtn.querySelector(".theme-icon-light");
-        const darkIcon = themeToggleBtn.querySelector(".theme-icon-dark");
-        if (lightIcon) lightIcon.style.display = "block";
-        if (darkIcon) darkIcon.style.display = "none";
+      if (themeToggleSwitch) {
+        themeToggleSwitch.checked = false;
       }
       theme = "light";
     }
@@ -673,10 +669,10 @@ function attachEventListeners() {
   const storedTheme = (window.localStorage && window.localStorage.getItem("theme")) || "light";
   applyTheme(storedTheme);
 
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener("click", () => {
-      const isDark = document.body.classList.contains("dark-theme");
-      applyTheme(isDark ? "light" : "dark");
+  if (themeToggleSwitch) {
+    themeToggleSwitch.addEventListener("change", () => {
+      const isDark = themeToggleSwitch.checked;
+      applyTheme(isDark ? "dark" : "light");
     });
   }
 
@@ -696,24 +692,6 @@ function attachEventListeners() {
     });
   }
 
-  // Reset app button
-  const resetAppBtn = document.getElementById("resetAppBtn");
-  if (resetAppBtn) {
-    resetAppBtn.addEventListener("click", () => {
-      if (confirm("Are you sure you want to reset the app? This will clear all local storage and reload the page.")) {
-        try {
-          // Clear all localStorage
-          localStorage.clear();
-          // Reload the page
-          window.location.reload();
-        } catch (error) {
-          console.error("Error resetting app:", error);
-          // Fallback: just reload
-          window.location.reload();
-        }
-      }
-    });
-  }
 
   // Top Navigation Container
   setupTopNavContainer();
@@ -737,9 +715,42 @@ function attachEventListeners() {
   // Feature buttons click handlers
   setupFeatureButtons();
   
+  // Toggle apartment form button
+  if (elements.toggleApartmentFormBtn) {
+    elements.toggleApartmentFormBtn.addEventListener("click", () => {
+      const form = elements.apartmentForm;
+      const isVisible = form.style.display !== "none";
+      
+      if (isVisible) {
+        // Hide form
+        form.style.display = "none";
+        elements.toggleApartmentFormBtn.textContent = translate("addApartment") || "Add Apartment";
+        // Reset form if not in edit mode
+        if (!elements.apartmentId?.value) {
+          cancelEditApartment();
+        }
+      } else {
+        // Show form
+        form.style.display = "grid";
+        elements.toggleApartmentFormBtn.textContent = translate("cancel") || "Cancel";
+        // Scroll to form
+        form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+  }
+  
   // Cancel edit button
   if (elements.apartmentCancelBtn) {
-    elements.apartmentCancelBtn.addEventListener("click", cancelEditApartment);
+    elements.apartmentCancelBtn.addEventListener("click", () => {
+      cancelEditApartment();
+      // Hide form after canceling
+      if (elements.apartmentForm) {
+        elements.apartmentForm.style.display = "none";
+      }
+      if (elements.toggleApartmentFormBtn) {
+        elements.toggleApartmentFormBtn.textContent = translate("addApartment") || "Add Apartment";
+      }
+    });
   }
   
   // Initialize photo upload functionality
@@ -755,6 +766,31 @@ function attachEventListeners() {
   // Map initialization removed
 
   elements.tenantForm.addEventListener("submit", onCreateTenant);
+
+  // Toggle contract form button
+  if (elements.toggleContractFormBtn) {
+    elements.toggleContractFormBtn.addEventListener("click", () => {
+      const form = elements.contractForm;
+      const isVisible = form.style.display !== "none";
+      
+      if (isVisible) {
+        // Hide form
+        form.style.display = "none";
+        elements.toggleContractFormBtn.textContent = translate("addContract") || "Add Contract";
+        // Reset form
+        form.reset();
+        if (elements.contractActive) {
+          elements.contractActive.checked = true;
+        }
+      } else {
+        // Show form
+        form.style.display = "grid";
+        elements.toggleContractFormBtn.textContent = translate("cancel") || "Cancel";
+        // Scroll to form
+        form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+  }
 
   elements.contractForm.addEventListener("submit", onCreateContract);
 
@@ -1775,13 +1811,30 @@ async function loadApartments() {
     return;
   }
   
-  const { data, error } = await supabase
+  // Try to load with all columns first (including optional ones)
+  let { data, error } = await supabase
     .from("apartments")
     .select(
-      "id, name, address, electricity_code, heating_code, water_code, waste_code, photos"
+      "id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, monthly_rent, features"
     )
     .eq("landlord_id", state.currentUser.id) // Filter by current user
     .order("created_at", { ascending: false });
+
+  // If error is about missing columns (400 or PGRST204), fall back to core columns only
+  if (error && (error.code === 'PGRST204' || error.status === 400 || error.message?.includes('column'))) {
+    console.warn("Some columns don't exist in database, loading with core columns only:", error.message);
+    // Retry with only core columns that definitely exist
+    const coreSelect = await supabase
+      .from("apartments")
+      .select(
+        "id, name, address, electricity_code, heating_code, water_code, waste_code, photos"
+      )
+      .eq("landlord_id", state.currentUser.id)
+      .order("created_at", { ascending: false });
+    
+    data = coreSelect.data;
+    error = coreSelect.error;
+  }
 
   if (error) {
     notify("error", translate("errorLoad"));
@@ -5390,11 +5443,53 @@ function initializePhotoViewer() {
   });
 }
 
-function editApartment(apartmentId) {
-  const apartment = state.apartments.find(a => equalsId(a.id, apartmentId));
-  if (!apartment) {
-    notify("error", translate("errorLoad"));
-    return;
+async function editApartment(apartmentId) {
+  // First try to get from state (might have limited fields)
+  let apartment = state.apartments.find(a => equalsId(a.id, apartmentId));
+  
+  // Fetch full apartment data from database to ensure we have all fields
+  try {
+    // Try to get all columns explicitly first
+    let { data: fullApartment, error } = await supabase
+      .from("apartments")
+      .select("id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, monthly_rent, features")
+      .eq("id", apartmentId)
+      .single();
+    
+    // If that fails due to missing columns, try with select("*") which will get whatever exists
+    if (error && (error.code === 'PGRST204' || error.status === 400 || error.message?.includes('column'))) {
+      const fallbackQuery = await supabase
+        .from("apartments")
+        .select("*")
+        .eq("id", apartmentId)
+        .single();
+      fullApartment = fallbackQuery.data;
+      error = fallbackQuery.error;
+    }
+    
+    if (!error && fullApartment) {
+      apartment = fullApartment;
+    } else if (!apartment) {
+      // If we couldn't fetch and don't have it in state, show error
+      notify("error", translate("errorLoad"));
+      console.error("editApartment fetch error:", error);
+      return;
+    }
+  } catch (err) {
+    console.warn("Could not fetch full apartment data, using cached data:", err);
+    // Continue with apartment from state if fetch fails
+    if (!apartment) {
+      notify("error", translate("errorLoad"));
+      return;
+    }
+  }
+  
+  // Show form
+  if (elements.apartmentForm) {
+    elements.apartmentForm.style.display = "grid";
+  }
+  if (elements.toggleApartmentFormBtn) {
+    elements.toggleApartmentFormBtn.textContent = translate("cancel") || "Cancel";
   }
   
   // Populate form fields
@@ -5796,6 +5891,13 @@ async function onCreateApartment(event) {
     }
 
     cancelEditApartment();
+    // Hide form after successful submission
+    if (elements.apartmentForm) {
+      elements.apartmentForm.style.display = "none";
+    }
+    if (elements.toggleApartmentFormBtn) {
+      elements.toggleApartmentFormBtn.textContent = translate("addApartment") || "Add Apartment";
+    }
     await loadApartments();
     // Ensure apartments table is rendered after loading
     if (state.contractsLoaded) {
@@ -6025,6 +6127,15 @@ async function onCreateContract(event) {
   event.target.reset();
   elements.contractActive.checked = true;
   notify("success", translate("successAddContract"));
+  
+  // Hide form after successful submission
+  if (elements.contractForm) {
+    elements.contractForm.style.display = "none";
+  }
+  if (elements.toggleContractFormBtn) {
+    elements.toggleContractFormBtn.textContent = translate("addContract") || "Add Contract";
+  }
+  
   loadContracts();
 }
 

@@ -3,6 +3,28 @@
    Mobile, Tablet, and Laptop breakpoints
    ============================================ */
 
+/* Theme Switch Responsive */
+@media screen and (max-width: 768px) {
+  .theme-switch-container {
+    width: 56px;
+    height: 32px;
+  }
+  
+  .theme-switch-toggle {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .theme-switch-input:checked + .theme-switch-container .theme-switch-toggle {
+    left: calc(100% - 28px);
+  }
+  
+  .theme-switch-toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 /* ============================================
    TABLET STYLES (769px - 1024px)
    ============================================ */
