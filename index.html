@@ -175,65 +175,9 @@
           </button>
           <button type="button" data-page="tenants" data-i18n="navTenants">Tenants</button>
           <button type="button" data-page="contracts" data-i18n="navContracts">Contracts</button>
-          <button type="button" data-page="requests" data-i18n="navRequests">Requests</button>
-          <div class="nav-group">
-            <span class="nav-group-label" data-i18n="navExpensesGroup">Expenses</span>
-            <div class="nav-group-buttons">
-              <button type="button" data-page="expenses" data-expense-type="all" data-i18n="navExpensesAll">
-                All
-              </button>
-              <button
-                type="button"
-                data-page="expenses"
-                data-expense-type="rent"
-                class="active"
-                data-i18n="navExpensesRent"
-              >
-                Rent
-              </button>
-              <button
-                type="button"
-                data-page="expenses"
-                data-expense-type="garbage"
-                data-i18n="navExpensesGarbage"
-              >
-                Garbage
-              </button>
-              <button
-                type="button"
-                data-page="expenses"
-                data-expense-type="maintenance"
-                data-i18n="navExpensesMaintenance"
-              >
-                Maintenance
-              </button>
-              <button
-                type="button"
-                data-page="expenses"
-                data-expense-type="electricity"
-                data-i18n="navExpensesElectricity"
-              >
-                Electricity
-              </button>
-              <button
-                type="button"
-                data-page="expenses"
-                data-expense-type="water"
-                data-i18n="navExpensesWater"
-              >
-                Water
-              </button>
-              <button
-                type="button"
-                data-page="expenses"
-                data-expense-type="heating"
-                data-i18n="navExpensesHeating"
-              >
-                Heating
-              </button>
-            </div>
-          </div>
+          <button type="button" data-page="expenses" data-expense-type="all" data-i18n="navExpensesGroup">Expenses</button>
           <button type="button" data-page="payments" data-i18n="navPayments">Payments</button>
+          <button type="button" data-page="requests" data-i18n="navRequests">Requests</button>
         </nav>
         </div>
 
@@ -734,6 +678,34 @@
         </section>
 
         <section id="page-expenses" class="admin-page" data-page="expenses">
+          <div class="expenses-layout">
+            <aside class="expenses-sidebar">
+              <h4 class="expenses-sidebar-title" data-i18n="navExpensesGroup">Expenses</h4>
+              <div class="expenses-sidebar-buttons">
+                <button type="button" class="expense-sidebar-btn" data-page="expenses" data-expense-type="all" data-i18n="navExpensesAll">
+                  All
+                </button>
+                <button type="button" class="expense-sidebar-btn" data-page="expenses" data-expense-type="rent" data-i18n="navExpensesRent">
+                  Rent
+                </button>
+                <button type="button" class="expense-sidebar-btn" data-page="expenses" data-expense-type="garbage" data-i18n="navExpensesGarbage">
+                  Garbage
+                </button>
+                <button type="button" class="expense-sidebar-btn" data-page="expenses" data-expense-type="maintenance" data-i18n="navExpensesMaintenance">
+                  Maintenance
+                </button>
+                <button type="button" class="expense-sidebar-btn" data-page="expenses" data-expense-type="electricity" data-i18n="navExpensesElectricity">
+                  Electricity
+                </button>
+                <button type="button" class="expense-sidebar-btn" data-page="expenses" data-expense-type="water" data-i18n="navExpensesWater">
+                  Water
+                </button>
+                <button type="button" class="expense-sidebar-btn" data-page="expenses" data-expense-type="heating" data-i18n="navExpensesHeating">
+                  Heating
+                </button>
+              </div>
+            </aside>
+            <div class="expenses-content">
           <article class="card" id="debtsPaymentsCard">
             <header>
               <div>
@@ -742,24 +714,25 @@
                   Track rent, utilities, damages and more.
                 </p>
               </div>
+              <div>
+                <button
+                  type="button"
+                  id="toggleExpenseFormBtn"
+                  class="button-primary"
+                  data-i18n="expenseFormToggleExpense"
+                >
+                  Create Expense
+                </button>
+                <button
+                  type="button"
+                  id="togglePaymentFormBtn"
+                  class="button-primary"
+                  data-i18n="expenseFormTogglePayment"
+                >
+                  Record Payment
+                </button>
+              </div>
             </header>
-            <div class="form-toggle" id="expenseFormToggle">
-              <button
-                type="button"
-                class="active"
-                data-expense-form-mode="expense"
-                data-i18n="expenseFormToggleExpense"
-              >
-                Create Expense
-              </button>
-              <button
-                type="button"
-                data-expense-form-mode="payment"
-                data-i18n="expenseFormTogglePayment"
-              >
-                Record Payment
-              </button>
-            </div>
             <div class="summary-controls">
               <button id="toggleExpenseSummary" type="button" data-i18n="toggleExpenseSummary">
                 Tenant Summary
@@ -780,7 +753,7 @@
               </table>
             </div>
             <div class="flex-columns">
-              <form id="debtForm" class="form-grid" data-expense-mode="expense">
+              <form id="debtForm" class="form-grid" data-expense-mode="expense" style="display: none;">
                 <h4 data-i18n="createDebt">Create Expense</h4>
                 <div class="field">
                   <label for="debtContract" data-i18n="selectContract"
@@ -854,7 +827,7 @@
                 </div>
               </form>
 
-              <form id="paymentForm" class="form-grid" data-expense-mode="payment">
+              <form id="paymentForm" class="form-grid" data-expense-mode="payment" style="display: none;">
                 <h4 data-i18n="recordPayment">Record Payment</h4>
                 <div class="field">
                   <label for="paymentDebt" data-i18n="selectDebt">Debt</label>
@@ -944,6 +917,17 @@
                   <option value="water" data-i18n="debtWater">Water</option>
                   <option value="damage" data-i18n="debtDamage">Damage</option>
                   <option value="other" data-i18n="debtOther">Other</option>
+                </select>
+              </div>
+              <div>
+                <label for="debtsSortBy" data-i18n="sortBy">Sort By</label>
+                <select id="debtsSortBy">
+                  <option value="date_desc" data-i18n="sortDateDesc">Date (Newest First)</option>
+                  <option value="date_asc" data-i18n="sortDateAsc">Date (Oldest First)</option>
+                  <option value="reference_asc" data-i18n="sortReferenceAsc">Reference (A-Z)</option>
+                  <option value="reference_desc" data-i18n="sortReferenceDesc">Reference (Z-A)</option>
+                  <option value="amount_desc" data-i18n="sortAmountDesc">Amount (High to Low)</option>
+                  <option value="amount_asc" data-i18n="sortAmountAsc">Amount (Low to High)</option>
                 </select>
               </div>
               <div class="toolbar-actions">
@@ -1044,6 +1028,8 @@
               </table>
             </div>
           </article>
+            </div>
+          </div>
         </section>
 
         <section id="page-payments" class="admin-page" data-page="payments">
@@ -1229,6 +1215,7 @@
     <!-- Load shared translations before any app logic that uses them -->
     <script src="js/languages.js"></script>
     <script src="js/pdf-export.js"></script>
+    <script src="js/pagination.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

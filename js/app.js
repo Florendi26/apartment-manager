@@ -147,6 +147,7 @@ const state = {
   markPaidDebtId: null,
   globalTenantFilter: null, // Global tenant filter for all views
   globalContractFilter: null, // Global contract filter for all views
+  paginationInstances: {}, // Store pagination instances for each table
 };
 
 // Table mapping for split tables
@@ -514,7 +515,8 @@ function cacheElements() {
       "debtElectricityCutWrapper"
     ),
     debtElectricityCut: document.getElementById("debtElectricityCut"),
-    expenseFormToggle: document.getElementById("expenseFormToggle"),
+    toggleExpenseFormBtn: document.getElementById("toggleExpenseFormBtn"),
+    togglePaymentFormBtn: document.getElementById("togglePaymentFormBtn"),
     paymentDebt: document.getElementById("paymentDebt"),
     paymentAmount: document.getElementById("paymentAmount"),
     paymentDate: document.getElementById("paymentDate"),
@@ -526,6 +528,7 @@ function cacheElements() {
     debtsTableBody: document.getElementById("debtsTableBody"),
     debtsFilterStatus: document.getElementById("debtsFilterStatus"),
     debtsFilterType: document.getElementById("debtsFilterType"),
+    debtsSortBy: document.getElementById("debtsSortBy"),
     exportDebtsPdf: document.getElementById("exportDebtsPdf"),
     expensesHeading: document.getElementById("expensesHeading"),
     expensesSubheading: document.getElementById("expensesSubheading"),
@@ -565,11 +568,25 @@ function cacheElements() {
   if (elements.debtFormCancelEdit) {
     elements.debtFormCancelEdit.addEventListener("click", () => {
       resetDebtForm();
+      // Hide form after canceling
+      if (elements.debtForm) {
+        elements.debtForm.style.display = "none";
+      }
+      if (elements.toggleExpenseFormBtn) {
+        elements.toggleExpenseFormBtn.textContent = translate("expenseFormToggleExpense") || "Create Expense";
+      }
     });
   }
   if (elements.paymentFormCancelEdit) {
     elements.paymentFormCancelEdit.addEventListener("click", () => {
       resetPaymentForm();
+      // Hide form after canceling
+      if (elements.paymentForm) {
+        elements.paymentForm.style.display = "none";
+      }
+      if (elements.togglePaymentFormBtn) {
+        elements.togglePaymentFormBtn.textContent = translate("expenseFormTogglePayment") || "Record Payment";
+      }
     });
   }
   if (elements.debtsTableBody) {
@@ -590,12 +607,12 @@ function cacheElements() {
   if (elements.utilityPaymentsTableBody) {
     elements.utilityPaymentsTableBody.addEventListener("click", handleUtilityPaymentsTableClick);
   }
-  elements.expenseFormModeButtons = Array.from(
-    document.querySelectorAll("[data-expense-form-mode]")
-  );
+  // Removed expenseFormModeButtons - using separate toggle buttons now
   elements.expenseModeSections = Array.from(
     document.querySelectorAll("[data-expense-mode]")
   );
+  // Initialize expense form mode (defaults to "expense")
+  // This controls which sections (tables, toolbars) are visible
   updateExpenseFormModeUI();
   updateExpenseSummaryUI();
   updatePaymentSummaryUI();
@@ -702,6 +719,14 @@ function attachEventListeners() {
     elements.adminNav.addEventListener("click", handleAdminNavClick);
   }
   
+  // Handle sidebar expense filter buttons using event delegation
+  document.addEventListener("click", (event) => {
+    const sidebarBtn = event.target.closest('.expense-sidebar-btn');
+    if (sidebarBtn) {
+      handleAdminNavClick(event);
+    }
+  });
+  
   // Global contract filter
   if (elements.globalContractFilter) {
     elements.globalContractFilter.addEventListener("change", handleGlobalContractFilterChange);
@@ -807,11 +832,69 @@ function attachEventListeners() {
       handleElectricityCutChange
     );
   }
-  if (elements.expenseFormToggle) {
-    elements.expenseFormToggle.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-expense-form-mode]");
-      if (!button) return;
-      setExpenseFormMode(button.dataset.expenseFormMode);
+  // Toggle expense form button
+  if (elements.toggleExpenseFormBtn) {
+    elements.toggleExpenseFormBtn.addEventListener("click", () => {
+      const form = elements.debtForm;
+      const isVisible = form.style.display !== "none";
+      
+      if (isVisible) {
+        // Hide form
+        form.style.display = "none";
+        elements.toggleExpenseFormBtn.textContent = translate("expenseFormToggleExpense") || "Create Expense";
+        // Reset form if not in edit mode
+        if (!state.editingDebtId) {
+          resetDebtForm();
+        }
+      } else {
+        // Show form
+        form.style.display = "grid";
+        elements.toggleExpenseFormBtn.textContent = translate("cancel") || "Cancel";
+        // Update expense form mode for table/toolbar visibility
+        setExpenseFormMode("expense");
+        // Hide payment form if open
+        if (elements.paymentForm) {
+          elements.paymentForm.style.display = "none";
+          if (elements.togglePaymentFormBtn) {
+            elements.togglePaymentFormBtn.textContent = translate("expenseFormTogglePayment") || "Record Payment";
+          }
+        }
+        // Scroll to form
+        form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+  }
+  
+  // Toggle payment form button
+  if (elements.togglePaymentFormBtn) {
+    elements.togglePaymentFormBtn.addEventListener("click", () => {
+      const form = elements.paymentForm;
+      const isVisible = form.style.display !== "none";
+      
+      if (isVisible) {
+        // Hide form
+        form.style.display = "none";
+        elements.togglePaymentFormBtn.textContent = translate("expenseFormTogglePayment") || "Record Payment";
+        // Reset form if not in edit mode
+        if (!state.editingPaymentId) {
+          resetPaymentForm();
+        }
+      } else {
+        // Show form
+        form.style.display = "grid";
+        elements.togglePaymentFormBtn.textContent = translate("cancel") || "Cancel";
+        // Update expense form mode for table/toolbar visibility
+        setExpenseFormMode("payment");
+        // Hide expense form if open
+        if (elements.debtForm) {
+          elements.debtForm.style.display = "none";
+          if (elements.toggleExpenseFormBtn) {
+            elements.toggleExpenseFormBtn.textContent = translate("expenseFormToggleExpense") || "Create Expense";
+          }
+        }
+        // Scroll to form
+        form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
     });
   }
   if (elements.paymentDebt) {
@@ -838,6 +921,9 @@ function attachEventListeners() {
 
   elements.debtsFilterStatus.addEventListener("change", renderDebtsTable);
   elements.debtsFilterType.addEventListener("change", onDebtsTypeFilterChange);
+  if (elements.debtsSortBy) {
+    elements.debtsSortBy.addEventListener("change", renderDebtsTable);
+  }
   elements.exportDebtsPdf.addEventListener("click", exportDebtsToPdf);
   
   // Mark Paid Modal event listeners
@@ -927,6 +1013,8 @@ function handleAdminNavClick(event) {
   if (!page) return;
   event.preventDefault();
   if (page === "expenses") {
+    // If clicked from sidebar, use the expense type from the button
+    // If clicked from main nav (just "Expenses"), default to "all"
     const expenseType = button.dataset.expenseType || "all";
     setAdminPage("expenses", expenseType);
   } else {
@@ -1193,6 +1281,25 @@ function setAdminPage(page, expenseCategory = state.expensesCategory) {
   updateAdminNavActive(page, expenseCategory);
   if (page === "expenses") {
     applyExpensesCategory(expenseCategory);
+    // Ensure pagination loads when expenses page is shown
+    setTimeout(() => {
+      if (state.paginationInstances.debts) {
+        const currentItems = state.paginationInstances.debts.getItems();
+        // If no items loaded yet, force load
+        if (currentItems.length === 0 && !state.paginationInstances.debts.isLoading()) {
+          // Reset and load
+          if (state.paginationInstances.debts.state) {
+            state.paginationInstances.debts.state.currentPage = 0;
+            state.paginationInstances.debts.state.allItems = [];
+            state.paginationInstances.debts.state.hasMore = true;
+            state.paginationInstances.debts.loadNextPage();
+          }
+        }
+      } else if (state.debtsLoaded && elements.debtsTableBody) {
+        // Pagination not set up yet, set it up now
+        setupDebtsPagination();
+      }
+    }, 100);
   }
   
   // Show/hide global contract filter based on page
@@ -1238,25 +1345,52 @@ function applyExpensesCategory(category = "all") {
   refreshTenantSummaries(); // Refresh tenant summary with new filter
   if (state.adminPage === "expenses") {
     updateAdminNavActive("expenses", normalized);
+    // Ensure pagination loads when switching expense categories
+    if (state.paginationInstances.debts) {
+      // Reset will trigger loading with new filters
+      state.paginationInstances.debts.reset();
+    }
   }
 }
 
 function updateAdminNavActive(page, expenseCategory = state.expensesCategory) {
   if (!elements.adminNav) return;
   const hasMapping = !!EXPENSE_TYPE_MAP[expenseCategory];
+  
+  // Update nav buttons (excluding expense category buttons which are now in sidebar)
   elements.adminNav
     .querySelectorAll("button[data-page]")
     .forEach((button) => {
       const buttonPage = button.dataset.page;
       const buttonExpense = button.dataset.expenseType || null;
-      const isExpenses = buttonPage === "expenses" && page === "expenses";
-      const isActive =
-        (buttonPage === page && page !== "expenses") ||
-        (isExpenses &&
-          hasMapping &&
-          buttonExpense === expenseCategory);
-      button.classList.toggle("active", isActive);
+      
+      // For expenses page, just check if the page matches (don't check expense type)
+      // Expense type filtering is now handled by sidebar buttons
+      // For payments and other pages, check if page matches
+      if (buttonPage === page) {
+        button.classList.add("active");
+      } else {
+        button.classList.remove("active");
+      }
     });
+  
+  // Update sidebar buttons (only for expense types, not payments)
+  document.querySelectorAll('.expense-sidebar-btn').forEach((button) => {
+    const buttonPage = button.dataset.page;
+    const buttonExpense = button.dataset.expenseType || null;
+    const isExpenses = buttonPage === "expenses" && page === "expenses";
+    let isActive = false;
+    
+    if (isExpenses) {
+      if (buttonExpense === "all" && expenseCategory === "all") {
+        isActive = true;
+      } else if (hasMapping && buttonExpense === expenseCategory) {
+        isActive = true;
+      }
+    }
+    
+    button.classList.toggle("active", isActive);
+  });
 }
 
 function updateExpensesHeading() {
@@ -1304,38 +1438,28 @@ function updateExpenseFormTypeLock() {
 
 function setExpenseFormMode(mode) {
   if (mode !== "expense" && mode !== "payment") return;
-  if (mode === "expense" && state.editingPaymentId) {
+  
+  // Only reset forms if switching modes (not when forms are already hidden/shown by toggle buttons)
+  // This prevents conflicts with the new separate toggle button system
+  if (mode === "expense" && state.editingPaymentId && state.expenseFormMode === "payment") {
     resetPaymentForm();
   }
-  if (mode === "payment" && state.editingDebtId) {
+  if (mode === "payment" && state.editingDebtId && state.expenseFormMode === "expense") {
     resetDebtForm();
   }
+  
   state.expenseFormMode = mode;
   updateExpenseFormModeUI();
 }
 
 function updateExpenseFormModeUI() {
-  if (Array.isArray(elements.expenseFormModeButtons)) {
-    elements.expenseFormModeButtons.forEach((button) => {
-      const mode = button.dataset.expenseFormMode;
-      button.classList.toggle("active", mode === state.expenseFormMode);
-    });
-  }
-  if (elements.debtForm) {
-    elements.debtForm.classList.toggle(
-      "hidden",
-      state.expenseFormMode !== "expense"
-    );
-  }
-  if (elements.paymentForm) {
-    elements.paymentForm.classList.toggle(
-      "hidden",
-      state.expenseFormMode !== "payment"
-    );
-  }
+  // Handle expense mode sections visibility (tables, toolbars, etc.)
   if (Array.isArray(elements.expenseModeSections)) {
     elements.expenseModeSections.forEach((node) => {
       const mode = node.dataset.expenseMode;
+      // Show sections based on current expense form mode
+      // If form mode is "expense", show expense sections
+      // If form mode is "payment", show payment sections
       node.classList.toggle("hidden", mode !== state.expenseFormMode);
     });
   }
@@ -1692,19 +1816,17 @@ async function loadInitialData() {
   populateTenantSelector();
   
   if (!hasSeenAnimation) {
-    // Render statistics with animation (this replaces all the individual renderAdminSummary calls)
-    await renderAdminSummaryWithAnimation();
+    // Show pages immediately for better UX (don't wait for animation)
+    showAllAdminPages();
+    
+    // Render statistics with animation in background (doesn't block UI)
+    renderAdminSummaryWithAnimation();
     
     // Mark that animation has been shown in this session
     sessionStorage.setItem('statisticsAnimationShown', 'true');
     
     // Clear the flag
     state.isInitialLoad = false;
-    
-    // After animation completes, show the rest of the pages
-    setTimeout(() => {
-      showAllAdminPages();
-    }, 2500); // Wait for animation to complete (2000ms animation + 500ms buffer)
   } else {
     // Animation already shown, just render normally and show pages immediately
     state.isInitialLoad = false;
@@ -1714,16 +1836,14 @@ async function loadInitialData() {
 }
 
 function hideAllAdminPages() {
-  // Hide all admin pages except statistics
-  const adminPages = document.querySelectorAll('.admin-page');
-  adminPages.forEach(page => {
-    page.style.display = 'none';
-  });
+  // Don't hide pages anymore - show them immediately for better UX
+  // Just ensure the correct page is active
+  setAdminPage(state.adminPage || 'apartments', state.expensesCategory);
   
-  // Hide admin nav initially
-  if (elements.adminNav) {
-    elements.adminNav.style.display = 'none';
-  }
+  // Keep admin nav visible
+  // if (elements.adminNav) {
+  //   elements.adminNav.style.display = 'none';
+  // }
 }
 
 function showAllAdminPages() {
@@ -1805,55 +1925,25 @@ async function loadApartments() {
     state.apartments = [];
     // Only render if contracts are loaded (or if no contracts exist)
     if (state.contractsLoaded || state.contracts.length === 0) {
-      renderApartmentsTable();
+      // Setup pagination even if no user (will show empty)
+      setupApartmentsPagination();
+      if (state.paginationInstances.apartments) {
+        state.paginationInstances.apartments.reset();
+      }
     }
     populateApartmentSelects();
     return;
   }
+
+  // Use pagination instead of loading all at once
+  setupApartmentsPagination();
   
-  // Try to load with all columns first (including optional ones)
-  let { data, error } = await supabase
-    .from("apartments")
-    .select(
-      "id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, monthly_rent, features"
-    )
-    .eq("landlord_id", state.currentUser.id) // Filter by current user
-    .order("created_at", { ascending: false });
-
-  // If error is about missing columns (400 or PGRST204), fall back to core columns only
-  if (error && (error.code === 'PGRST204' || error.status === 400 || error.message?.includes('column'))) {
-    console.warn("Some columns don't exist in database, loading with core columns only:", error.message);
-    // Retry with only core columns that definitely exist
-    const coreSelect = await supabase
-      .from("apartments")
-      .select(
-        "id, name, address, electricity_code, heating_code, water_code, waste_code, photos"
-      )
-      .eq("landlord_id", state.currentUser.id)
-      .order("created_at", { ascending: false });
-    
-    data = coreSelect.data;
-    error = coreSelect.error;
+  // Reset pagination to load from the beginning
+  if (state.paginationInstances.apartments) {
+    state.paginationInstances.apartments.reset();
   }
-
-  if (error) {
-    notify("error", translate("errorLoad"));
-    console.error("loadApartments", error);
-    return;
-  }
-
-  state.apartments = data || [];
-  // Don't render yet - wait for contracts to load first for accurate status
+  
   populateApartmentSelects();
-  // Only update summary if not in initial load (initial load uses animated version)
-  if (!state.isInitialLoad) {
-    renderAdminSummary();
-  }
-  
-  // Render apartments table if contracts are already loaded
-  if (state.contractsLoaded) {
-    renderApartmentsTable();
-  }
 }
 
 async function loadTenants() {
@@ -1936,6 +2026,11 @@ async function loadContracts() {
   if (state.apartments && state.apartments.length > 0) {
     renderApartmentsTable();
   }
+
+  // Also refresh pagination if it exists
+  if (state.paginationInstances.apartments) {
+    renderApartmentsTable();
+  }
   
   // Only update summary if not in initial load (initial load uses animated version)
   if (!state.isInitialLoad) {
@@ -1947,6 +2042,9 @@ async function loadDebts() {
   // Load from all split bill tables
   await loadAllBills();
   
+  // Setup pagination after loading
+  setupDebtsPagination();
+  
   // Combine all bills into state.debts for backward compatibility
   state.debts = [
     ...state.rentBills.map(b => ({ ...b, type: "rent", due_date: b.bill_date || b.due_date })),
@@ -1957,7 +2055,15 @@ async function loadDebts() {
     ...state.heatingBills.map(b => ({ ...b, type: "thermos", due_date: b.bill_date, is_paid: false })),
   ];
   
-  renderDebtsTable();
+  // Setup pagination after loading
+  setupDebtsPagination();
+  
+  // If pagination was set up, it will handle rendering
+  // Otherwise use fallback rendering
+  if (!state.paginationInstances.debts) {
+    renderDebtsTable();
+  }
+  
   populateDebtSelects();
 
   if (state.selectedTenantId) {
@@ -2069,7 +2175,13 @@ async function loadPayments() {
     ...state.heatingPayments.map(p => ({ ...p, type: "thermos" })),
   ];
 
-  renderPaymentsTable();
+  // Setup pagination after loading
+  setupPaymentsPagination();
+  
+  // Also render using old method if pagination not set up
+  if (!state.paginationInstances.payments) {
+    renderPaymentsTable();
+  }
 
   if (state.selectedTenantId) {
     renderTenantPayments();
@@ -2158,6 +2270,495 @@ async function loadAllPayments() {
   // Update state with results
   results.forEach(({ stateKey, data }) => {
     state[stateKey.payments] = data;
+  });
+}
+
+/**
+ * Setup pagination for apartments table
+ */
+function setupApartmentsPagination() {
+  if (!elements.apartmentsTableBody) return;
+
+  // Destroy existing instance if any
+  if (state.paginationInstances.apartments) {
+    state.paginationInstances.apartments.destroy();
+  }
+
+  state.paginationInstances.apartments = new InfiniteScrollPagination({
+    container: elements.apartmentsTableBody,
+    itemsPerPage: 15,
+    loadPage: async (page, limit) => {
+      if (!state.currentUser) {
+        return { items: [], hasMore: false };
+      }
+
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+
+      // Try to load with all columns first
+      let { data, error, count } = await supabase
+        .from("apartments")
+        .select(
+          "id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, monthly_rent, features",
+          { count: 'exact' }
+        )
+        .eq("landlord_id", state.currentUser.id)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      // Fallback to core columns if needed
+      if (error && (error.code === 'PGRST204' || error.status === 400 || error.message?.includes('column'))) {
+        const coreSelect = await supabase
+          .from("apartments")
+          .select(
+            "id, name, address, electricity_code, heating_code, water_code, waste_code, photos",
+            { count: 'exact' }
+          )
+          .eq("landlord_id", state.currentUser.id)
+          .order("created_at", { ascending: false })
+          .range(from, to);
+        
+        data = coreSelect.data;
+        error = coreSelect.error;
+        count = coreSelect.count;
+      }
+
+      if (error) {
+        throw error;
+      }
+
+      const items = data || [];
+      const hasMore = count ? (to + 1 < count) : (items.length === limit);
+
+      // Update state.apartments to include all loaded items
+      const currentIds = new Set(state.apartments.map(a => a.id));
+      items.forEach(item => {
+        if (!currentIds.has(item.id)) {
+          state.apartments.push(item);
+        }
+      });
+
+      populateApartmentSelects();
+
+      return { items, hasMore };
+    },
+    renderItem: (apartment) => {
+      // Compute active contracts dynamically (contracts may load after apartments)
+      const apartmentsWithActiveContracts = new Set(
+        state.contracts
+          .filter(c => c.is_active && c.apartment_id != null)
+          .map(c => String(c.apartment_id))
+      );
+      const hasActiveContract = apartmentsWithActiveContracts.has(String(apartment.id));
+      const statusClass = hasActiveContract ? "" : "view-active";
+      const statusText = hasActiveContract 
+        ? translate("apartmentOccupied") || "Occupied" 
+        : translate("apartmentAvailable") || "Available";
+      
+      let photos = [];
+      if (apartment.photos) {
+        try {
+          photos = typeof apartment.photos === 'string' 
+            ? (apartment.photos.startsWith('[') ? JSON.parse(apartment.photos) : apartment.photos.split(',').map(p => p.trim()))
+            : apartment.photos;
+        } catch (e) {
+          photos = apartment.photos.split(',').map(p => p.trim());
+        }
+      }
+      const firstPhoto = photos.length > 0 ? photos[0] : null;
+
+      const row = document.createElement('tr');
+      row.className = statusClass;
+      row.innerHTML = `
+        <td data-label="Photo">
+          ${firstPhoto 
+            ? `<img src="${sanitize(firstPhoto)}" alt="${sanitize(apartment.name)}" class="apartment-photo-thumbnail" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;" onerror="this.style.display='none'" data-apartment-id="${apartment.id}">`
+            : '<span style="color: #999;">No photo</span>'
+          }
+        </td>
+        <td data-label="Name">${sanitize(apartment.name)}</td>
+        <td data-label="Address">${sanitize(apartment.address || "")}</td>
+        <td data-label="Electricity Code">${sanitize(apartment.electricity_code || "")}</td>
+        <td data-label="Heating Code">${sanitize(apartment.heating_code || "")}</td>
+        <td data-label="Water Code">${sanitize(apartment.water_code || "")}</td>
+        <td data-label="Waste Code">${sanitize(apartment.waste_code || "")}</td>
+        <td data-label="Status"><span class="status-badge ${hasActiveContract ? 'occupied' : 'available'}">${statusText}</span></td>
+        <td data-label="Actions">
+          <div class="actions-group">
+            <button type="button" class="button-secondary button-small" data-action="edit-apartment" data-id="${apartment.id}">
+              ${translate("edit") || "Edit"}
+            </button>
+            <button type="button" class="button-danger button-small" data-action="delete-apartment" data-id="${apartment.id}">
+              ${translate("delete") || "Delete"}
+            </button>
+          </div>
+        </td>
+        <td data-label="ID">${apartment.id}</td>
+      `;
+
+      // Attach event listeners
+      const editBtn = row.querySelector('[data-action="edit-apartment"]');
+      const deleteBtn = row.querySelector('[data-action="delete-apartment"]');
+      const photoImg = row.querySelector('.apartment-photo-thumbnail');
+      
+      if (editBtn) {
+        editBtn.addEventListener("click", () => editApartment(editBtn.dataset.id));
+      }
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => handleDeleteApartment(deleteBtn.dataset.id));
+      }
+      if (photoImg) {
+        photoImg.addEventListener("click", () => {
+          const apartmentId = photoImg.getAttribute("data-apartment-id");
+          if (!apartmentId) return;
+          const apt = state.apartments.find(a => equalsId(a.id, apartmentId));
+          if (apt) {
+            // Parse and show photos
+            let aptPhotos = [];
+            if (apt.photos) {
+              try {
+                aptPhotos = typeof apt.photos === 'string' 
+                  ? (apt.photos.startsWith('[') ? JSON.parse(apt.photos) : apt.photos.split(',').map(p => p.trim()))
+                  : apt.photos;
+              } catch (e) {
+                aptPhotos = apt.photos.split(',').map(p => p.trim());
+              }
+            }
+            showPhotoViewer(aptPhotos, 0);
+          }
+        });
+      }
+
+      return row;
+    },
+    skeletonTemplate: () => {
+      const skeleton = document.createElement('tr');
+      skeleton.className = 'pagination-skeleton';
+      skeleton.innerHTML = '<td colspan="9" style="padding: 1rem; text-align: center;"><div style="background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;"></div></td>';
+      return skeleton;
+    },
+    loadMoreText: translate("loadMore") || "Load More",
+    errorText: translate("errorLoadMore") || "Error loading. Click to retry.",
+    onError: (error) => {
+      console.error("Apartments pagination error:", error);
+      notify("error", translate("errorLoad") || "Error loading apartments");
+    },
+    onLoadComplete: () => {
+      if (!state.isInitialLoad) {
+        renderAdminSummary();
+      }
+    }
+  });
+}
+
+/**
+ * Setup pagination for expenses/debts table (client-side pagination on filtered data)
+ */
+function setupDebtsPagination() {
+  if (!elements.debtsTableBody) return;
+
+  // Destroy existing instance if any
+  if (state.paginationInstances.debts) {
+    state.paginationInstances.debts.destroy();
+  }
+
+  state.paginationInstances.debts = new InfiniteScrollPagination({
+    container: elements.debtsTableBody,
+    itemsPerPage: 15,
+    loadPage: async (page, limit) => {
+      // Wait for debts to be loaded if not ready yet
+      if (!state.debtsLoaded || (state.debts && state.debts.length === 0 && state.rentBills.length === 0)) {
+        // Wait a bit for data to load
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      // Simulate async to show skeleton (filtering is fast but we want consistency)
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const statusFilter = elements.debtsFilterStatus?.value || "all";
+      const typeFilter = elements.debtsFilterType?.value || "all";
+      const today = new Date().toISOString().slice(0, 10);
+
+      // Get filtered debts
+      const debtsToFilter = getFilteredDebts();
+      
+      // If no debts available yet, return empty
+      if (!debtsToFilter || debtsToFilter.length === 0) {
+        return { items: [], hasMore: false };
+      }
+      
+      const filtered = debtsToFilter.filter((debt) => {
+        const isPaid = !!debt.is_paid;
+        const isOverdue = !isPaid && debt.due_date && debt.due_date < today;
+
+        if (!isUtilityType(debt.type)) {
+          if (statusFilter === "paid" && !isPaid) return false;
+          if (statusFilter === "open_overdue" && isPaid) return false;
+        }
+        if (typeFilter !== "all" && debt.type !== typeFilter) return false;
+        return true;
+      });
+
+      // Sort based on selected option
+      const sortBy = elements.debtsSortBy?.value || "date_desc";
+      filtered.sort((a, b) => {
+        switch (sortBy) {
+          case "date_asc":
+            const dateA = a.due_date || '';
+            const dateB = b.due_date || '';
+            return dateA.localeCompare(dateB);
+          
+          case "date_desc":
+            const dateADesc = a.due_date || '';
+            const dateBDesc = b.due_date || '';
+            return dateBDesc.localeCompare(dateADesc);
+          
+          case "reference_asc":
+            // Extract numeric part for proper numeric sorting
+            const refA = a.reference || "";
+            const refB = b.reference || "";
+            const numA = typeof refA === 'number' ? refA : parseInt(refA, 10);
+            const numB = typeof refB === 'number' ? refB : parseInt(refB, 10);
+            if (!isNaN(numA) && !isNaN(numB)) {
+              return numA - numB;
+            }
+            // Fallback to string comparison
+            return String(refA).toLowerCase().localeCompare(String(refB).toLowerCase());
+          
+          case "reference_desc":
+            // Extract numeric part for proper numeric sorting
+            const refADesc = a.reference || "";
+            const refBDesc = b.reference || "";
+            const numADesc = typeof refADesc === 'number' ? refADesc : parseInt(refADesc, 10);
+            const numBDesc = typeof refBDesc === 'number' ? refBDesc : parseInt(refBDesc, 10);
+            if (!isNaN(numADesc) && !isNaN(numBDesc)) {
+              return numBDesc - numADesc;
+            }
+            // Fallback to string comparison
+            return String(refBDesc).toLowerCase().localeCompare(String(refADesc).toLowerCase());
+          
+          case "amount_asc":
+            const amountA = normalizeCurrency(a.amount || 0);
+            const amountB = normalizeCurrency(b.amount || 0);
+            return amountA - amountB;
+          
+          case "amount_desc":
+            const amountADesc = normalizeCurrency(a.amount || 0);
+            const amountBDesc = normalizeCurrency(b.amount || 0);
+            return amountBDesc - amountADesc;
+          
+          default:
+            // Default to date_desc
+            const dateADef = a.due_date || '';
+            const dateBDef = b.due_date || '';
+            return dateBDef.localeCompare(dateADef);
+        }
+      });
+
+      // Paginate
+      const from = (page - 1) * limit;
+      const to = from + limit;
+      const items = filtered.slice(from, to);
+      const hasMore = to < filtered.length;
+
+      return { items, hasMore };
+    },
+    renderItem: (debt) => {
+      const tenant = state.tenants.find((t) => equalsId(t.id, debt.tenant_id));
+      const status = getDebtStatus(debt);
+      const typeLabel = getDebtTypeLabel(debt);
+      const isUtility = isUtilityType(debt.type);
+      const showMarkPaid = !isUtility;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
+        <td>${sanitize(typeLabel)}</td>
+        <td>${formatCurrency(debt.amount)}</td>
+        <td>${formatDate(debt.due_date)}</td>
+        <td>${isUtility ? "" : `<span class="tag ${status.class}">${status.label}</span>`}</td>
+        <td>${sanitize(formatReferenceForDisplay(debt.reference))}</td>
+        <td>${sanitize(stripElectricityCutMarker(debt.notes || ""))}</td>
+        <td>
+          <div class="actions-group">
+            <button type="button" class="button-secondary" data-action="edit-debt" data-id="${debt.id}">
+              ${translate("edit")}
+            </button>
+            <button type="button" class="button-danger" data-action="delete-debt" data-id="${debt.id}">
+              ${translate("delete")}
+            </button>
+            ${showMarkPaid ? `<button type="button" class="button-primary" data-action="mark-paid" data-id="${debt.id}" ${
+              debt.is_paid ? "disabled" : ""
+            }>
+              ${translate("markPaid")}
+            </button>` : ""}
+          </div>
+        </td>
+      `;
+
+      // Attach event listeners
+      const editBtn = row.querySelector('[data-action="edit-debt"]');
+      const deleteBtn = row.querySelector('[data-action="delete-debt"]');
+      const markPaidBtn = row.querySelector('[data-action="mark-paid"]');
+      
+      if (editBtn) {
+        editBtn.addEventListener("click", () => editDebt(editBtn.dataset.id));
+      }
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => handleDeleteDebt(deleteBtn.dataset.id));
+      }
+      if (markPaidBtn) {
+        markPaidBtn.addEventListener("click", () => handleMarkPaid(markPaidBtn.dataset.id));
+      }
+
+      return row;
+    },
+    skeletonTemplate: () => {
+      const skeleton = document.createElement('tr');
+      skeleton.className = 'pagination-skeleton';
+      skeleton.innerHTML = '<td colspan="8" style="padding: 1rem; text-align: center;"><div style="background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;"></div></td>';
+      return skeleton;
+    },
+    loadMoreText: translate("loadMore") || "Load More",
+    errorText: translate("errorLoadMore") || "Error loading. Click to retry.",
+    onError: (error) => {
+      console.error("Debts pagination error:", error);
+    },
+    onLoadComplete: () => {
+      // Recalculate and render total payment summary
+      const instance = state.paginationInstances.debts;
+      if (instance) {
+        const allItems = instance.getItems();
+        const totalPaymentSummary = allItems.reduce((summary, debt) => {
+          const debtSummary = getDebtPaymentSummary(debt.id);
+          summary.totalPaid += debtSummary.totalPaid;
+          summary.totalDebt += debtSummary.debtAmount;
+          return summary;
+        }, { totalPaid: 0, totalDebt: 0 });
+        
+        const totalRemaining = normalizeCurrency(totalPaymentSummary.totalDebt - totalPaymentSummary.totalPaid);
+        totalPaymentSummary.totalRemaining = Math.abs(totalRemaining) < 0.001 ? null : totalRemaining;
+        
+        renderTotalPaymentSummary(totalPaymentSummary);
+      }
+    }
+  });
+}
+
+/**
+ * Setup pagination for payments table (client-side pagination on filtered data)
+ */
+function setupPaymentsPagination() {
+  if (!elements.paymentsTableBody && !elements.expensesPaymentsTableBody) return;
+
+  const containers = [elements.paymentsTableBody, elements.expensesPaymentsTableBody].filter(Boolean);
+  if (containers.length === 0) return;
+
+  // Destroy existing instance if any
+  if (state.paginationInstances.payments) {
+    state.paginationInstances.payments.destroy();
+  }
+
+  // Use the first available container as the main one
+  const mainContainer = containers[0];
+
+  state.paginationInstances.payments = new InfiniteScrollPagination({
+    container: mainContainer,
+    itemsPerPage: 15,
+    loadPage: async (page, limit) => {
+      // Simulate async to show skeleton
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const activeExpenseType = getActiveExpenseType();
+      const paymentsToFilter = getFilteredPayments();
+      
+      const filteredPayments = activeExpenseType
+        ? paymentsToFilter.filter((payment) => {
+            if (payment.type === activeExpenseType) return true;
+            const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
+            return debt && debt.type === activeExpenseType;
+          })
+        : paymentsToFilter;
+
+      // Sort by payment_date descending
+      filteredPayments.sort((a, b) => {
+        const dateA = a.payment_date || '';
+        const dateB = b.payment_date || '';
+        return dateB.localeCompare(dateA);
+      });
+
+      // Paginate
+      const from = (page - 1) * limit;
+      const to = from + limit;
+      const items = filteredPayments.slice(from, to);
+      const hasMore = to < filteredPayments.length;
+
+      return { items, hasMore };
+    },
+    renderItem: (payment) => {
+      const tenant = state.tenants.find((t) => equalsId(t.id, payment.tenant_id));
+      const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
+      const typeLabel = debt ? getDebtTypeLabel(debt) : (payment.type ? translate(`debt${capitalize(payment.type)}`) || payment.type : "-");
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
+        <td>${sanitize(typeLabel)}</td>
+        <td>${formatCurrency(payment.amount)}</td>
+        <td>${debt ? formatDate(debt.due_date) : "-"}</td>
+        <td>${formatDate(payment.payment_date)}</td>
+        <td>${sanitize(payment.method || "")}</td>
+        <td>${sanitize(formatReferenceForDisplay(payment.reference))}</td>
+        <td>
+          <div class="actions-group">
+            <button type="button" class="button-secondary" data-action="edit-payment" data-id="${payment.id}">
+              ${translate("edit")}
+            </button>
+            <button type="button" class="button-danger" data-action="delete-payment" data-id="${payment.id}">
+              ${translate("delete")}
+            </button>
+          </div>
+        </td>
+      `;
+
+      // Attach event listeners
+      const editBtn = row.querySelector('[data-action="edit-payment"]');
+      const deleteBtn = row.querySelector('[data-action="delete-payment"]');
+      
+      if (editBtn) {
+        editBtn.addEventListener("click", () => editPayment(editBtn.dataset.id));
+      }
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => handleDeletePayment(deleteBtn.dataset.id));
+      }
+
+      return row;
+    },
+    skeletonTemplate: () => {
+      const skeleton = document.createElement('tr');
+      skeleton.className = 'pagination-skeleton';
+      skeleton.innerHTML = '<td colspan="8" style="padding: 1rem; text-align: center;"><div style="background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;"></div></td>';
+      return skeleton;
+    },
+    loadMoreText: translate("loadMore") || "Load More",
+    errorText: translate("errorLoadMore") || "Error loading. Click to retry.",
+    onError: (error) => {
+      console.error("Payments pagination error:", error);
+    },
+    onLoadComplete: () => {
+      // Sync to second container if it exists (expensesPaymentsTableBody)
+      if (elements.expensesPaymentsTableBody && elements.expensesPaymentsTableBody !== mainContainer) {
+        // Clone all rows from main container
+        const rows = Array.from(mainContainer.children);
+        elements.expensesPaymentsTableBody.innerHTML = '';
+        rows.forEach(row => {
+          // Clone the row (except sentinel and load more button should not be duplicated)
+          if (!row.hasAttribute('data-pagination-sentinel') && !row.hasAttribute('data-pagination-load-more')) {
+            elements.expensesPaymentsTableBody.appendChild(row.cloneNode(true));
+          }
+        });
+      }
+    }
   });
 }
 
@@ -2369,6 +2970,34 @@ async function sendRequestNotification(requestId, status) {
 }
 
 function renderApartmentsTable() {
+  // If pagination is set up, don't use the old render method
+  if (state.paginationInstances.apartments) {
+    // Just refresh the pagination to update contract status
+    const instance = state.paginationInstances.apartments;
+    if (instance && instance.state) {
+      // Re-render existing items with updated contract status
+      const items = instance.getItems();
+      if (items.length > 0) {
+        // Clear and re-render with updated status
+        const container = elements.apartmentsTableBody;
+        container.innerHTML = '';
+        items.forEach(item => {
+          const row = instance.callbacks.renderItem(item);
+          container.appendChild(row);
+        });
+        // Re-add sentinel
+        if (instance.elements.sentinel) {
+          container.appendChild(instance.elements.sentinel);
+        }
+        if (instance.elements.loadMoreButton) {
+          container.appendChild(instance.elements.loadMoreButton);
+        }
+      }
+    }
+    return;
+  }
+
+  // Fallback to old rendering method if pagination not set up
   // Pre-compute a Set of apartment IDs with active contracts for O(1) lookup
   // Convert to strings to match equalsId behavior
   const apartmentsWithActiveContracts = new Set(
@@ -2662,6 +3291,14 @@ function renderTotalPaymentSummary(summary) {
 }
 
 function renderDebtsTable() {
+  // If pagination is set up, reset it to refresh with new filters
+  if (state.paginationInstances.debts) {
+    state.paginationInstances.debts.reset();
+    // Recalculate and render total payment summary (done in onLoadComplete)
+    return;
+  }
+
+  // Fallback to old rendering method
   const statusFilter = elements.debtsFilterStatus.value;
   const typeFilter = elements.debtsFilterType.value;
   const today = new Date().toISOString().slice(0, 10);
@@ -2695,6 +3332,62 @@ function renderDebtsTable() {
 
   // Render total payment summary
   renderTotalPaymentSummary(totalPaymentSummary);
+
+  // Sort based on selected option
+  const sortBy = elements.debtsSortBy?.value || "date_desc";
+  filtered.sort((a, b) => {
+    switch (sortBy) {
+      case "date_asc":
+        const dateA = a.due_date || '';
+        const dateB = b.due_date || '';
+        return dateA.localeCompare(dateB);
+      
+      case "date_desc":
+        const dateADesc = a.due_date || '';
+        const dateBDesc = b.due_date || '';
+        return dateBDesc.localeCompare(dateADesc);
+      
+      case "reference_asc":
+        // Extract numeric part for proper numeric sorting
+        const refA = a.reference || "";
+        const refB = b.reference || "";
+        const numA = typeof refA === 'number' ? refA : parseInt(refA, 10);
+        const numB = typeof refB === 'number' ? refB : parseInt(refB, 10);
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return numA - numB;
+        }
+        // Fallback to string comparison
+        return String(refA).toLowerCase().localeCompare(String(refB).toLowerCase());
+      
+      case "reference_desc":
+        // Extract numeric part for proper numeric sorting
+        const refADesc = a.reference || "";
+        const refBDesc = b.reference || "";
+        const numADesc = typeof refADesc === 'number' ? refADesc : parseInt(refADesc, 10);
+        const numBDesc = typeof refBDesc === 'number' ? refBDesc : parseInt(refBDesc, 10);
+        if (!isNaN(numADesc) && !isNaN(numBDesc)) {
+          return numBDesc - numADesc;
+        }
+        // Fallback to string comparison
+        return String(refBDesc).toLowerCase().localeCompare(String(refADesc).toLowerCase());
+      
+      case "amount_asc":
+        const amountA = normalizeCurrency(a.amount || 0);
+        const amountB = normalizeCurrency(b.amount || 0);
+        return amountA - amountB;
+      
+      case "amount_desc":
+        const amountADesc = normalizeCurrency(a.amount || 0);
+        const amountBDesc = normalizeCurrency(b.amount || 0);
+        return amountBDesc - amountADesc;
+      
+      default:
+        // Default to date_desc
+        const dateADef = a.due_date || '';
+        const dateBDef = b.due_date || '';
+        return dateBDef.localeCompare(dateADef);
+    }
+  });
 
   // Hide/show status header based on utility type filter
   const activeType = getActiveExpenseType();
@@ -2760,7 +3453,7 @@ function renderDebtsTable() {
                 required
               />
             </td>
-            ${isUtilityEdit ? "" : `<td><span class="tag ${status.class}">${status.label}</span></td>`}
+            <td>${isUtilityEdit ? "" : `<span class="tag ${status.class}">${status.label}</span>`}</td>
             <td>${sanitize(formatReferenceForDisplay(debt.reference))}</td>
             <td>
               <input 
@@ -2794,7 +3487,7 @@ function renderDebtsTable() {
           <td>${sanitize(typeLabel)}</td>
           <td>${formatCurrency(debt.amount)}</td>
           <td>${formatDate(debt.due_date)}</td>
-          ${isUtility ? "" : `<td><span class="tag ${status.class}">${status.label}</span></td>`}
+          <td>${isUtility ? "" : `<span class="tag ${status.class}">${status.label}</span>`}</td>
           <td>${sanitize(formatReferenceForDisplay(debt.reference))}</td>
           <td>${sanitize(stripElectricityCutMarker(debt.notes || ""))}</td>
           <td>
@@ -3182,6 +3875,13 @@ function editUtilityPayment(id, source) {
 }
 
 function renderPaymentsTable() {
+  // If pagination is set up, reset it to refresh with new filters
+  if (state.paginationInstances.payments) {
+    state.paginationInstances.payments.reset();
+    return;
+  }
+
+  // Fallback to old rendering method
   // Get the active expense type filter
   const activeExpenseType = getActiveExpenseType();
   
@@ -3944,8 +4644,24 @@ function handlePaymentsTableClick(event) {
 function startEditDebt(debtId) {
   const debt = state.debts.find((d) => equalsId(d.id, debtId));
   if (!debt) return;
-  setExpenseFormMode("expense");
   state.editingDebtId = debt.id;
+  
+  // Show expense form
+  if (elements.debtForm) {
+    elements.debtForm.style.display = "grid";
+  }
+  if (elements.toggleExpenseFormBtn) {
+    elements.toggleExpenseFormBtn.textContent = translate("cancel") || "Cancel";
+  }
+  
+  // Hide payment form
+  if (elements.paymentForm) {
+    elements.paymentForm.style.display = "none";
+  }
+  if (elements.togglePaymentFormBtn) {
+    elements.togglePaymentFormBtn.textContent = translate("expenseFormTogglePayment") || "Record Payment";
+  }
+  
   // Re-render the table to show editable fields
   renderDebtsTable();
 }
@@ -3981,13 +4697,37 @@ function resetDebtForm() {
   
   // Reapply global contract filter lock
   updateFormContractLock();
+  
+  // Hide form
+  if (elements.debtForm) {
+    elements.debtForm.style.display = "none";
+  }
+  if (elements.toggleExpenseFormBtn) {
+    elements.toggleExpenseFormBtn.textContent = translate("expenseFormToggleExpense") || "Create Expense";
+  }
 }
 
 function startEditPayment(paymentId) {
   const payment = state.payments.find((p) => equalsId(p.id, paymentId));
   if (!payment) return;
-  setExpenseFormMode("payment");
   state.editingPaymentId = payment.id;
+  
+  // Show payment form
+  if (elements.paymentForm) {
+    elements.paymentForm.style.display = "grid";
+  }
+  if (elements.togglePaymentFormBtn) {
+    elements.togglePaymentFormBtn.textContent = translate("cancel") || "Cancel";
+  }
+  
+  // Hide expense form
+  if (elements.debtForm) {
+    elements.debtForm.style.display = "none";
+  }
+  if (elements.toggleExpenseFormBtn) {
+    elements.toggleExpenseFormBtn.textContent = translate("expenseFormToggleExpense") || "Create Expense";
+  }
+  
   // Re-render the table to show editable fields
   renderPaymentsTable();
 }
@@ -4005,6 +4745,14 @@ function resetPaymentForm() {
   if (elements.paymentMethod) {
     elements.paymentMethod.style.display = "none";
     elements.paymentMethod.value = "";
+  }
+  
+  // Hide form
+  if (elements.paymentForm) {
+    elements.paymentForm.style.display = "none";
+  }
+  if (elements.togglePaymentFormBtn) {
+    elements.togglePaymentFormBtn.textContent = translate("expenseFormTogglePayment") || "Record Payment";
   }
   
   if (elements.paymentDebt) {

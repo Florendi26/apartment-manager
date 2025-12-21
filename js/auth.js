@@ -524,7 +524,7 @@ async function init() {
     
     // If it's a text button (old style), update text content
     if (!languageToggleBtn.querySelector("svg")) {
-      languageToggleBtn.textContent = currentLanguage === "en" ? "En" : "Sq";
+    languageToggleBtn.textContent = currentLanguage === "en" ? "En" : "Sq";
     }
     
     languageToggleBtn.addEventListener("click", () => {
@@ -533,14 +533,14 @@ async function init() {
         languageToggleBtn.setAttribute("title", "Albanian");
         languageToggleBtn.setAttribute("aria-label", "Current language: Albanian");
         if (!languageToggleBtn.querySelector("svg")) {
-          languageToggleBtn.textContent = "Sq";
+        languageToggleBtn.textContent = "Sq";
         }
       } else {
         currentLanguage = "en";
         languageToggleBtn.setAttribute("title", "English");
         languageToggleBtn.setAttribute("aria-label", "Current language: English");
         if (!languageToggleBtn.querySelector("svg")) {
-          languageToggleBtn.textContent = "En";
+        languageToggleBtn.textContent = "En";
         }
       }
       localStorage.setItem("language", currentLanguage);

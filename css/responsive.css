@@ -3,6 +3,60 @@
    Mobile, Tablet, and Laptop breakpoints
    ============================================ */
 
+/* Expenses Sidebar Responsive */
+@media screen and (max-width: 1024px) {
+  .expenses-layout {
+    flex-direction: column;
+  }
+  
+  .expenses-sidebar {
+    width: 100%;
+    position: static;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .expenses-sidebar-title {
+    margin: 0;
+    white-space: nowrap;
+  }
+  
+  .expenses-sidebar-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  
+  .expense-sidebar-btn {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .expenses-sidebar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .expenses-sidebar-title {
+    margin-bottom: 0.75rem;
+  }
+  
+  .expenses-sidebar-buttons {
+    flex-direction: column;
+  }
+  
+  .expense-sidebar-btn {
+    width: 100%;
+    text-align: left;
+  }
+}
+
 /* Theme Switch Responsive */
 @media screen and (max-width: 768px) {
   .theme-switch-container {
