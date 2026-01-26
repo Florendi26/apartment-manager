@@ -109,7 +109,11 @@ class InfiniteScrollPagination {
     return () => {
       const skeleton = document.createElement('tr');
       skeleton.className = 'pagination-skeleton';
-      skeleton.innerHTML = '<td colspan="100%" style="padding: 1rem; text-align: center; color: #9ca3af;">Loading...</td>';
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '100%');
+      td.style.cssText = 'padding: 1rem; text-align: center; color: #9ca3af;';
+      td.textContent = 'Loading...';
+      skeleton.appendChild(td);
       return skeleton;
     };
   }
@@ -254,15 +258,18 @@ class InfiniteScrollPagination {
 
     const currentItemCount = this.state.allItems.length;
     items.forEach((item, index) => {
-      const itemHTML = this.callbacks.renderItem(item, currentItemCount + index);
-      if (typeof itemHTML === 'string') {
-        const temp = document.createElement('div');
-        temp.innerHTML = itemHTML.trim();
+      const itemResult = this.callbacks.renderItem(item, currentItemCount + index);
+      if (itemResult instanceof Node) {
+        fragment.appendChild(itemResult);
+      } else if (typeof itemResult === 'string') {
+        // For backwards compatibility, parse HTML string using DOMParser (safer than innerHTML)
+        // Note: Callbacks should ideally return DOM nodes instead of HTML strings
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(itemResult.trim(), 'text/html');
+        const temp = doc.body;
         while (temp.firstChild) {
           fragment.appendChild(temp.firstChild);
         }
-      } else if (itemHTML instanceof Node) {
-        fragment.appendChild(itemHTML);
       }
     });
 

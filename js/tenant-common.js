@@ -73,38 +73,39 @@ async function tenantLoadProfileByEmail(user) {
   return data && data[0] ? data[0] : null;
 }
 
-function tenantSetupThemeToggle(buttonId, storageKey = "tenantTheme") {
-  const btn = document.getElementById(buttonId);
-  if (!btn) return;
+function tenantSetupThemeToggle(switchId, storageKey = "tenantTheme") {
+  const themeToggleSwitch = document.getElementById(switchId);
+  if (!themeToggleSwitch) return;
 
-  const applyTheme = (theme) => {
-    const lightIcon = btn.querySelector(".theme-icon-light");
-    const darkIcon = btn.querySelector(".theme-icon-dark");
-    
+  function applyTheme(theme) {
+    const body = document.body;
+    if (!body) return;
     if (theme === "dark") {
-      document.body.classList.add("dark-theme");
-      if (lightIcon) lightIcon.style.display = "none";
-      if (darkIcon) darkIcon.style.display = "block";
+      body.classList.add("dark-theme");
+      if (themeToggleSwitch) {
+        themeToggleSwitch.checked = true;
+      }
     } else {
-      document.body.classList.remove("dark-theme");
-      if (lightIcon) lightIcon.style.display = "block";
-      if (darkIcon) darkIcon.style.display = "none";
+      body.classList.remove("dark-theme");
+      if (themeToggleSwitch) {
+        themeToggleSwitch.checked = false;
+      }
       theme = "light";
     }
     try {
       window.localStorage.setItem(storageKey, theme);
     } catch (_) {}
-  };
+  }
 
-  const storedTheme =
-    (window.localStorage && window.localStorage.getItem(storageKey)) ||
-    "light";
+  const storedTheme = (window.localStorage && window.localStorage.getItem(storageKey)) || "light";
   applyTheme(storedTheme);
 
-  btn.addEventListener("click", () => {
-    const isDark = document.body.classList.contains("dark-theme");
-    applyTheme(isDark ? "light" : "dark");
-  });
+  if (themeToggleSwitch) {
+    themeToggleSwitch.addEventListener("change", () => {
+      const isDark = themeToggleSwitch.checked;
+      applyTheme(isDark ? "dark" : "light");
+    });
+  }
 }
 
 // Mobile menu toggle function (global)
@@ -129,12 +130,29 @@ window.setupMobileMenuToggle = function setupMobileMenuToggle() {
       closeBtn.setAttribute("type", "button");
       closeBtn.setAttribute("title", "Close Menu");
       closeBtn.setAttribute("aria-label", "Close Menu");
-      closeBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      `;
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      svg.setAttribute("width", "20");
+      svg.setAttribute("height", "20");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "2");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      const line1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line1.setAttribute("x1", "18");
+      line1.setAttribute("y1", "6");
+      line1.setAttribute("x2", "6");
+      line1.setAttribute("y2", "18");
+      const line2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line2.setAttribute("x1", "6");
+      line2.setAttribute("y1", "6");
+      line2.setAttribute("x2", "18");
+      line2.setAttribute("y2", "18");
+      svg.appendChild(line1);
+      svg.appendChild(line2);
+      closeBtn.appendChild(svg);
       topNavContainer.appendChild(closeBtn);
     }
 

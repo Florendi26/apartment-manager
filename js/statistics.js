@@ -682,12 +682,33 @@ window.setupMobileMenuToggle = function setupMobileMenuToggleForStats() {
       closeBtn.setAttribute("type", "button");
       closeBtn.setAttribute("title", "Close Menu");
       closeBtn.setAttribute("aria-label", "Close Menu");
-      closeBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      `;
+      // Create SVG using DOM methods
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      svg.setAttribute("width", "20");
+      svg.setAttribute("height", "20");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "2");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      
+      const line1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line1.setAttribute("x1", "18");
+      line1.setAttribute("y1", "6");
+      line1.setAttribute("x2", "6");
+      line1.setAttribute("y2", "18");
+      svg.appendChild(line1);
+      
+      const line2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line2.setAttribute("x1", "6");
+      line2.setAttribute("y1", "6");
+      line2.setAttribute("x2", "18");
+      line2.setAttribute("y2", "18");
+      svg.appendChild(line2);
+      
+      closeBtn.appendChild(svg);
       topNavContainer.appendChild(closeBtn);
     }
 
@@ -889,8 +910,10 @@ function setupTopNavigationForStats(role) {
   
   const isTenant = role === "Tenant";
   
-  // Clear existing navigation
-  navContainer.innerHTML = "";
+  // Clear existing navigation using DOM methods
+  while (navContainer.firstChild) {
+    navContainer.removeChild(navContainer.firstChild);
+  }
   
   // Statistics button (always shown, but disabled on statistics page)
   const statsBtn = document.createElement("button");
@@ -898,7 +921,10 @@ function setupTopNavigationForStats(role) {
   statsBtn.id = "topNavStatistics";
   statsBtn.disabled = true;
   // Don't add onclick handler since we're already on statistics page
-  statsBtn.innerHTML = '<span data-i18n="floatingNavStatistics">Statistics</span>';
+  const statsSpan = document.createElement("span");
+  statsSpan.setAttribute("data-i18n", "floatingNavStatistics");
+  statsSpan.textContent = "Statistics";
+  statsBtn.appendChild(statsSpan);
   navContainer.appendChild(statsBtn);
   
   // Divider
@@ -912,21 +938,30 @@ function setupTopNavigationForStats(role) {
     tenantApartmentsBtn.className = "top-nav-btn";
     tenantApartmentsBtn.id = "topNavTenantApartments";
     tenantApartmentsBtn.onclick = () => window.location.href = "tenant-apartments.html";
-    tenantApartmentsBtn.innerHTML = '<span data-i18n="floatingNavTenantApartments">Tenant - Apartment</span>';
+    const tenantApartmentsSpan = document.createElement("span");
+    tenantApartmentsSpan.setAttribute("data-i18n", "floatingNavTenantApartments");
+    tenantApartmentsSpan.textContent = "Tenant - Apartment";
+    tenantApartmentsBtn.appendChild(tenantApartmentsSpan);
     navContainer.appendChild(tenantApartmentsBtn);
     
     const tenantContractsBtn = document.createElement("button");
     tenantContractsBtn.className = "top-nav-btn";
     tenantContractsBtn.id = "topNavTenantContracts";
     tenantContractsBtn.onclick = () => window.location.href = "tenant-contracts.html";
-    tenantContractsBtn.innerHTML = '<span data-i18n="floatingNavTenantContracts">Tenant Contracts</span>';
+    const tenantContractsSpan = document.createElement("span");
+    tenantContractsSpan.setAttribute("data-i18n", "floatingNavTenantContracts");
+    tenantContractsSpan.textContent = "Tenant Contracts";
+    tenantContractsBtn.appendChild(tenantContractsSpan);
     navContainer.appendChild(tenantContractsBtn);
     
     const tenantExpensesBtn = document.createElement("button");
     tenantExpensesBtn.className = "top-nav-btn";
     tenantExpensesBtn.id = "topNavTenantExpenses";
     tenantExpensesBtn.onclick = () => window.location.href = "tenant-expenses.html";
-    tenantExpensesBtn.innerHTML = '<span data-i18n="floatingNavTenantExpenses">Tenant Expenses</span>';
+    const tenantExpensesSpan = document.createElement("span");
+    tenantExpensesSpan.setAttribute("data-i18n", "floatingNavTenantExpenses");
+    tenantExpensesSpan.textContent = "Tenant Expenses";
+    tenantExpensesBtn.appendChild(tenantExpensesSpan);
     navContainer.appendChild(tenantExpensesBtn);
   } else {
     // Landlord navigation: Administrator | Tenant View
@@ -934,14 +969,20 @@ function setupTopNavigationForStats(role) {
     adminBtn.className = "top-nav-btn";
     adminBtn.id = "topNavAdmin";
     adminBtn.onclick = () => window.location.href = "index.html";
-    adminBtn.innerHTML = '<span data-i18n="floatingNavAdmin">Administrator</span>';
+    const adminSpan = document.createElement("span");
+    adminSpan.setAttribute("data-i18n", "floatingNavAdmin");
+    adminSpan.textContent = "Administrator";
+    adminBtn.appendChild(adminSpan);
     navContainer.appendChild(adminBtn);
     
     const tenantViewBtn = document.createElement("button");
     tenantViewBtn.className = "top-nav-btn";
     tenantViewBtn.id = "topNavTenant";
     tenantViewBtn.onclick = () => window.location.href = "index.html?view=tenant";
-    tenantViewBtn.innerHTML = '<span data-i18n="floatingNavTenant">Tenant View</span>';
+    const tenantViewSpan = document.createElement("span");
+    tenantViewSpan.setAttribute("data-i18n", "floatingNavTenant");
+    tenantViewSpan.textContent = "Tenant View";
+    tenantViewBtn.appendChild(tenantViewSpan);
     navContainer.appendChild(tenantViewBtn);
   }
   
@@ -955,7 +996,10 @@ function setupTopNavigationForStats(role) {
   profileBtn.className = "top-nav-btn";
   profileBtn.id = "topNavProfile";
   profileBtn.onclick = () => window.location.href = "profile.html";
-  profileBtn.innerHTML = '<span data-i18n="floatingNavProfile">Profile</span>';
+  const profileSpan = document.createElement("span");
+  profileSpan.setAttribute("data-i18n", "floatingNavProfile");
+  profileSpan.textContent = "Profile";
+  profileBtn.appendChild(profileSpan);
   navContainer.appendChild(profileBtn);
   
   // Apply translations

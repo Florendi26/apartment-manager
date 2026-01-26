@@ -71,7 +71,17 @@ async function tenantCheckAuth() {
 async function loadAvailableApartments() {
   const body = document.getElementById("tenantAvailableApartmentsBody");
   if (!body) return;
-  body.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
+  
+  // Clear container and show loading using DOM methods
+  while (body.firstChild) {
+    body.removeChild(body.firstChild);
+  }
+  const loadingTr = document.createElement('tr');
+  const loadingTd = document.createElement('td');
+  loadingTd.setAttribute('colspan', '3');
+  loadingTd.textContent = "Loading...";
+  loadingTr.appendChild(loadingTd);
+  body.appendChild(loadingTr);
 
   // Get all active contracts to know which apartments are taken
   const { data: activeContracts, error: contractsError } = await supabase
@@ -81,7 +91,16 @@ async function loadAvailableApartments() {
 
   if (contractsError) {
     console.error("loadAvailableApartments contracts", contractsError);
-    body.innerHTML = "<tr><td colspan='3'>Failed to load apartments.</td></tr>";
+    // Clear container and show error using DOM methods
+    while (body.firstChild) {
+      body.removeChild(body.firstChild);
+    }
+    const errorTr = document.createElement('tr');
+    const errorTd = document.createElement('td');
+    errorTd.setAttribute('colspan', '3');
+    errorTd.textContent = "Failed to load apartments.";
+    errorTr.appendChild(errorTd);
+    body.appendChild(errorTr);
     return;
   }
 
@@ -95,7 +114,16 @@ async function loadAvailableApartments() {
 
   if (apartmentsError) {
     console.error("loadAvailableApartments apartments", apartmentsError);
-    body.innerHTML = "<tr><td colspan='3'>Failed to load apartments.</td></tr>";
+    // Clear container and show error using DOM methods
+    while (body.firstChild) {
+      body.removeChild(body.firstChild);
+    }
+    const errorTr = document.createElement('tr');
+    const errorTd = document.createElement('td');
+    errorTd.setAttribute('colspan', '3');
+    errorTd.textContent = "Failed to load apartments.";
+    errorTr.appendChild(errorTd);
+    body.appendChild(errorTr);
     return;
   }
 
@@ -104,32 +132,52 @@ async function loadAvailableApartments() {
     (apt) => !takenIds.includes(apt.id)
   );
 
-  if (apartmentsError) {
-    console.error("loadAvailableApartments apartments", apartmentsError);
-    body.innerHTML = "<tr><td colspan='3'>Failed to load apartments.</td></tr>";
-    return;
-  }
-
   if (!apartments || apartments.length === 0) {
-    body.innerHTML = "<tr><td colspan='3'>No apartments available at the moment.</td></tr>";
+    // Clear container and show message using DOM methods
+    while (body.firstChild) {
+      body.removeChild(body.firstChild);
+    }
+    const noAptsTr = document.createElement('tr');
+    const noAptsTd = document.createElement('td');
+    noAptsTd.setAttribute('colspan', '3');
+    noAptsTd.textContent = "No apartments available at the moment.";
+    noAptsTr.appendChild(noAptsTd);
+    body.appendChild(noAptsTr);
     return;
   }
 
-  body.innerHTML = apartments
-    .map(
-      (apt) => `
-      <tr>
-        <td>${apt.name || "-"}</td>
-        <td>${apt.address || "-"}</td>
-        <td>
-          <button type="button" class="button-secondary" data-apartment-id="${apt.id}">
-            Apply
-          </button>
-        </td>
-      </tr>
-    `
-    )
-    .join("");
+  // Clear container using DOM methods
+  while (body.firstChild) {
+    body.removeChild(body.firstChild);
+  }
+  
+  // Render apartments using DOM methods
+  apartments.forEach((apt) => {
+    const tr = document.createElement('tr');
+    
+    const nameCell = document.createElement('td');
+    nameCell.textContent = apt.name || "-";
+    tr.appendChild(nameCell);
+    
+    const addressCell = document.createElement('td');
+    addressCell.textContent = apt.address || "-";
+    tr.appendChild(addressCell);
+    
+    const actionCell = document.createElement('td');
+    const applyBtn = document.createElement('button');
+    applyBtn.type = 'button';
+    applyBtn.className = 'btn btn-outline-secondary btn-sm';
+    applyBtn.setAttribute('data-apartment-id', apt.id);
+    applyBtn.textContent = "Apply";
+    applyBtn.addEventListener("click", () => {
+      // Handle apply action
+      alert(`Applying for apartment: ${apt.name || apt.id}`);
+    });
+    actionCell.appendChild(applyBtn);
+    tr.appendChild(actionCell);
+    
+    body.appendChild(tr);
+  });
 
   body.querySelectorAll("button[data-apartment-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -147,10 +195,28 @@ async function loadTenantData(user) {
     contractInfoEl.textContent = "Loading your contract information...";
   }
   if (expensesBody) {
-    expensesBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+    // Clear container and show loading using DOM methods
+    while (expensesBody.firstChild) {
+      expensesBody.removeChild(expensesBody.firstChild);
+    }
+    const loadingTr = document.createElement('tr');
+    const loadingTd = document.createElement('td');
+    loadingTd.setAttribute('colspan', '4');
+    loadingTd.textContent = "Loading...";
+    loadingTr.appendChild(loadingTd);
+    expensesBody.appendChild(loadingTr);
   }
   if (paymentsBody) {
-    paymentsBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+    // Clear container and show loading using DOM methods
+    while (paymentsBody.firstChild) {
+      paymentsBody.removeChild(paymentsBody.firstChild);
+    }
+    const loadingTr = document.createElement('tr');
+    const loadingTd = document.createElement('td');
+    loadingTd.setAttribute('colspan', '4');
+    loadingTd.textContent = "Loading...";
+    loadingTr.appendChild(loadingTd);
+    paymentsBody.appendChild(loadingTr);
   }
 
   // Find tenant by email
@@ -175,10 +241,28 @@ async function loadTenantData(user) {
         "No tenant profile linked to your email yet. You can apply for an apartment above.";
     }
     if (expensesBody) {
-      expensesBody.innerHTML = "<tr><td colspan='4'>No expenses found.</td></tr>";
+      // Clear container and show message using DOM methods
+      while (expensesBody.firstChild) {
+        expensesBody.removeChild(expensesBody.firstChild);
+      }
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '4');
+      td.textContent = "No expenses found.";
+      tr.appendChild(td);
+      expensesBody.appendChild(tr);
     }
     if (paymentsBody) {
-      paymentsBody.innerHTML = "<tr><td colspan='4'>No payments found.</td></tr>";
+      // Clear container and show message using DOM methods
+      while (paymentsBody.firstChild) {
+        paymentsBody.removeChild(paymentsBody.firstChild);
+      }
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '4');
+      td.textContent = "No payments found.";
+      tr.appendChild(td);
+      paymentsBody.appendChild(tr);
     }
     return;
   }
@@ -204,10 +288,28 @@ async function loadTenantData(user) {
         "You do not have any contracts yet. Once a landlord creates a contract for you, it will appear here.";
     }
     if (expensesBody) {
-      expensesBody.innerHTML = "<tr><td colspan='4'>No expenses found.</td></tr>";
+      // Clear container and show message using DOM methods
+      while (expensesBody.firstChild) {
+        expensesBody.removeChild(expensesBody.firstChild);
+      }
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '4');
+      td.textContent = "No expenses found.";
+      tr.appendChild(td);
+      expensesBody.appendChild(tr);
     }
     if (paymentsBody) {
-      paymentsBody.innerHTML = "<tr><td colspan='4'>No payments found.</td></tr>";
+      // Clear container and show message using DOM methods
+      while (paymentsBody.firstChild) {
+        paymentsBody.removeChild(paymentsBody.firstChild);
+      }
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '4');
+      td.textContent = "No payments found.";
+      tr.appendChild(td);
+      paymentsBody.appendChild(tr);
     }
     return;
   }
@@ -227,20 +329,29 @@ async function loadTenantData(user) {
   }
 
   if (contractInfoEl) {
-    contractInfoEl.innerHTML = `
-      <dl>
-        <dt>Apartment:</dt>
-        <dd>${apartmentName}</dd>
-        <dt>Start Date:</dt>
-        <dd>${tenantFormatDate(activeContract.start_date)}</dd>
-        <dt>End Date:</dt>
-        <dd>${tenantFormatDate(activeContract.end_date)}</dd>
-        <dt>Monthly Rent:</dt>
-        <dd>${tenantFormatCurrency(activeContract.monthly_rent)}</dd>
-        <dt>Status:</dt>
-        <dd>${activeContract.is_active ? "Active" : "Inactive"}</dd>
-      </dl>
-    `;
+    // Clear container using DOM methods
+    while (contractInfoEl.firstChild) {
+      contractInfoEl.removeChild(contractInfoEl.firstChild);
+    }
+    
+    const dl = document.createElement('dl');
+    
+    function addDefinitionItem(dtText, ddText) {
+      const dt = document.createElement('dt');
+      dt.textContent = dtText;
+      dl.appendChild(dt);
+      const dd = document.createElement('dd');
+      dd.textContent = ddText;
+      dl.appendChild(dd);
+    }
+    
+    addDefinitionItem("Apartment:", apartmentName);
+    addDefinitionItem("Start Date:", tenantFormatDate(activeContract.start_date));
+    addDefinitionItem("End Date:", tenantFormatDate(activeContract.end_date));
+    addDefinitionItem("Monthly Rent:", tenantFormatCurrency(activeContract.monthly_rent));
+    addDefinitionItem("Status:", activeContract.is_active ? "Active" : "Inactive");
+    
+    contractInfoEl.appendChild(dl);
   }
 
   // Load expenses and payments for all contracts of this tenant
@@ -285,59 +396,100 @@ async function loadTenantData(user) {
   }
 
   // Render expenses
-  if (allExpenses.length === 0) {
-    if (expensesBody) {
-      expensesBody.innerHTML = "<tr><td colspan='4'>No expenses found.</td></tr>";
+  if (expensesBody) {
+    // Clear container using DOM methods
+    while (expensesBody.firstChild) {
+      expensesBody.removeChild(expensesBody.firstChild);
     }
-  } else if (expensesBody) {
-    const sortedExpenses = allExpenses.sort((a, b) => {
-      const aTime = a.due_date ? new Date(a.due_date).getTime() : 0;
-      const bTime = b.due_date ? new Date(b.due_date).getTime() : 0;
-      return aTime - bTime;
-    });
-    expensesBody.innerHTML = sortedExpenses
-      .map((e) => {
+    
+    if (allExpenses.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '4');
+      td.textContent = "No expenses found.";
+      tr.appendChild(td);
+      expensesBody.appendChild(tr);
+    } else {
+      const sortedExpenses = allExpenses.sort((a, b) => {
+        const aTime = a.due_date ? new Date(a.due_date).getTime() : 0;
+        const bTime = b.due_date ? new Date(b.due_date).getTime() : 0;
+        return aTime - bTime;
+      });
+      
+      sortedExpenses.forEach((e) => {
         const status =
           typeof e.is_paid === "boolean"
             ? e.is_paid
               ? "Paid"
               : "Unpaid"
             : "-";
-        return `
-          <tr>
-            <td>${e.type}</td>
-            <td>${tenantFormatCurrency(tenantNormalizeCurrency(e.amount))}</td>
-            <td>${tenantFormatDate(e.due_date)}</td>
-            <td>${status}</td>
-          </tr>
-        `;
-      })
-      .join("");
+        
+        const tr = document.createElement('tr');
+        
+        const typeCell = document.createElement('td');
+        typeCell.textContent = e.type;
+        tr.appendChild(typeCell);
+        
+        const amountCell = document.createElement('td');
+        amountCell.textContent = tenantFormatCurrency(tenantNormalizeCurrency(e.amount));
+        tr.appendChild(amountCell);
+        
+        const dateCell = document.createElement('td');
+        dateCell.textContent = tenantFormatDate(e.due_date);
+        tr.appendChild(dateCell);
+        
+        const statusCell = document.createElement('td');
+        statusCell.textContent = status;
+        tr.appendChild(statusCell);
+        
+        expensesBody.appendChild(tr);
+      });
+    }
   }
 
   // Render payments
-  if (allPayments.length === 0) {
-    if (paymentsBody) {
-      paymentsBody.innerHTML = "<tr><td colspan='4'>No payments found.</td></tr>";
+  if (paymentsBody) {
+    // Clear container using DOM methods
+    while (paymentsBody.firstChild) {
+      paymentsBody.removeChild(paymentsBody.firstChild);
     }
-  } else if (paymentsBody) {
-    const sortedPayments = allPayments.sort((a, b) => {
-      const aTime = a.payment_date ? new Date(a.payment_date).getTime() : 0;
-      const bTime = b.payment_date ? new Date(b.payment_date).getTime() : 0;
-      return aTime - bTime;
-    });
-    paymentsBody.innerHTML = sortedPayments
-      .map((p) => {
-        return `
-          <tr>
-            <td>${p.type}</td>
-            <td>${tenantFormatCurrency(tenantNormalizeCurrency(p.amount))}</td>
-            <td>${tenantFormatDate(p.payment_date)}</td>
-            <td>${p.method || "-"}</td>
-          </tr>
-        `;
-      })
-      .join("");
+    
+    if (allPayments.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '4');
+      td.textContent = "No payments found.";
+      tr.appendChild(td);
+      paymentsBody.appendChild(tr);
+    } else {
+      const sortedPayments = allPayments.sort((a, b) => {
+        const aTime = a.payment_date ? new Date(a.payment_date).getTime() : 0;
+        const bTime = b.payment_date ? new Date(b.payment_date).getTime() : 0;
+        return aTime - bTime;
+      });
+      
+      sortedPayments.forEach((p) => {
+        const tr = document.createElement('tr');
+        
+        const typeCell = document.createElement('td');
+        typeCell.textContent = p.type;
+        tr.appendChild(typeCell);
+        
+        const amountCell = document.createElement('td');
+        amountCell.textContent = tenantFormatCurrency(tenantNormalizeCurrency(p.amount));
+        tr.appendChild(amountCell);
+        
+        const dateCell = document.createElement('td');
+        dateCell.textContent = tenantFormatDate(p.payment_date);
+        tr.appendChild(dateCell);
+        
+        const methodCell = document.createElement('td');
+        methodCell.textContent = p.method || "-";
+        tr.appendChild(methodCell);
+        
+        paymentsBody.appendChild(tr);
+      });
+    }
   }
 }
 

@@ -26,46 +26,79 @@ async function tenantLoadProfilePage(user) {
   const accountDl = document.getElementById("tenantAccountDetails");
 
   if (profileDl) {
-    profileDl.innerHTML = "<dd>Loading profile...</dd>";
+    // Clear container using DOM methods
+    while (profileDl.firstChild) {
+      profileDl.removeChild(profileDl.firstChild);
+    }
+    const loadingDd = document.createElement('dd');
+    loadingDd.textContent = "Loading profile...";
+    profileDl.appendChild(loadingDd);
   }
   if (accountDl) {
-    accountDl.innerHTML = "<dd>Loading account...</dd>";
+    // Clear container using DOM methods
+    while (accountDl.firstChild) {
+      accountDl.removeChild(accountDl.firstChild);
+    }
+    const loadingDd = document.createElement('dd');
+    loadingDd.textContent = "Loading account...";
+    accountDl.appendChild(loadingDd);
   }
 
   const tenantProfile = await tenantLoadProfileByEmail(user);
 
   if (!tenantProfile) {
     if (profileDl) {
-      profileDl.innerHTML =
-        "<dd>No tenant profile linked to your email yet.</dd>";
+      // Clear container using DOM methods
+      while (profileDl.firstChild) {
+        profileDl.removeChild(profileDl.firstChild);
+      }
+      const dd = document.createElement('dd');
+      dd.textContent = "No tenant profile linked to your email yet.";
+      profileDl.appendChild(dd);
     }
   } else if (profileDl) {
-    profileDl.innerHTML = `
-      <dt>Full Name:</dt>
-      <dd>${tenantProfile.full_name || "-"}</dd>
-      <dt>Email:</dt>
-      <dd>${tenantProfile.email || user.email || "-"}</dd>
-      <dt>Phone:</dt>
-      <dd>${tenantProfile.phone || "-"}</dd>
-      <dt>Entry Date:</dt>
-      <dd>${tenantFormatDate(tenantProfile.entry_date)}</dd>
-    `;
+    // Clear container using DOM methods
+    while (profileDl.firstChild) {
+      profileDl.removeChild(profileDl.firstChild);
+    }
+    
+    function addDefinitionItem(dtText, ddText) {
+      const dt = document.createElement('dt');
+      dt.textContent = dtText;
+      profileDl.appendChild(dt);
+      const dd = document.createElement('dd');
+      dd.textContent = ddText;
+      profileDl.appendChild(dd);
+    }
+    
+    addDefinitionItem("Full Name:", tenantProfile.full_name || "-");
+    addDefinitionItem("Email:", tenantProfile.email || user.email || "-");
+    addDefinitionItem("Phone:", tenantProfile.phone || "-");
+    addDefinitionItem("Entry Date:", tenantFormatDate(tenantProfile.entry_date));
   }
 
   if (accountDl) {
+    // Clear container using DOM methods
+    while (accountDl.firstChild) {
+      accountDl.removeChild(accountDl.firstChild);
+    }
+    
     const meta = user.user_metadata || {};
-    accountDl.innerHTML = `
-      <dt>Preferred Language:</dt>
-      <dd>${meta.preferred_language || "en"}</dd>
-      <dt>Preferred Currency:</dt>
-      <dd>${meta.preferred_currency || "EUR"}</dd>
-      <dt>Theme Mode:</dt>
-      <dd>${meta.theme_mode || "light"}</dd>
-      <dt>Role:</dt>
-      <dd>${meta.role || "Tenant"}</dd>
-      <dt>Date Joined:</dt>
-      <dd>${tenantFormatDate(meta.date_joined)}</dd>
-    `;
+    
+    function addDefinitionItem(dtText, ddText) {
+      const dt = document.createElement('dt');
+      dt.textContent = dtText;
+      accountDl.appendChild(dt);
+      const dd = document.createElement('dd');
+      dd.textContent = ddText;
+      accountDl.appendChild(dd);
+    }
+    
+    addDefinitionItem("Preferred Language:", meta.preferred_language || "en");
+    addDefinitionItem("Preferred Currency:", meta.preferred_currency || "EUR");
+    addDefinitionItem("Theme Mode:", meta.theme_mode || "light");
+    addDefinitionItem("Role:", meta.role || "Tenant");
+    addDefinitionItem("Date Joined:", tenantFormatDate(meta.date_joined));
   }
 }
 

@@ -7,9 +7,16 @@
     <title data-i18n="loginTitle">Login - Apartment Management</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
-    <link rel="manifest" href="site.webmanifest" />
+    <!-- Only load manifest when not using file:// protocol (prevents CORS errors) -->
+    <script>
+      if (window.location.protocol !== 'file:') {
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = 'site.webmanifest';
+        document.head.appendChild(manifestLink);
+      }
+    </script>
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/responsive.css" />
   </head>
   <body>
     <div class="logo-bar">
@@ -116,17 +123,16 @@
                 </button>
               </div>
             </div>
-            <div id="loginError" class="error-message" style="display: none;"></div>
+            <div id="loginError" class="error-message hidden"></div>
             <button type="submit" class="button-primary" data-i18n="loginButton">Login</button>
             <div class="login-footer">
-              <p data-i18n="noAccount">Don't have an account?</p>
-              <button type="button" id="showSignup" class="button-link" data-i18n="signupLink">Sign Up</button>
+              <p><span data-i18n="noAccount">Don't have an account?</span> <a href="#" id="showSignup" class="text-link" data-i18n="signupLink">Sign Up</a></p>
             </div>
           </form>
         </div>
 
         <!-- Sign Up Card -->
-        <div class="login-card card" id="signupCard" style="display: none;">
+        <div class="login-card card hidden" id="signupCard">
           <h2 data-i18n="signupTitle">Sign Up</h2>
           <p class="login-subtitle" data-i18n="signupSubtitle">Create a new account to get started</p>
           <form id="signupForm" class="form-grid">
@@ -266,11 +272,10 @@
                 <option value="dark">Dark</option>
               </select>
             </div>
-            <div id="signupError" class="error-message" style="display: none;"></div>
+            <div id="signupError" class="error-message hidden"></div>
             <button type="submit" class="button-primary" data-i18n="signupButton">Sign Up</button>
             <div class="login-footer">
-              <p data-i18n="haveAccount">Already have an account?</p>
-              <button type="button" id="showLogin" class="button-link" data-i18n="loginLink">Login</button>
+              <p><span data-i18n="haveAccount">Already have an account?</span> <a href="#" id="showLogin" class="text-link" data-i18n="loginLink">Login</a></p>
             </div>
           </form>
         </div>

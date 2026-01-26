@@ -7,8 +7,8 @@
     <title data-i18n="appTitle">Apartment Management</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/responsive.css" />
   </head>
   <body>
     <div class="logo-bar">
@@ -74,12 +74,12 @@
 
     <main>
       <section id="notificationArea" aria-live="polite"></section>
-      <div id="confirmationModal" class="confirmation-modal" style="display: none;">
+      <div id="confirmationModal" class="confirmation-modal hidden">
         <div class="confirmation-animation-container" id="confirmationAnimationContainer"></div>
       </div>
       
       <!-- Photo Viewer Modal -->
-      <div id="photoViewerModal" class="photo-viewer-modal" style="display: none;">
+      <div id="photoViewerModal" class="photo-viewer-modal hidden">
         <div class="photo-viewer-content">
           <button class="photo-viewer-close" id="photoViewerClose">&times;</button>
           <button class="photo-viewer-nav photo-viewer-prev" id="photoViewerPrev">&#8249;</button>
@@ -95,7 +95,7 @@
       </div>
       
       <!-- Photo Review Modal (for upload previews) -->
-      <div id="photoReviewModal" class="photo-viewer-modal" style="display: none;">
+      <div id="photoReviewModal" class="photo-viewer-modal hidden">
         <div class="photo-viewer-content">
           <button class="photo-viewer-close" id="photoReviewClose">&times;</button>
           <div class="photo-viewer-main">
@@ -109,7 +109,7 @@
       </div>
       
       <!-- Delete Apartment Confirmation Modal -->
-      <div id="deleteApartmentModal" class="delete-confirmation-modal" style="display: none;">
+      <div id="deleteApartmentModal" class="delete-confirmation-modal hidden">
         <div class="delete-confirmation-content">
           <h3 data-i18n="confirmDeleteApartmentTitle">Confirm Deletion</h3>
           <p class="delete-confirmation-message" id="deleteApartmentMessage"></p>
@@ -132,7 +132,7 @@
       </div>
       
       <!-- Mark Paid Payment Modal -->
-      <div id="markPaidModal" class="mark-paid-modal" style="display: none;">
+      <div id="markPaidModal" class="mark-paid-modal hidden">
         <div class="mark-paid-modal-content">
           <h3 data-i18n="markPaid">Mark Paid</h3>
           <div class="mark-paid-form">
@@ -157,7 +157,7 @@
                 <button type="button" class="payment-method-btn" data-method="Online payment">Online payment</button>
                 <button type="button" class="payment-method-btn" data-method="custom">Custom</button>
               </div>
-              <input type="text" id="markPaidMethod" placeholder="Enter payment method" style="display: none; margin-top: 0.5rem;">
+              <input type="text" id="markPaidMethod" placeholder="Enter payment method" class="hidden-inline-margin">
             </div>
             <div class="form-actions">
               <button type="button" class="button-secondary" id="markPaidCancel">Cancel</button>
@@ -203,7 +203,7 @@
                 Add Apartment
               </button>
             </header>
-            <form id="apartmentForm" class="form-grid" style="display: none;">
+            <form id="apartmentForm" class="form-grid hidden">
               <input type="hidden" id="apartmentId" name="apartment_id" />
               <div class="field">
                 <label for="apartmentName" data-i18n="apartmentName"
@@ -271,6 +271,14 @@
                   name="waste_code"
                   placeholder="Waste account"
                 />
+              </div>
+              <div class="field">
+                <label for="apartmentRentalStatus" data-i18n="apartmentRentalStatus">Rental Status</label>
+                <select id="apartmentRentalStatus" name="rental_status" required>
+                  <option value="available" data-i18n="rentalStatusAvailable">Available (For Rent)</option>
+                  <option value="rented" data-i18n="rentalStatusRented">Rented (With Contract)</option>
+                  <option value="not_renting" data-i18n="rentalStatusNotRenting">Not Renting</option>
+                </select>
               </div>
               <div class="field">
                 <label for="apartmentCondition" data-i18n="apartmentCondition">Condition</label>
@@ -392,32 +400,14 @@
                 <label for="apartmentFeatures" data-i18n="apartmentFeatures">Features</label>
                 <div class="features-select-container">
                   <div class="features-buttons" id="apartmentFeaturesButtons">
-                    <button type="button" class="feature-button" data-feature="Balcony/Terrace" data-i18n-en="Balcony/Terrace" data-i18n-sq="Ballkon/Tarracë">Balcony/Terrace</button>
-                    <button type="button" class="feature-button" data-feature="Wood Stove/Fireplace" data-i18n-en="Wood Stove/Fireplace" data-i18n-sq="Sobë me Dru/Oxhak">Wood Stove/Fireplace</button>
                     <button type="button" class="feature-button" data-feature="Elevator" data-i18n-en="Elevator" data-i18n-sq="Ashensor">Elevator</button>
-                    <button type="button" class="feature-button" data-feature="First Floor" data-i18n-en="First Floor" data-i18n-sq="Kati i Parë">First Floor</button>
-                    <button type="button" class="feature-button" data-feature="Parking Space/Garage" data-i18n-en="Parking Space/Garage" data-i18n-sq="Parkim/Garaj">Parking Space/Garage</button>
-                    <button type="button" class="feature-button" data-feature="Attic Floor" data-i18n-en="Attic Floor" data-i18n-sq="Kati i Papafingo">Attic Floor</button>
-                    <button type="button" class="feature-button" data-feature="New Building" data-i18n-en="New Building" data-i18n-sq="Ndërtesë e Re">New Building</button>
-                    <button type="button" class="feature-button" data-feature="Renovated" data-i18n-en="Renovated" data-i18n-sq="E Renovuar">Renovated</button>
-                    <button type="button" class="feature-button" data-feature="Furnished" data-i18n-en="Furnished" data-i18n-sq="E Mobiluar">Furnished</button>
                     <button type="button" class="feature-button" data-feature="Basement" data-i18n-en="Basement" data-i18n-sq="Bodrum">Basement</button>
-                    <button type="button" class="feature-button" data-feature="Intercom" data-i18n-en="Intercom" data-i18n-sq="Interkom">Intercom</button>
-                    <button type="button" class="feature-button" data-feature="Duplex" data-i18n-en="Duplex" data-i18n-sq="Dupleks">Duplex</button>
+                    <button type="button" class="feature-button" data-feature="Parking Space" data-i18n-en="Parking Space" data-i18n-sq="Vendparking">Parking Space</button>
                   </div>
-                  <select id="apartmentFeatures" name="features" multiple style="display: none;">
-                    <option value="Balcony/Terrace" data-i18n-en="Balcony/Terrace" data-i18n-sq="Ballkon/Tarracë">Balcony/Terrace</option>
-                    <option value="Wood Stove/Fireplace" data-i18n-en="Wood Stove/Fireplace" data-i18n-sq="Sobë me Dru/Oxhak">Wood Stove/Fireplace</option>
+                  <select id="apartmentFeatures" name="features" multiple class="hidden">
                     <option value="Elevator" data-i18n-en="Elevator" data-i18n-sq="Ashensor">Elevator</option>
-                    <option value="First Floor" data-i18n-en="First Floor" data-i18n-sq="Kati i Parë">First Floor</option>
-                    <option value="Parking Space/Garage" data-i18n-en="Parking Space/Garage" data-i18n-sq="Parkim/Garaj">Parking Space/Garage</option>
-                    <option value="Attic Floor" data-i18n-en="Attic Floor" data-i18n-sq="Kati i Papafingo">Attic Floor</option>
-                    <option value="New Building" data-i18n-en="New Building" data-i18n-sq="Ndërtesë e Re">New Building</option>
-                    <option value="Renovated" data-i18n-en="Renovated" data-i18n-sq="E Renovuar">Renovated</option>
-                    <option value="Furnished" data-i18n-en="Furnished" data-i18n-sq="E Mobiluar">Furnished</option>
                     <option value="Basement" data-i18n-en="Basement" data-i18n-sq="Bodrum">Basement</option>
-                    <option value="Intercom" data-i18n-en="Intercom" data-i18n-sq="Interkom">Intercom</option>
-                    <option value="Duplex" data-i18n-en="Duplex" data-i18n-sq="Dupleks">Duplex</option>
+                    <option value="Parking Space" data-i18n-en="Parking Space" data-i18n-sq="Vendparking">Parking Space</option>
                   </select>
                 </div>
               </div>
@@ -430,6 +420,109 @@
                   placeholder="Add a detailed description of the apartment, features, nearby amenities, and any rules or requirements"
                 ></textarea>
               </div>
+              <div id="apartmentRentalRulesSection" class="rental-rules-section hidden">
+                <h4 class="rental-rules-heading" data-i18n="rentalRulesFeatures">🛠️ Apartment Features &amp; Rules</h4>
+                <div class="rental-rules-grid">
+                  <div class="field">
+                    <label for="rentalHeatingCooling" data-i18n="rentalHeatingCooling">Heating &amp; cooling (AC, radiator, etc.)</label>
+                    <select id="rentalHeatingCooling" name="rental_rules_heating_cooling">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="ac" data-i18n="rentalOptAc">AC</option>
+                      <option value="radiator" data-i18n="rentalOptRadiator">Radiator</option>
+                      <option value="ac_radiator" data-i18n="rentalOptAcRadiator">AC + Radiator</option>
+                      <option value="central_heating" data-i18n="rentalOptCentralHeating">Central Heating</option>
+                      <option value="none" data-i18n="rentalOptNone">None</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="rentalAppliances" data-i18n="rentalAppliances">Appliances (washing machine, fridge, stove)</label>
+                    <select id="rentalAppliances" name="rental_rules_appliances">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="full" data-i18n="rentalOptFull">Full (washing machine, fridge, stove)</option>
+                      <option value="fridge_stove" data-i18n="rentalOptFridgeStove">Fridge + stove only</option>
+                      <option value="none" data-i18n="rentalOptNone">None</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="rentalPetPolicy" data-i18n="rentalPetPolicy">Pet policy 🐶🐱</label>
+                    <select id="rentalPetPolicy" name="rental_rules_pet_policy">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="allowed" data-i18n="rentalOptAllowed">Allowed</option>
+                      <option value="not_allowed" data-i18n="rentalOptNotAllowed">Not allowed</option>
+                      <option value="negotiable" data-i18n="rentalOptNegotiable">Negotiable</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="rentalSmoking" data-i18n="rentalSmoking">Smoking allowed or not</label>
+                    <select id="rentalSmoking" name="rental_rules_smoking">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="allowed" data-i18n="rentalOptAllowed">Allowed</option>
+                      <option value="not_allowed" data-i18n="rentalOptNotAllowed">Not allowed</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="rentalMinPeriod" data-i18n="rentalMinPeriod">Minimum rental period</label>
+                    <select id="rentalMinPeriod" name="rental_rules_min_rental_period">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="1_month" data-i18n="rentalOpt1Month">1 month</option>
+                      <option value="3_months" data-i18n="rentalOpt3Months">3 months</option>
+                      <option value="6_months" data-i18n="rentalOpt6Months">6 months</option>
+                      <option value="1_year" data-i18n="rentalOpt1Year">1 year</option>
+                      <option value="2_years" data-i18n="rentalOpt2Years">2 years</option>
+                    </select>
+                  </div>
+                </div>
+                <h4 class="rental-rules-heading" data-i18n="rentalRulesLegal">📄 Legal &amp; Contract Info</h4>
+                <div class="rental-rules-grid">
+                  <div class="field">
+                    <label for="rentalContractType" data-i18n="rentalContractType">Type of contract (written, notarized, registered)</label>
+                    <select id="rentalContractType" name="rental_rules_contract_type">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="written" data-i18n="rentalOptWritten">Written</option>
+                      <option value="notarized" data-i18n="rentalOptNotarized">Notarized</option>
+                      <option value="registered" data-i18n="rentalOptRegistered">Registered</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="rentalNoticePeriod" data-i18n="rentalNoticePeriod">Notice period for leaving</label>
+                    <select id="rentalNoticePeriod" name="rental_rules_notice_period">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="30_days" data-i18n="rentalOpt30Days">30 days</option>
+                      <option value="60_days" data-i18n="rentalOpt60Days">60 days</option>
+                      <option value="90_days" data-i18n="rentalOpt90Days">90 days</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="rentalRepairsPaidBy" data-i18n="rentalRepairsPaidBy">Who pays for repairs</label>
+                    <select id="rentalRepairsPaidBy" name="rental_rules_repairs_paid_by">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="landlord" data-i18n="rentalOptLandlord">Landlord</option>
+                      <option value="tenant" data-i18n="rentalOptTenant">Tenant</option>
+                      <option value="shared" data-i18n="rentalOptShared">Shared</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="rentalSubletting" data-i18n="rentalSubletting">Rules about subletting</label>
+                    <select id="rentalSubletting" name="rental_rules_subletting">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="not_allowed" data-i18n="rentalOptNotAllowed">Not allowed</option>
+                      <option value="allowed_with_permission" data-i18n="rentalOptAllowedWithPermission">Allowed with permission</option>
+                      <option value="allowed" data-i18n="rentalOptAllowed">Allowed</option>
+                    </select>
+                  </div>
+                </div>
+                <h4 class="rental-rules-heading" data-i18n="rentalRulesLandlord">👤 Landlord / Agency Transparency</h4>
+                <div class="rental-rules-grid">
+                  <div class="field">
+                    <label for="rentalOwnerDirect" data-i18n="rentalOwnerDirect">Owner-direct or agency</label>
+                    <select id="rentalOwnerDirect" name="rental_rules_is_owner_direct">
+                      <option value="" data-i18n="rentalOptDash">—</option>
+                      <option value="owner" data-i18n="rentalOptOwner">Owner-direct</option>
+                      <option value="agency" data-i18n="rentalOptAgency">Agency</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
               <div class="field">
                 <label for="apartmentPhotos" data-i18n="apartmentPhotos"
                   >Photos</label
@@ -441,7 +534,7 @@
                     name="photos"
                     accept="image/*"
                     multiple
-                    style="display: none;"
+                    class="hidden"
                   />
                   <div class="photo-upload-dropzone" id="photoDropzone">
                     <p data-i18n="photoUploadDragDrop">Drag and drop photos here, or click to select</p>
@@ -548,7 +641,7 @@
                 Add Contract
               </button>
             </header>
-            <form id="contractForm" class="form-grid" style="display: none;">
+            <form id="contractForm" class="form-grid hidden">
               <div class="field">
                 <label for="contractApartment" data-i18n="selectApartment"
                   >Apartment</label
@@ -753,7 +846,7 @@
               </table>
             </div>
             <div class="flex-columns">
-              <form id="debtForm" class="form-grid" data-expense-mode="expense" style="display: none;">
+              <form id="debtForm" class="form-grid hidden" data-expense-mode="expense">
                 <h4 data-i18n="createDebt">Create Expense</h4>
                 <div class="field">
                   <label for="debtContract" data-i18n="selectContract"
@@ -827,7 +920,7 @@
                 </div>
               </form>
 
-              <form id="paymentForm" class="form-grid" data-expense-mode="payment" style="display: none;">
+              <form id="paymentForm" class="form-grid hidden" data-expense-mode="payment">
                 <h4 data-i18n="recordPayment">Record Payment</h4>
                 <div class="field">
                   <label for="paymentDebt" data-i18n="selectDebt">Debt</label>
@@ -869,7 +962,7 @@
                     id="paymentMethod"
                     name="method"
                     placeholder="Enter payment method"
-                    style="display: none; margin-top: 0.5rem;"
+                    class="hidden-inline-margin"
                   />
                 </div>
                 <div class="form-actions">
@@ -938,7 +1031,7 @@
             </div>
 
             <!-- Utility Summary Section (for electricity, water, heating) -->
-            <div id="utilitySummarySection" class="utility-summary-section card" style="display: none;">
+            <div id="utilitySummarySection" class="utility-summary-section card hidden">
               <div class="utility-summary-header">
                 <h4 data-i18n="utilitySummaryTitle">Utility Summary</h4>
                   </div>
@@ -1208,6 +1301,7 @@
       </button>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
     <!-- Load configuration first -->

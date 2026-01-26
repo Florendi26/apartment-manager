@@ -8,7 +8,6 @@
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/responsive.css" />
   </head>
   <body>
     <div class="logo-bar">
@@ -51,7 +50,7 @@
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-dark" style="display: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-dark hidden">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
         </button>
@@ -84,7 +83,7 @@
       </section>
       
       <!-- Apartment Details Modal -->
-      <div id="apartmentDetailsModal" class="apartment-details-modal" style="display: none;">
+      <div id="apartmentDetailsModal" class="apartment-details-modal hidden">
         <div class="apartment-details-content">
           <button class="apartment-details-close" id="apartmentDetailsClose">&times;</button>
           <div class="apartment-details-header">
@@ -122,6 +121,9 @@
                 <h3 data-i18n="apartmentDetailsDescription">Description</h3>
                 <p id="apartmentDetailsDescriptionValue" class="apartment-description" data-i18n="apartmentDetailsNoDescription">No description available.</p>
               </div>
+              <div id="apartmentDetailsRentalRulesSection" class="apartment-details-section rental-rules-display hidden">
+                <div id="apartmentDetailsRentalRulesContainer"></div>
+              </div>
             </div>
           </div>
           <div class="apartment-details-actions">
@@ -136,7 +138,7 @@
       </div>
       
       <!-- Photo Viewer Modal -->
-      <div id="photoViewerModal" class="photo-viewer-modal" style="display: none;">
+      <div id="photoViewerModal" class="photo-viewer-modal hidden">
         <div class="photo-viewer-content">
           <button class="photo-viewer-close" id="photoViewerClose">&times;</button>
           <button class="photo-viewer-nav photo-viewer-prev" id="photoViewerPrev">&#8249;</button>

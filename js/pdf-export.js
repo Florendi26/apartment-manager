@@ -259,6 +259,9 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
     }
   });
 
+  // Sort expense summary by amount (most expensive first)
+  expenseSummary.sort((a, b) => b.amount - a.amount);
+
   Array.from(expensesByType.keys()).forEach((type) => {
     if (!typeOrder.includes(type)) {
       const typeLabel = translate(`debt${capitalize(type)}`) || type;
@@ -275,6 +278,9 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
       }
     }
   });
+
+  // Sort expense summary by amount (most expensive first)
+  expenseSummary.sort((a, b) => b.amount - a.amount);
 
   if (expenseSummary.length > 0) {
     if (autoTableAvailable) {
@@ -389,11 +395,162 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
     }
   }
 
-  // Render expense type tables with pagination
-  const tableFullWidth = infoPageWidth - 28;
-  const detailTypeOrder = ["rent", "garbage", "water", "electricity", "maintenance", "thermos"];
-  
-  detailTypeOrder.forEach((type) => {
+  // For normal format, add detailed unpaid expenses table
+  if (format === "normal" && autoTableAvailable) {
+    // Helper function to get debt status
+    function getDebtStatus(debt) {
+      if (debt.is_paid) {
+        return { label: translate("paid") || "Paid", class: "paid" };
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      if (debt.due_date && debt.due_date < today) {
+        return { label: translate("overdue") || "Overdue", class: "overdue" };
+      }
+      return { label: translate("open") || "Open", class: "open" };
+    }
+    
+    // Build list of unpaid expenses
+    const unpaidExpensesList = [];
+    
+    // Add unpaid regular debts
+    unpaidRegularDebts.forEach((debt) => {
+      const status = getDebtStatus(debt);
+      unpaidExpensesList.push({
+        type: translate(`debt${capitalize(debt.type)}`) || debt.type,
+        amount: normalizeCurrency(debt.amount),
+        dueDate: debt.due_date,
+        status: status.label,
+        reference: debt.reference || "-"
+      });
+    });
+    
+    // Add utility debts with balance (expenses > payments) - one row per type
+    const utilityTypesProcessed = new Set();
+    utilityDebts.forEach((debt) => {
+      if (utilityTypesProcessed.has(debt.type)) return;
+      utilityTypesProcessed.add(debt.type);
+      
+      const typePayments = payments.filter(p => {
+        if (p.type === debt.type) return true;
+        const relatedDebt = debtsById.get(String(p.debt_id));
+        return relatedDebt && relatedDebt.type === debt.type;
+      }).reduce((sum, p) => sum + normalizeCurrency(p.amount), 0);
+      
+      const typeExpenses = utilityDebts
+        .filter(d => d.type === debt.type)
+        .reduce((sum, d) => sum + normalizeCurrency(d.amount), 0);
+      
+      const balance = typeExpenses - typePayments;
+      
+      // Only add if there's a positive balance
+      if (balance > 0.01) {
+        unpaidExpensesList.push({
+          type: translate(`debt${capitalize(debt.type)}`) || debt.type,
+          amount: balance,
+          dueDate: null, // Utilities don't have specific due dates
+          status: translate("owes") || "Owes",
+          reference: "-"
+        });
+      }
+    });
+    
+    // Group by type and calculate total per type
+    const typeTotals = {};
+    unpaidExpensesList.forEach(item => {
+      if (!typeTotals[item.type]) {
+        typeTotals[item.type] = 0;
+      }
+      typeTotals[item.type] += item.amount;
+    });
+    
+    // Sort by type total (most expensive type first), then within type by due date (newest first)
+    unpaidExpensesList.sort((a, b) => {
+      const aTypeTotal = typeTotals[a.type] || 0;
+      const bTypeTotal = typeTotals[b.type] || 0;
+      
+      // First sort by type total (descending - highest type total first)
+      if (Math.abs(aTypeTotal - bTypeTotal) > 0.01) {
+        return bTypeTotal - aTypeTotal;
+      }
+      
+      // If same type total, sort by type name
+      if (a.type !== b.type) {
+        return a.type.localeCompare(b.type);
+      }
+      
+      // If same type, sort by due date (newest first)
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+    });
+    
+    if (unpaidExpensesList.length > 0) {
+      // Check if we need a new page
+      if (cursorY > 250) {
+        doc.addPage();
+        cursorY = 20;
+      }
+      
+      const unpaidTableBody = unpaidExpensesList.map((item, index) => [
+        index + 1, // Row number starting from 1
+        item.type,
+        formatCurrency(item.amount),
+        item.dueDate ? formatDate(item.dueDate) : "-",
+        item.status,
+        formatReferenceNumber(item.reference)
+      ]);
+      
+      const tableFullWidth = infoPageWidth - 28;
+      const leftMargin = 14;
+      const rightMargin = 14;
+      
+      doc.autoTable({
+        startY: cursorY,
+        head: [[
+          "#",
+          translate("debtType") || "Type",
+          translate("amount") || "Amount",
+          translate("dueDate") || "Due Date",
+          translate("status") || "Status",
+          translate("reference") || "Reference"
+        ]],
+        body: unpaidTableBody,
+        tableWidth: tableFullWidth,
+        margin: { left: leftMargin, right: rightMargin },
+        styles: {
+          fontSize: 9,
+          cellPadding: 2,
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+        },
+        headStyles: {
+          fillColor: [8, 168, 138],
+          textColor: [255, 255, 255],
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          fontSize: 9,
+        },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 15 }, // # column - centered, narrow width
+          1: { halign: 'left' },   // Type
+          2: { halign: 'right' },  // Amount
+          3: { halign: 'left' },   // Due Date
+          4: { halign: 'left' },   // Status
+          5: { halign: 'left' }    // Reference
+        }
+      });
+      
+      cursorY = doc.lastAutoTable.finalY + 12;
+    }
+  }
+
+  // Render expense type tables with pagination (only for detailed format)
+  if (format === "detailed") {
+    const tableFullWidth = infoPageWidth - 28;
+    const detailTypeOrder = ["rent", "garbage", "water", "electricity", "maintenance", "thermos"];
+    
+    detailTypeOrder.forEach((type) => {
     // Collect all debts and payments for this type
     const typeDebts = debts.filter(d => d.type === type);
     const typePayments = payments.filter(p => {
@@ -469,7 +626,8 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
       // Update cursorY after rendering
       cursorY = finalY + 10;
     }
-  });
+    });
+  }
 
   doc.save(`tenant-${tenant.id}.pdf`);
   incrementPdfGeneratedCount();

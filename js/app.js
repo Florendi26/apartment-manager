@@ -171,6 +171,23 @@ const EXPENSE_STATE_KEYS = {
 
 const elements = {};
 
+// DOM Helper Functions
+const clear = (el) => { if (el) el.innerHTML = ''; };
+const el = (tag, attrs = {}, children = []) => {
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k, v]) => {
+    if (k === 'text') e.textContent = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k === 'class') e.className = v;
+    else if (k.startsWith('data-')) e.setAttribute(k, v);
+    else if (k === 'style' && typeof v === 'string') e.style.cssText = v;
+    else if (k in e && typeof v !== 'object') e[k] = v;
+    else if (v != null) e.setAttribute(k, v);
+  });
+  children.forEach(c => e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+  return e;
+};
+
 // Mobile menu toggle function (standalone version for index.html)
 function setupMobileMenuToggle() {
   const menuToggleBtn = document.getElementById("menuToggleBtn");
@@ -205,12 +222,30 @@ function setupMobileMenuToggle() {
       closeBtn.setAttribute("type", "button");
       closeBtn.setAttribute("title", "Close Menu");
       closeBtn.setAttribute("aria-label", "Close Menu");
-      closeBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      `;
+      // Create SVG using DOM methods
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      svg.setAttribute("width", "20");
+      svg.setAttribute("height", "20");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "2");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      const line1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line1.setAttribute("x1", "18");
+      line1.setAttribute("y1", "6");
+      line1.setAttribute("x2", "6");
+      line1.setAttribute("y2", "18");
+      const line2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line2.setAttribute("x1", "6");
+      line2.setAttribute("y1", "6");
+      line2.setAttribute("x2", "18");
+      line2.setAttribute("y2", "18");
+      svg.appendChild(line1);
+      svg.appendChild(line2);
+      closeBtn.appendChild(svg);
       topNavContainer.appendChild(closeBtn);
     }
 
@@ -473,6 +508,7 @@ function cacheElements() {
     apartmentHeatingCode: document.getElementById("apartmentHeatingCode"),
     apartmentWaterCode: document.getElementById("apartmentWaterCode"),
     apartmentWasteCode: document.getElementById("apartmentWasteCode"),
+    apartmentRentalStatus: document.getElementById("apartmentRentalStatus"),
     apartmentCondition: document.getElementById("apartmentCondition"),
     apartmentRooms: document.getElementById("apartmentRooms"),
     apartmentBalconies: document.getElementById("apartmentBalconies"),
@@ -620,6 +656,9 @@ function cacheElements() {
 }
 
 function attachEventListeners() {
+  // Setup collapsible table rows for mobile
+  setupCollapsibleTableRows();
+
   // Authentication event listeners
   if (elements.loginForm) {
     elements.loginForm.addEventListener("submit", handleLogin);
@@ -628,17 +667,31 @@ function attachEventListeners() {
     elements.signupForm.addEventListener("submit", handleSignup);
   }
   if (elements.showSignup) {
-    elements.showSignup.addEventListener("click", () => {
-      if (elements.signupCard) elements.signupCard.style.display = "block";
+    elements.showSignup.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (elements.signupCard) {
+        elements.signupCard.classList.remove("hidden");
+        elements.signupCard.style.display = "block";
+      }
       const loginCard = document.querySelector(".login-card:not(#signupCard)");
-      if (loginCard) loginCard.style.display = "none";
+      if (loginCard) {
+        loginCard.classList.add("hidden");
+        loginCard.style.display = "none";
+      }
     });
   }
   if (elements.showLogin) {
-    elements.showLogin.addEventListener("click", () => {
-      if (elements.signupCard) elements.signupCard.style.display = "none";
+    elements.showLogin.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (elements.signupCard) {
+        elements.signupCard.classList.add("hidden");
+        elements.signupCard.style.display = "none";
+      }
       const loginCard = document.querySelector(".login-card:not(#signupCard)");
-      if (loginCard) loginCard.style.display = "block";
+      if (loginCard) {
+        loginCard.classList.remove("hidden");
+        loginCard.style.display = "block";
+      }
     });
   }
   if (elements.logoutButton) {
@@ -740,15 +793,31 @@ function attachEventListeners() {
   // Feature buttons click handlers
   setupFeatureButtons();
   
+  // Rental rules section: show only when renting (available or rented)
+  function toggleRentalRulesSection() {
+    const sel = document.getElementById("apartmentRentalStatus");
+    const section = document.getElementById("apartmentRentalRulesSection");
+    if (!sel || !section) return;
+    const v = (sel.value || "").toLowerCase();
+    const isRenting = v === "available" || v === "rented";
+    if (isRenting) section.classList.remove("hidden");
+    else section.classList.add("hidden");
+  }
+  window.toggleRentalRulesSection = toggleRentalRulesSection;
+  if (elements.apartmentRentalStatus) {
+    elements.apartmentRentalStatus.addEventListener("change", toggleRentalRulesSection);
+  }
+  toggleRentalRulesSection();
+  
   // Toggle apartment form button
   if (elements.toggleApartmentFormBtn) {
     elements.toggleApartmentFormBtn.addEventListener("click", () => {
       const form = elements.apartmentForm;
-      const isVisible = form.style.display !== "none";
+      const isVisible = !form.classList.contains("hidden");
       
       if (isVisible) {
         // Hide form
-        form.style.display = "none";
+        form.classList.add("hidden");
         elements.toggleApartmentFormBtn.textContent = translate("addApartment") || "Add Apartment";
         // Reset form if not in edit mode
         if (!elements.apartmentId?.value) {
@@ -756,7 +825,7 @@ function attachEventListeners() {
         }
       } else {
         // Show form
-        form.style.display = "grid";
+        form.classList.remove("hidden");
         elements.toggleApartmentFormBtn.textContent = translate("cancel") || "Cancel";
         // Scroll to form
         form.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -770,7 +839,7 @@ function attachEventListeners() {
       cancelEditApartment();
       // Hide form after canceling
       if (elements.apartmentForm) {
-        elements.apartmentForm.style.display = "none";
+        elements.apartmentForm.classList.add("hidden");
       }
       if (elements.toggleApartmentFormBtn) {
         elements.toggleApartmentFormBtn.textContent = translate("addApartment") || "Add Apartment";
@@ -1006,6 +1075,26 @@ function attachEventListeners() {
   }
 }
 
+function setupCollapsibleTableRows() {
+  // Use event delegation for dynamically created table rows
+  document.addEventListener('click', (e) => {
+    const row = e.target.closest('table tbody tr');
+    if (!row) return;
+    
+    // Don't toggle if clicking on buttons or interactive elements
+    if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input') || e.target.closest('a')) {
+      return;
+    }
+    
+    // Only on mobile (when table rows are displayed as blocks/cards)
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) return;
+    
+    // Toggle collapsed class
+    row.classList.toggle('collapsed');
+  });
+}
+
 function handleAdminNavClick(event) {
   const button = event.target.closest("button[data-page]");
   if (!button) return;
@@ -1116,7 +1205,14 @@ function populateGlobalContractFilter() {
   if (!elements.globalContractFilter) return;
   
   const currentValue = state.globalContractFilter || "";
-  elements.globalContractFilter.innerHTML = `<option value="" data-i18n="allContracts">${translate("allContracts") || "All Contracts"}</option>`;
+  clear(elements.globalContractFilter);
+  
+  // Create default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.setAttribute('data-i18n', 'allContracts');
+  defaultOption.textContent = translate("allContracts") || "All Contracts";
+  elements.globalContractFilter.appendChild(defaultOption);
   
   // Only show active contracts
   state.contracts.filter(c => c.is_active).forEach(contract => {
@@ -1568,27 +1664,44 @@ function buildTenantSummaryData() {
 
 function renderTenantSummaryBody(target, summary) {
   if (!target) return;
+  
+  clear(target);
+  
   if (!summary.length) {
-    target.innerHTML = `
-      <tr>
-        <td colspan="5">${sanitize(translate("summaryNoData"))}</td>
-      </tr>
-    `;
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.setAttribute('colspan', '5');
+    td.textContent = sanitize(translate("summaryNoData"));
+    tr.appendChild(td);
+    target.appendChild(tr);
     return;
   }
-  target.innerHTML = summary
-    .map(
-      (row) => `
-        <tr>
-          <td>${sanitize(row.tenantName)}</td>
-          <td>${row.expensesCount}</td>
-          <td>${formatCurrency(row.expensesAmount)}</td>
-          <td>${row.paymentsCount}</td>
-          <td>${formatCurrency(row.paymentsAmount)}</td>
-        </tr>
-      `
-    )
-    .join("");
+  
+  summary.forEach((row) => {
+    const tr = document.createElement('tr');
+    
+    const tenantCell = document.createElement('td');
+    tenantCell.textContent = sanitize(row.tenantName);
+    tr.appendChild(tenantCell);
+    
+    const expensesCountCell = document.createElement('td');
+    expensesCountCell.textContent = row.expensesCount;
+    tr.appendChild(expensesCountCell);
+    
+    const expensesAmountCell = document.createElement('td');
+    expensesAmountCell.textContent = formatCurrency(row.expensesAmount);
+    tr.appendChild(expensesAmountCell);
+    
+    const paymentsCountCell = document.createElement('td');
+    paymentsCountCell.textContent = row.paymentsCount;
+    tr.appendChild(paymentsCountCell);
+    
+    const paymentsAmountCell = document.createElement('td');
+    paymentsAmountCell.textContent = formatCurrency(row.paymentsAmount);
+    tr.appendChild(paymentsAmountCell);
+    
+    target.appendChild(tr);
+  });
 }
 
 function getActiveExpenseType() {
@@ -2015,6 +2128,10 @@ async function loadContracts() {
 
   state.contracts = data || [];
   state.contractsLoaded = true;
+  
+  // Sync apartment rental_status based on active contracts
+  await syncApartmentRentalStatus();
+  
   renderContractsTable();
   populateContractSelects();
   populateGlobalContractFilter();
@@ -2035,6 +2152,64 @@ async function loadContracts() {
   // Only update summary if not in initial load (initial load uses animated version)
   if (!state.isInitialLoad) {
     renderAdminSummary();
+  }
+}
+
+/**
+ * Sync apartment rental_status based on active contracts
+ * If apartment has active contract, set rental_status to "rented"
+ * If no active contract, set rental_status to "available" (unless manually set to "not_renting")
+ */
+async function syncApartmentRentalStatus() {
+  if (!state.currentUser || !state.contracts || state.contracts.length === 0) return;
+  
+  // Get all landlord apartment IDs
+  const { data: landlordApartments, error: apartmentError } = await supabase
+    .from("apartments")
+    .select("id, rental_status")
+    .eq("landlord_id", state.currentUser.id);
+  
+  if (apartmentError || !landlordApartments) return;
+  
+  // Create a set of apartment IDs with active contracts
+  const apartmentsWithActiveContracts = new Set(
+    state.contracts
+      .filter(c => c.is_active && c.apartment_id)
+      .map(c => String(c.apartment_id))
+  );
+  
+  // Update apartments with active contracts to "rented"
+  const apartmentsToRent = landlordApartments.filter(
+    apt => apartmentsWithActiveContracts.has(String(apt.id)) && apt.rental_status !== "rented"
+  );
+  
+  if (apartmentsToRent.length > 0) {
+    const idsToUpdate = apartmentsToRent.map(a => a.id);
+    const { error: updateError } = await supabase
+      .from("apartments")
+      .update({ rental_status: "rented" })
+      .in("id", idsToUpdate);
+    
+    if (updateError) {
+      console.warn("Failed to sync apartment rental_status to rented:", updateError);
+    }
+  }
+  
+  // Update apartments without active contracts to "available" (only if currently "rented")
+  const apartmentsToMakeAvailable = landlordApartments.filter(
+    apt => !apartmentsWithActiveContracts.has(String(apt.id)) && apt.rental_status === "rented"
+  );
+  
+  if (apartmentsToMakeAvailable.length > 0) {
+    const idsToUpdate = apartmentsToMakeAvailable.map(a => a.id);
+    const { error: updateError } = await supabase
+      .from("apartments")
+      .update({ rental_status: "available" })
+      .in("id", idsToUpdate);
+    
+    if (updateError) {
+      console.warn("Failed to sync apartment rental_status to available:", updateError);
+    }
   }
 }
 
@@ -2299,7 +2474,7 @@ function setupApartmentsPagination() {
       let { data, error, count } = await supabase
         .from("apartments")
         .select(
-          "id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, monthly_rent, features",
+          "id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, monthly_rent, features, rental_status, rental_rules",
           { count: 'exact' }
         )
         .eq("landlord_id", state.currentUser.id)
@@ -2369,44 +2544,159 @@ function setupApartmentsPagination() {
 
       const row = document.createElement('tr');
       row.className = statusClass;
-      row.innerHTML = `
-        <td data-label="Photo">
-          ${firstPhoto 
-            ? `<img src="${sanitize(firstPhoto)}" alt="${sanitize(apartment.name)}" class="apartment-photo-thumbnail" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;" onerror="this.style.display='none'" data-apartment-id="${apartment.id}">`
-            : '<span style="color: #999;">No photo</span>'
-          }
-        </td>
-        <td data-label="Name">${sanitize(apartment.name)}</td>
-        <td data-label="Address">${sanitize(apartment.address || "")}</td>
-        <td data-label="Electricity Code">${sanitize(apartment.electricity_code || "")}</td>
-        <td data-label="Heating Code">${sanitize(apartment.heating_code || "")}</td>
-        <td data-label="Water Code">${sanitize(apartment.water_code || "")}</td>
-        <td data-label="Waste Code">${sanitize(apartment.waste_code || "")}</td>
-        <td data-label="Status"><span class="status-badge ${hasActiveContract ? 'occupied' : 'available'}">${statusText}</span></td>
-        <td data-label="Actions">
-          <div class="actions-group">
-            <button type="button" class="button-secondary button-small" data-action="edit-apartment" data-id="${apartment.id}">
-              ${translate("edit") || "Edit"}
-            </button>
-            <button type="button" class="button-danger button-small" data-action="delete-apartment" data-id="${apartment.id}">
-              ${translate("delete") || "Delete"}
-            </button>
-          </div>
-        </td>
-        <td data-label="ID">${apartment.id}</td>
-      `;
-
-      // Attach event listeners
-      const editBtn = row.querySelector('[data-action="edit-apartment"]');
-      const deleteBtn = row.querySelector('[data-action="delete-apartment"]');
-      const photoImg = row.querySelector('.apartment-photo-thumbnail');
+      row.classList.add('collapsed'); // Collapsed by default on mobile
       
-      if (editBtn) {
-        editBtn.addEventListener("click", () => editApartment(editBtn.dataset.id));
+      // Summary cell (shown when collapsed)
+      const summaryCell = document.createElement('td');
+      summaryCell.className = 'mobile-summary-cell';
+      const shortDate = formatDateShortYear(apartment.created_at || '');
+      const statusTextShort = hasActiveContract ? translate("apartmentOccupied") || "Occupied" : translate("apartmentAvailable") || "Available";
+      
+      const summaryRow = document.createElement('div');
+      summaryRow.className = 'summary-row';
+      
+      const mainInfo = document.createElement('div');
+      mainInfo.className = 'summary-main-info';
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'summary-name';
+      nameSpan.textContent = sanitize(apartment.name);
+      mainInfo.appendChild(nameSpan);
+      
+      const separator1 = document.createElement('span');
+      separator1.textContent = '•';
+      separator1.style.opacity = '0.5';
+      mainInfo.appendChild(separator1);
+      
+      const addressSpan = document.createElement('span');
+      addressSpan.className = 'summary-type';
+      addressSpan.textContent = sanitize(apartment.address || '');
+      mainInfo.appendChild(addressSpan);
+      
+      summaryRow.appendChild(mainInfo);
+      
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'summary-status';
+      const summaryStatusBadge = document.createElement('span');
+      summaryStatusBadge.className = `status-badge ${hasActiveContract ? 'occupied' : 'available'}`;
+      summaryStatusBadge.textContent = statusTextShort;
+      statusDiv.appendChild(summaryStatusBadge);
+      summaryRow.appendChild(statusDiv);
+      
+      summaryCell.appendChild(summaryRow);
+      row.appendChild(summaryCell);
+      
+      // Photo cell
+      const photoCell = document.createElement('td');
+      photoCell.className = 'desktop-cell';
+      photoCell.setAttribute('data-label', 'Photo');
+      if (firstPhoto) {
+        const img = document.createElement('img');
+        img.src = sanitize(firstPhoto);
+        img.alt = sanitize(apartment.name);
+        img.className = 'apartment-photo-thumbnail';
+        img.style.cssText = 'width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;';
+        img.setAttribute('data-apartment-id', apartment.id);
+        img.addEventListener('error', function() { this.style.display = 'none'; });
+        photoCell.appendChild(img);
+      } else {
+        const span = document.createElement('span');
+        span.style.color = '#999';
+        span.textContent = 'No photo';
+        photoCell.appendChild(span);
       }
-      if (deleteBtn) {
-        deleteBtn.addEventListener("click", () => handleDeleteApartment(deleteBtn.dataset.id));
-      }
+      row.appendChild(photoCell);
+      
+      // Name cell
+      const nameCell = document.createElement('td');
+      nameCell.className = 'desktop-cell';
+      nameCell.setAttribute('data-label', 'Name');
+      nameCell.textContent = sanitize(apartment.name);
+      row.appendChild(nameCell);
+      
+      // Address cell
+      const addressCell = document.createElement('td');
+      addressCell.className = 'desktop-cell';
+      addressCell.setAttribute('data-label', 'Address');
+      addressCell.textContent = sanitize(apartment.address || '');
+      row.appendChild(addressCell);
+      
+      // Electricity Code cell
+      const elecCell = document.createElement('td');
+      elecCell.className = 'desktop-cell';
+      elecCell.setAttribute('data-label', 'Electricity Code');
+      elecCell.textContent = sanitize(apartment.electricity_code || '');
+      row.appendChild(elecCell);
+      
+      // Heating Code cell
+      const heatCell = document.createElement('td');
+      heatCell.className = 'desktop-cell';
+      heatCell.setAttribute('data-label', 'Heating Code');
+      heatCell.textContent = sanitize(apartment.heating_code || '');
+      row.appendChild(heatCell);
+      
+      // Water Code cell
+      const waterCell = document.createElement('td');
+      waterCell.className = 'desktop-cell';
+      waterCell.setAttribute('data-label', 'Water Code');
+      waterCell.textContent = sanitize(apartment.water_code || '');
+      row.appendChild(waterCell);
+      
+      // Waste Code cell
+      const wasteCell = document.createElement('td');
+      wasteCell.className = 'desktop-cell';
+      wasteCell.setAttribute('data-label', 'Waste Code');
+      wasteCell.textContent = sanitize(apartment.waste_code || '');
+      row.appendChild(wasteCell);
+      
+      // Status cell
+      const statusCell = document.createElement('td');
+      statusCell.className = 'desktop-cell';
+      statusCell.setAttribute('data-label', 'Status');
+      const desktopStatusBadge = document.createElement('span');
+      desktopStatusBadge.className = `status-badge ${hasActiveContract ? 'occupied' : 'available'}`;
+      desktopStatusBadge.textContent = statusText;
+      statusCell.appendChild(desktopStatusBadge);
+      row.appendChild(statusCell);
+      
+      // Actions cell
+      const actionsCell = document.createElement('td');
+      actionsCell.className = 'desktop-cell';
+      actionsCell.setAttribute('data-label', 'Actions');
+      actionsCell.setAttribute('data-collapsible', 'true');
+      const actionsGroup = document.createElement('div');
+      actionsGroup.className = 'actions-group';
+      
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn btn-outline-secondary btn-sm';
+      editBtn.setAttribute('data-action', 'edit-apartment');
+      editBtn.setAttribute('data-id', apartment.id);
+      editBtn.textContent = translate("edit") || "Edit";
+      editBtn.addEventListener("click", () => editApartment(apartment.id));
+      actionsGroup.appendChild(editBtn);
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'btn btn-outline-danger btn-sm';
+      deleteBtn.setAttribute('data-action', 'delete-apartment');
+      deleteBtn.setAttribute('data-id', apartment.id);
+      deleteBtn.textContent = translate("delete") || "Delete";
+      deleteBtn.addEventListener("click", () => handleDeleteApartment(apartment.id));
+      actionsGroup.appendChild(deleteBtn);
+      
+      actionsCell.appendChild(actionsGroup);
+      row.appendChild(actionsCell);
+      
+      // ID cell
+      const idCell = document.createElement('td');
+      idCell.className = 'desktop-cell';
+      idCell.setAttribute('data-label', 'ID');
+      idCell.textContent = apartment.id;
+      row.appendChild(idCell);
+
+      // Attach event listeners for photo
+      const photoImg = row.querySelector('.apartment-photo-thumbnail');
       if (photoImg) {
         photoImg.addEventListener("click", () => {
           const apartmentId = photoImg.getAttribute("data-apartment-id");
@@ -2434,7 +2724,13 @@ function setupApartmentsPagination() {
     skeletonTemplate: () => {
       const skeleton = document.createElement('tr');
       skeleton.className = 'pagination-skeleton';
-      skeleton.innerHTML = '<td colspan="9" style="padding: 1rem; text-align: center;"><div style="background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;"></div></td>';
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '9');
+      td.style.cssText = 'padding: 1rem; text-align: center;';
+      const div = document.createElement('div');
+      div.style.cssText = 'background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;';
+      td.appendChild(div);
+      skeleton.appendChild(td);
       return skeleton;
     },
     loadMoreText: translate("loadMore") || "Load More",
@@ -2571,52 +2867,161 @@ function setupDebtsPagination() {
       const showMarkPaid = !isUtility;
 
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
-        <td>${sanitize(typeLabel)}</td>
-        <td>${formatCurrency(debt.amount)}</td>
-        <td>${formatDate(debt.due_date)}</td>
-        <td>${isUtility ? "" : `<span class="tag ${status.class}">${status.label}</span>`}</td>
-        <td>${sanitize(formatReferenceForDisplay(debt.reference))}</td>
-        <td>${sanitize(stripElectricityCutMarker(debt.notes || ""))}</td>
-        <td>
-          <div class="actions-group">
-            <button type="button" class="button-secondary" data-action="edit-debt" data-id="${debt.id}">
-              ${translate("edit")}
-            </button>
-            <button type="button" class="button-danger" data-action="delete-debt" data-id="${debt.id}">
-              ${translate("delete")}
-            </button>
-            ${showMarkPaid ? `<button type="button" class="button-primary" data-action="mark-paid" data-id="${debt.id}" ${
-              debt.is_paid ? "disabled" : ""
-            }>
-              ${translate("markPaid")}
-            </button>` : ""}
-          </div>
-        </td>
-      `;
-
-      // Attach event listeners
-      const editBtn = row.querySelector('[data-action="edit-debt"]');
-      const deleteBtn = row.querySelector('[data-action="delete-debt"]');
-      const markPaidBtn = row.querySelector('[data-action="mark-paid"]');
+      row.classList.add('collapsed'); // Collapsed by default on mobile
       
-      if (editBtn) {
-        editBtn.addEventListener("click", () => editDebt(editBtn.dataset.id));
+      // Summary cell (shown when collapsed)
+      const summaryCell = document.createElement('td');
+      summaryCell.className = 'mobile-summary-cell';
+      const tenantName = sanitize(tenant?.full_name || translate("unknown"));
+      const shortDate = formatDateShortYear(debt.due_date);
+      const amount = formatCurrency(debt.amount);
+      const isPaid = !isUtility && debt.is_paid;
+      const statusBall = isPaid ? '<span class="status-ball status-paid"></span>' : '<span class="status-ball status-unpaid"></span>';
+      
+      // Create structured summary
+      const summaryRow = document.createElement('div');
+      summaryRow.className = 'summary-row';
+      
+      const mainInfo = document.createElement('div');
+      mainInfo.className = 'summary-main-info';
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'summary-name';
+      nameSpan.textContent = tenantName;
+      mainInfo.appendChild(nameSpan);
+      
+      const separator1 = document.createElement('span');
+      separator1.textContent = '•';
+      separator1.style.opacity = '0.5';
+      mainInfo.appendChild(separator1);
+      
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'summary-type';
+      typeSpan.textContent = sanitize(typeLabel);
+      mainInfo.appendChild(typeSpan);
+      
+      const separator2 = document.createElement('span');
+      separator2.textContent = '•';
+      separator2.style.opacity = '0.5';
+      mainInfo.appendChild(separator2);
+      
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'summary-date';
+      dateSpan.textContent = shortDate;
+      mainInfo.appendChild(dateSpan);
+      
+      summaryRow.appendChild(mainInfo);
+      
+      const amountSpan = document.createElement('span');
+      amountSpan.className = 'summary-amount';
+      amountSpan.textContent = amount;
+      summaryRow.appendChild(amountSpan);
+      
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'summary-status';
+      statusDiv.innerHTML = statusBall;
+      summaryRow.appendChild(statusDiv);
+      
+      summaryCell.appendChild(summaryRow);
+      row.appendChild(summaryCell);
+      
+      // Tenant cell
+      const tenantCell = document.createElement('td');
+      tenantCell.className = 'desktop-cell';
+      tenantCell.textContent = tenantName;
+      row.appendChild(tenantCell);
+      
+      // Type cell
+      const typeCell = document.createElement('td');
+      typeCell.className = 'desktop-cell';
+      typeCell.textContent = sanitize(typeLabel);
+      row.appendChild(typeCell);
+      
+      // Amount cell
+      const amountCell = document.createElement('td');
+      amountCell.className = 'desktop-cell';
+      amountCell.textContent = formatCurrency(debt.amount);
+      row.appendChild(amountCell);
+      
+      // Due date cell
+      const dueDateCell = document.createElement('td');
+      dueDateCell.className = 'desktop-cell';
+      dueDateCell.textContent = formatDate(debt.due_date);
+      row.appendChild(dueDateCell);
+      
+      // Status cell
+      const statusCell = document.createElement('td');
+      statusCell.className = 'desktop-cell';
+      if (!isUtility) {
+        const statusTag = document.createElement('span');
+        statusTag.className = `badge ${status.class === 'overdue' ? 'bg-danger' : status.class === 'paid' ? 'bg-success' : 'bg-warning'}`;
+        statusTag.textContent = status.label;
+        statusCell.appendChild(statusTag);
       }
-      if (deleteBtn) {
-        deleteBtn.addEventListener("click", () => handleDeleteDebt(deleteBtn.dataset.id));
+      row.appendChild(statusCell);
+      
+      // Reference cell (collapsible)
+      const refCell = document.createElement('td');
+      refCell.setAttribute('data-collapsible', 'true');
+      refCell.textContent = sanitize(formatReferenceForDisplay(debt.reference));
+      row.appendChild(refCell);
+      
+      // Notes cell (collapsible)
+      const notesCell = document.createElement('td');
+      notesCell.setAttribute('data-collapsible', 'true');
+      notesCell.textContent = sanitize(stripElectricityCutMarker(debt.notes || ""));
+      row.appendChild(notesCell);
+      
+      // Actions cell (collapsible)
+      const actionsCell = document.createElement('td');
+      actionsCell.setAttribute('data-collapsible', 'true');
+      const actionsGroup = document.createElement('div');
+      actionsGroup.className = 'btn-group';
+      
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn btn-outline-secondary btn-sm';
+      editBtn.setAttribute('data-action', 'edit-debt');
+      editBtn.setAttribute('data-id', debt.id);
+      editBtn.textContent = translate("edit");
+      editBtn.addEventListener("click", () => startEditDebt(debt.id));
+      actionsGroup.appendChild(editBtn);
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'btn btn-outline-danger btn-sm';
+      deleteBtn.setAttribute('data-action', 'delete-debt');
+      deleteBtn.setAttribute('data-id', debt.id);
+      deleteBtn.textContent = translate("delete");
+      deleteBtn.addEventListener("click", () => handleDeleteDebt(debt.id));
+      actionsGroup.appendChild(deleteBtn);
+      
+      if (showMarkPaid && !debt.is_paid) {
+        const markPaidBtn = document.createElement('button');
+        markPaidBtn.type = 'button';
+        markPaidBtn.className = 'btn btn-primary btn-sm';
+        markPaidBtn.setAttribute('data-action', 'mark-paid');
+        markPaidBtn.setAttribute('data-id', debt.id);
+        markPaidBtn.textContent = translate("markPaid");
+        markPaidBtn.addEventListener("click", () => handleMarkDebtPaid(debt.id));
+        actionsGroup.appendChild(markPaidBtn);
       }
-      if (markPaidBtn) {
-        markPaidBtn.addEventListener("click", () => handleMarkPaid(markPaidBtn.dataset.id));
-      }
+      
+      actionsCell.appendChild(actionsGroup);
+      row.appendChild(actionsCell);
 
       return row;
     },
     skeletonTemplate: () => {
       const skeleton = document.createElement('tr');
       skeleton.className = 'pagination-skeleton';
-      skeleton.innerHTML = '<td colspan="8" style="padding: 1rem; text-align: center;"><div style="background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;"></div></td>';
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '8');
+      td.style.cssText = 'padding: 1rem; text-align: center;';
+      const div = document.createElement('div');
+      div.style.cssText = 'background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;';
+      td.appendChild(div);
+      skeleton.appendChild(td);
       return skeleton;
     },
     loadMoreText: translate("loadMore") || "Load More",
@@ -2701,43 +3106,138 @@ function setupPaymentsPagination() {
       const typeLabel = debt ? getDebtTypeLabel(debt) : (payment.type ? translate(`debt${capitalize(payment.type)}`) || payment.type : "-");
 
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
-        <td>${sanitize(typeLabel)}</td>
-        <td>${formatCurrency(payment.amount)}</td>
-        <td>${debt ? formatDate(debt.due_date) : "-"}</td>
-        <td>${formatDate(payment.payment_date)}</td>
-        <td>${sanitize(payment.method || "")}</td>
-        <td>${sanitize(formatReferenceForDisplay(payment.reference))}</td>
-        <td>
-          <div class="actions-group">
-            <button type="button" class="button-secondary" data-action="edit-payment" data-id="${payment.id}">
-              ${translate("edit")}
-            </button>
-            <button type="button" class="button-danger" data-action="delete-payment" data-id="${payment.id}">
-              ${translate("delete")}
-            </button>
-          </div>
-        </td>
-      `;
-
-      // Attach event listeners
-      const editBtn = row.querySelector('[data-action="edit-payment"]');
-      const deleteBtn = row.querySelector('[data-action="delete-payment"]');
+      row.classList.add('collapsed'); // Collapsed by default on mobile
       
-      if (editBtn) {
-        editBtn.addEventListener("click", () => editPayment(editBtn.dataset.id));
-      }
-      if (deleteBtn) {
-        deleteBtn.addEventListener("click", () => handleDeletePayment(deleteBtn.dataset.id));
-      }
+      // Summary cell (shown when collapsed)
+      const summaryCell = document.createElement('td');
+      summaryCell.className = 'mobile-summary-cell';
+      const tenantName = sanitize(tenant?.full_name || translate("unknown"));
+      const shortDate = formatDateShortYear(payment.payment_date);
+      const amount = formatCurrency(payment.amount);
+      
+      const summaryRow = document.createElement('div');
+      summaryRow.className = 'summary-row';
+      
+      const mainInfo = document.createElement('div');
+      mainInfo.className = 'summary-main-info';
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'summary-name';
+      nameSpan.textContent = tenantName;
+      mainInfo.appendChild(nameSpan);
+      
+      const separator1 = document.createElement('span');
+      separator1.textContent = '•';
+      separator1.style.opacity = '0.5';
+      mainInfo.appendChild(separator1);
+      
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'summary-type';
+      typeSpan.textContent = sanitize(typeLabel);
+      mainInfo.appendChild(typeSpan);
+      
+      const separator2 = document.createElement('span');
+      separator2.textContent = '•';
+      separator2.style.opacity = '0.5';
+      mainInfo.appendChild(separator2);
+      
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'summary-date';
+      dateSpan.textContent = shortDate;
+      mainInfo.appendChild(dateSpan);
+      
+      summaryRow.appendChild(mainInfo);
+      
+      const amountSpan = document.createElement('span');
+      amountSpan.className = 'summary-amount';
+      amountSpan.textContent = amount;
+      summaryRow.appendChild(amountSpan);
+      
+      summaryCell.appendChild(summaryRow);
+      row.appendChild(summaryCell);
+      
+      // Tenant cell
+      const tenantCell = document.createElement('td');
+      tenantCell.className = 'desktop-cell';
+      tenantCell.textContent = tenantName;
+      row.appendChild(tenantCell);
+      
+      // Type cell
+      const typeCell = document.createElement('td');
+      typeCell.className = 'desktop-cell';
+      typeCell.textContent = sanitize(typeLabel);
+      row.appendChild(typeCell);
+      
+      // Amount cell
+      const amountCell = document.createElement('td');
+      amountCell.className = 'desktop-cell';
+      amountCell.textContent = amount;
+      row.appendChild(amountCell);
+      
+      // Due Date cell
+      const dueDateCell = document.createElement('td');
+      dueDateCell.className = 'desktop-cell';
+      dueDateCell.textContent = debt ? formatDate(debt.due_date) : "-";
+      row.appendChild(dueDateCell);
+      
+      // Payment Date cell
+      const paymentDateCell = document.createElement('td');
+      paymentDateCell.className = 'desktop-cell';
+      paymentDateCell.textContent = formatDate(payment.payment_date);
+      row.appendChild(paymentDateCell);
+      
+      // Method cell
+      const methodCell = document.createElement('td');
+      methodCell.className = 'desktop-cell';
+      methodCell.textContent = sanitize(payment.method || "");
+      row.appendChild(methodCell);
+      
+      // Reference cell
+      const refCell = document.createElement('td');
+      refCell.className = 'desktop-cell';
+      refCell.textContent = sanitize(formatReferenceForDisplay(payment.reference));
+      row.appendChild(refCell);
+      
+      // Actions cell
+      const actionsCell = document.createElement('td');
+      actionsCell.className = 'desktop-cell';
+      actionsCell.setAttribute('data-collapsible', 'true');
+      const actionsGroup = document.createElement('div');
+      actionsGroup.className = 'btn-group';
+      
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn btn-outline-secondary btn-sm';
+      editBtn.setAttribute('data-action', 'edit-payment');
+      editBtn.setAttribute('data-id', payment.id);
+      editBtn.textContent = translate("edit");
+      editBtn.addEventListener("click", () => startEditPayment(payment.id));
+      actionsGroup.appendChild(editBtn);
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'btn btn-outline-danger btn-sm';
+      deleteBtn.setAttribute('data-action', 'delete-payment');
+      deleteBtn.setAttribute('data-id', payment.id);
+      deleteBtn.textContent = translate("delete");
+      deleteBtn.addEventListener("click", () => handleDeletePayment(payment.id));
+      actionsGroup.appendChild(deleteBtn);
+      
+      actionsCell.appendChild(actionsGroup);
+      row.appendChild(actionsCell);
 
       return row;
     },
     skeletonTemplate: () => {
       const skeleton = document.createElement('tr');
       skeleton.className = 'pagination-skeleton';
-      skeleton.innerHTML = '<td colspan="8" style="padding: 1rem; text-align: center;"><div style="background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;"></div></td>';
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '8');
+      td.style.cssText = 'padding: 1rem; text-align: center;';
+      const div = document.createElement('div');
+      div.style.cssText = 'background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;';
+      td.appendChild(div);
+      skeleton.appendChild(td);
       return skeleton;
     },
     loadMoreText: translate("loadMore") || "Load More",
@@ -2750,7 +3250,7 @@ function setupPaymentsPagination() {
       if (elements.expensesPaymentsTableBody && elements.expensesPaymentsTableBody !== mainContainer) {
         // Clone all rows from main container
         const rows = Array.from(mainContainer.children);
-        elements.expensesPaymentsTableBody.innerHTML = '';
+        clear(elements.expensesPaymentsTableBody);
         rows.forEach(row => {
           // Clone the row (except sentinel and load more button should not be duplicated)
           if (!row.hasAttribute('data-pagination-sentinel') && !row.hasAttribute('data-pagination-load-more')) {
@@ -2782,7 +3282,13 @@ async function loadRequests() {
 
   if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
     if (elements.requestsTableBody) {
-      elements.requestsTableBody.innerHTML = "<tr><td colspan='7'>No requests</td></tr>";
+      clear(elements.requestsTableBody);
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '7');
+      td.textContent = 'No requests';
+      tr.appendChild(td);
+      elements.requestsTableBody.appendChild(tr);
     }
     return;
   }
@@ -2799,14 +3305,26 @@ async function loadRequests() {
   if (error) {
     console.error("loadRequests", error);
     if (elements.requestsTableBody) {
-      elements.requestsTableBody.innerHTML = "<tr><td colspan='7'>Error loading requests</td></tr>";
+      clear(elements.requestsTableBody);
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '7');
+      td.textContent = 'Error loading requests';
+      tr.appendChild(td);
+      elements.requestsTableBody.appendChild(tr);
     }
     return;
   }
 
   if (!requests || requests.length === 0) {
     if (elements.requestsTableBody) {
-      elements.requestsTableBody.innerHTML = "<tr><td colspan='7'>No requests</td></tr>";
+      clear(elements.requestsTableBody);
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '7');
+      td.textContent = 'No requests';
+      tr.appendChild(td);
+      elements.requestsTableBody.appendChild(tr);
     }
     return;
   }
@@ -2832,49 +3350,98 @@ async function loadRequests() {
 
   // Render requests table
   if (elements.requestsTableBody) {
-    elements.requestsTableBody.innerHTML = requests
-      .map(request => {
-        const apartment = apartmentsMap[request.apartment_id];
-        const tenant = tenantsMap[request.tenant_id];
-        const requestTypeText = request.request_type === "contract" 
-          ? (translate("requestTypeContract") || "Contract Request")
-          : (translate("requestTypeViewing") || "Viewing Request");
-        const statusText = request.status === "pending"
-          ? (translate("requestStatusPending") || "Pending")
-          : request.status === "accepted"
-          ? (translate("requestStatusAccepted") || "Accepted")
-          : (translate("requestStatusRejected") || "Rejected");
-        const statusClass = request.status === "pending" ? "pending" : request.status === "accepted" ? "accepted" : "rejected";
+    // Clear container using DOM methods
+    while (elements.requestsTableBody.firstChild) {
+      elements.requestsTableBody.removeChild(elements.requestsTableBody.firstChild);
+    }
+    
+    requests.forEach(request => {
+      const apartment = apartmentsMap[request.apartment_id];
+      const tenant = tenantsMap[request.tenant_id];
+      const requestTypeText = request.request_type === "contract" 
+        ? (translate("requestTypeContract") || "Contract Request")
+        : (translate("requestTypeViewing") || "Viewing Request");
+      const statusText = request.status === "pending"
+        ? (translate("requestStatusPending") || "Pending")
+        : request.status === "accepted"
+        ? (translate("requestStatusAccepted") || "Accepted")
+        : (translate("requestStatusRejected") || "Rejected");
+      const statusClass = request.status === "pending" ? "pending" : request.status === "accepted" ? "accepted" : "rejected";
 
-        return `
-          <tr>
-            <td data-label="Apartment">${sanitize(apartment?.name || translate("unknown"))}</td>
-            <td data-label="Tenant">${sanitize(tenant?.full_name || translate("unknown"))}</td>
-            <td data-label="Type">${requestTypeText}</td>
-            <td data-label="Message">${sanitize(request.message || "-")}</td>
-            <td data-label="Date">${formatDate(request.created_at)}</td>
-            <td data-label="Status"><span class="status-badge ${statusClass}">${statusText}</span></td>
-            <td data-label="Actions">
-              ${request.status === "pending" ? `
-                <button type="button" class="button-primary button-small" data-action="accept-request" data-id="${request.id}" data-apartment-id="${request.apartment_id}" data-tenant-id="${request.tenant_id}" data-request-type="${request.request_type}">
-                  ${translate("accept") || "Accept"}
-                </button>
-                <button type="button" class="button-secondary button-small" data-action="reject-request" data-id="${request.id}">
-                  ${translate("reject") || "Reject"}
-                </button>
-              ` : ""}
-            </td>
-          </tr>
-        `;
-      })
-      .join("");
-
-    // Add event listeners for accept/reject buttons
-    elements.requestsTableBody.querySelectorAll("[data-action='accept-request']").forEach(btn => {
-      btn.addEventListener("click", () => handleAcceptRequest(btn.dataset.id, btn.dataset.apartmentId, btn.dataset.tenantId, btn.dataset.requestType));
-    });
-    elements.requestsTableBody.querySelectorAll("[data-action='reject-request']").forEach(btn => {
-      btn.addEventListener("click", () => handleRejectRequest(btn.dataset.id));
+      const tr = document.createElement('tr');
+      
+      // Apartment cell
+      const apartmentCell = document.createElement('td');
+      apartmentCell.setAttribute('data-label', 'Apartment');
+      apartmentCell.textContent = sanitize(apartment?.name || translate("unknown"));
+      tr.appendChild(apartmentCell);
+      
+      // Tenant cell
+      const tenantCell = document.createElement('td');
+      tenantCell.setAttribute('data-label', 'Tenant');
+      tenantCell.textContent = sanitize(tenant?.full_name || translate("unknown"));
+      tr.appendChild(tenantCell);
+      
+      // Type cell
+      const typeCell = document.createElement('td');
+      typeCell.setAttribute('data-label', 'Type');
+      typeCell.textContent = requestTypeText;
+      tr.appendChild(typeCell);
+      
+      // Message cell
+      const messageCell = document.createElement('td');
+      messageCell.setAttribute('data-label', 'Message');
+      messageCell.textContent = sanitize(request.message || "-");
+      tr.appendChild(messageCell);
+      
+      // Date cell
+      const dateCell = document.createElement('td');
+      dateCell.setAttribute('data-label', 'Date');
+      dateCell.textContent = formatDate(request.created_at);
+      tr.appendChild(dateCell);
+      
+      // Status cell
+      const statusCell = document.createElement('td');
+      statusCell.setAttribute('data-label', 'Status');
+      const statusBadge = document.createElement('span');
+      statusBadge.className = `badge ${statusClass === 'pending' ? 'bg-warning' : statusClass === 'accepted' ? 'bg-success' : 'bg-danger'}`;
+      statusBadge.textContent = statusText;
+      statusCell.appendChild(statusBadge);
+      tr.appendChild(statusCell);
+      
+      // Actions cell
+      const actionsCell = document.createElement('td');
+      actionsCell.setAttribute('data-label', 'Actions');
+      if (request.status === "pending") {
+        const actionsGroup = document.createElement('div');
+        actionsGroup.className = 'btn-group';
+        
+        const acceptBtn = document.createElement('button');
+        acceptBtn.type = 'button';
+        acceptBtn.className = 'btn btn-primary btn-sm';
+        acceptBtn.setAttribute('data-action', 'accept-request');
+        acceptBtn.setAttribute('data-id', request.id);
+        acceptBtn.setAttribute('data-apartment-id', request.apartment_id);
+        acceptBtn.setAttribute('data-tenant-id', request.tenant_id);
+        acceptBtn.setAttribute('data-request-type', request.request_type);
+        acceptBtn.textContent = translate("accept") || "Accept";
+        acceptBtn.addEventListener("click", () => handleAcceptRequest(request.id, request.apartment_id, request.tenant_id, request.request_type));
+        actionsGroup.appendChild(acceptBtn);
+        
+        const rejectBtn = document.createElement('button');
+        rejectBtn.type = 'button';
+        rejectBtn.className = 'btn btn-outline-secondary btn-sm';
+        rejectBtn.setAttribute('data-action', 'reject-request');
+        rejectBtn.setAttribute('data-id', request.id);
+        rejectBtn.textContent = translate("reject") || "Reject";
+        rejectBtn.addEventListener("click", () => handleRejectRequest(request.id));
+        actionsGroup.appendChild(rejectBtn);
+        
+        actionsCell.appendChild(actionsGroup);
+      }
+      tr.appendChild(actionsCell);
+      
+      elements.requestsTableBody.appendChild(tr);
     });
   }
 }
@@ -2896,9 +3463,67 @@ async function handleAcceptRequest(requestId, apartmentId, tenantId, requestType
     return;
   }
 
-  // If it's a contract request, optionally create a contract
+  // If it's a contract request, automatically create a contract
   if (requestType === "contract") {
-    notify("info", translate("requestAcceptedCreateContract") || "Request accepted. You can now create a contract for this tenant.");
+    // Get apartment details to use monthly_rent if available
+    const { data: apartment, error: aptError } = await supabase
+      .from("apartments")
+      .select("id, monthly_rent")
+      .eq("id", apartmentId)
+      .single();
+
+    if (aptError) {
+      console.error("Failed to load apartment details:", aptError);
+      notify("error", "Failed to load apartment details. Please try again.");
+      await loadRequests();
+      return;
+    }
+
+    // Set default start date to today
+    const today = new Date();
+    const startDate = today.toISOString().split('T')[0];
+
+    // Create contract with default values
+    const contractPayload = {
+      apartment_id: apartmentId,
+      tenant_id: tenantId,
+      start_date: startDate,
+      end_date: null,
+      monthly_rent: apartment?.monthly_rent || 0,
+      monthly_garbage: 0,
+      monthly_maintenance: 0,
+      deposit_amount: 0,
+      is_active: true,
+    };
+
+    console.log("Creating contract with payload:", contractPayload);
+    const { error: contractError } = await supabase
+      .from("contracts")
+      .insert(contractPayload);
+
+    if (contractError) {
+      console.error("Failed to create contract:", contractError);
+      notify("error", `Failed to create contract: ${contractError.message || "Unknown error"}`);
+      // Still reload requests to show the accepted status
+      await loadRequests();
+      return;
+    }
+
+    // Update apartment rental_status to "rented" since contract is active
+    const { error: apartmentStatusError } = await supabase
+      .from("apartments")
+      .update({ rental_status: "rented" })
+      .eq("id", apartmentId);
+    
+    if (apartmentStatusError) {
+      console.warn("Failed to update apartment rental_status:", apartmentStatusError);
+    }
+
+    notify("success", translate("requestAcceptedContractCreated") || "Request accepted and contract created successfully!");
+    
+    // Reload contracts to show the new contract
+    await loadContracts();
+    await loadApartments();
   } else {
     notify("success", translate("requestAccepted") || "Request accepted successfully!");
   }
@@ -2980,7 +3605,10 @@ function renderApartmentsTable() {
       if (items.length > 0) {
         // Clear and re-render with updated status
         const container = elements.apartmentsTableBody;
-        container.innerHTML = '';
+        // Clear container using DOM methods
+        while (container.firstChild) {
+          container.removeChild(container.firstChild);
+        }
         items.forEach(item => {
           const row = instance.callbacks.renderItem(item);
           container.appendChild(row);
@@ -3006,114 +3634,238 @@ function renderApartmentsTable() {
       .map(c => String(c.apartment_id))
   );
   
-  elements.apartmentsTableBody.innerHTML = state.apartments
-    .map(
-      (apartment) => {
-        // Check if apartment has an active contract using Set lookup (O(1))
-        // Convert to string to match Set keys
-        const hasActiveContract = apartmentsWithActiveContracts.has(String(apartment.id));
-        const statusClass = hasActiveContract ? "" : "view-active";
-        const statusText = hasActiveContract 
-          ? translate("apartmentOccupied") || "Occupied" 
-          : translate("apartmentAvailable") || "Available";
+  // Clear container using DOM methods
+  clear(elements.apartmentsTableBody);
+  
+  state.apartments.forEach((apartment) => {
+    // Check if apartment has an active contract using Set lookup (O(1))
+    // Convert to string to match Set keys
+    const hasActiveContract = apartmentsWithActiveContracts.has(String(apartment.id));
+    const statusClass = hasActiveContract ? "" : "view-active";
+    const statusText = hasActiveContract 
+      ? translate("apartmentOccupied") || "Occupied" 
+      : translate("apartmentAvailable") || "Available";
+    
+    // Parse photos (comma-separated URLs or JSON array)
+    let photos = [];
+    if (apartment.photos) {
+      try {
+        photos = typeof apartment.photos === 'string' 
+          ? (apartment.photos.startsWith('[') ? JSON.parse(apartment.photos) : apartment.photos.split(',').map(p => p.trim()))
+          : apartment.photos;
+      } catch (e) {
+        photos = apartment.photos.split(',').map(p => p.trim());
+      }
+    }
+    const firstPhoto = photos.length > 0 ? photos[0] : null;
+    
+    const tr = document.createElement('tr');
+    tr.className = statusClass;
+    tr.classList.add('collapsed'); // Collapsed by default on mobile
+    
+    // Summary cell (shown when collapsed)
+    const summaryCell = document.createElement('td');
+    summaryCell.className = 'mobile-summary-cell';
+    const statusTextShort = hasActiveContract ? translate("apartmentOccupied") || "Occupied" : translate("apartmentAvailable") || "Available";
+    
+    const summaryRow = document.createElement('div');
+    summaryRow.className = 'summary-row';
+    
+    const mainInfo = document.createElement('div');
+    mainInfo.className = 'summary-main-info';
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'summary-name';
+    nameSpan.textContent = sanitize(apartment.name);
+    mainInfo.appendChild(nameSpan);
+    
+    const separator1 = document.createElement('span');
+    separator1.textContent = '•';
+    separator1.style.opacity = '0.5';
+    mainInfo.appendChild(separator1);
+    
+    const addressSpan = document.createElement('span');
+    addressSpan.className = 'summary-type';
+    addressSpan.textContent = sanitize(apartment.address || '');
+    mainInfo.appendChild(addressSpan);
+    
+    summaryRow.appendChild(mainInfo);
+    
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'summary-status';
+    const summaryStatusBadge = document.createElement('span');
+    summaryStatusBadge.className = `status-badge ${hasActiveContract ? 'occupied' : 'available'}`;
+    summaryStatusBadge.textContent = statusTextShort;
+    statusDiv.appendChild(summaryStatusBadge);
+    summaryRow.appendChild(statusDiv);
+    
+    summaryCell.appendChild(summaryRow);
+    tr.appendChild(summaryCell);
+    
+    // Photo cell
+    const photoCell = document.createElement('td');
+    photoCell.className = 'desktop-cell';
+    photoCell.setAttribute('data-label', 'Photo');
+    if (firstPhoto) {
+      const img = document.createElement('img');
+      img.src = sanitize(firstPhoto);
+      img.alt = sanitize(apartment.name);
+      img.className = 'apartment-photo-thumbnail';
+      img.style.cssText = 'width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;';
+      img.setAttribute('data-apartment-id', apartment.id);
+      img.addEventListener('error', function() { this.style.display = 'none'; });
+      img.addEventListener("click", () => {
+        const apt = state.apartments.find(a => equalsId(a.id, apartment.id));
+        if (!apt) return;
         
-        // Parse photos (comma-separated URLs or JSON array)
-        let photos = [];
-        if (apartment.photos) {
+        // Parse photos from apartment
+        let aptPhotos = [];
+        if (apt.photos) {
           try {
-            photos = typeof apartment.photos === 'string' 
-              ? (apartment.photos.startsWith('[') ? JSON.parse(apartment.photos) : apartment.photos.split(',').map(p => p.trim()))
-              : apartment.photos;
+            aptPhotos = typeof apt.photos === 'string' 
+              ? (apt.photos.startsWith('[') ? JSON.parse(apt.photos) : apt.photos.split(',').map(p => p.trim()))
+              : apt.photos;
           } catch (e) {
-            photos = apartment.photos.split(',').map(p => p.trim());
+            console.error("Error parsing apartment photos:", e);
+            aptPhotos = apt.photos.split(',').map(p => p.trim()).filter(p => p.length > 0);
           }
         }
-        const firstPhoto = photos.length > 0 ? photos[0] : null;
         
-        return `
-      <tr class="${statusClass}">
-        <td data-label="Photo">
-          ${firstPhoto 
-            ? `<img src="${sanitize(firstPhoto)}" alt="${sanitize(apartment.name)}" class="apartment-photo-thumbnail" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;" onerror="this.style.display='none'" data-apartment-id="${apartment.id}">`
-            : '<span style="color: #999;">No photo</span>'
-          }
-        </td>
-        <td data-label="Name">${sanitize(apartment.name)}</td>
-        <td data-label="Address">${sanitize(apartment.address || "")}</td>
-        <td data-label="Electricity Code">${sanitize(apartment.electricity_code || "")}</td>
-        <td data-label="Heating Code">${sanitize(apartment.heating_code || "")}</td>
-        <td data-label="Water Code">${sanitize(apartment.water_code || "")}</td>
-        <td data-label="Waste Code">${sanitize(apartment.waste_code || "")}</td>
-        <td data-label="Status"><span class="status-badge ${hasActiveContract ? 'occupied' : 'available'}">${statusText}</span></td>
-        <td data-label="Actions">
-          <div class="actions-group">
-            <button type="button" class="button-secondary button-small" data-action="edit-apartment" data-id="${apartment.id}">
-              ${translate("edit") || "Edit"}
-            </button>
-            <button type="button" class="button-danger button-small" data-action="delete-apartment" data-id="${apartment.id}">
-              ${translate("delete") || "Delete"}
-            </button>
-          </div>
-        </td>
-        <td data-label="ID">${apartment.id}</td>
-      </tr>
-    `;
-      }
-    )
-    .join("");
-  
-  // Add event listeners for edit and delete buttons
-  elements.apartmentsTableBody.querySelectorAll("[data-action='edit-apartment']").forEach(btn => {
-    btn.addEventListener("click", () => editApartment(btn.dataset.id));
-  });
-  elements.apartmentsTableBody.querySelectorAll("[data-action='delete-apartment']").forEach(btn => {
-    btn.addEventListener("click", () => handleDeleteApartment(btn.dataset.id));
-  });
-  
-  // Add event listeners for photo thumbnails
-  elements.apartmentsTableBody.querySelectorAll(".apartment-photo-thumbnail").forEach(img => {
-    img.addEventListener("click", () => {
-      const apartmentId = img.getAttribute("data-apartment-id");
-      if (!apartmentId) return;
-      
-      // Get photos from apartment data in state
-      const apartment = state.apartments.find(a => equalsId(a.id, apartmentId));
-      if (!apartment) return;
-      
-      // Parse photos from apartment
-      let photos = [];
-      if (apartment.photos) {
-        try {
-          photos = typeof apartment.photos === 'string' 
-            ? (apartment.photos.startsWith('[') ? JSON.parse(apartment.photos) : apartment.photos.split(',').map(p => p.trim()))
-            : apartment.photos;
-        } catch (e) {
-          console.error("Error parsing apartment photos:", e);
-          // Try comma-separated fallback
-          photos = apartment.photos.split(',').map(p => p.trim()).filter(p => p.length > 0);
+        if (aptPhotos.length > 0 && window.openPhotoViewer) {
+          window.openPhotoViewer(aptPhotos, 0);
         }
-      }
-      
-      if (photos.length > 0 && window.openPhotoViewer) {
-        window.openPhotoViewer(photos, 0);
-      }
-    });
+      });
+      photoCell.appendChild(img);
+    } else {
+      const span = document.createElement('span');
+      span.style.color = '#999';
+      span.textContent = 'No photo';
+      photoCell.appendChild(span);
+    }
+    tr.appendChild(photoCell);
+    
+    // Name cell
+    const nameCell = document.createElement('td');
+    nameCell.className = 'desktop-cell';
+    nameCell.setAttribute('data-label', 'Name');
+    nameCell.textContent = sanitize(apartment.name);
+    tr.appendChild(nameCell);
+    
+    // Address cell
+    const addressCell = document.createElement('td');
+    addressCell.className = 'desktop-cell';
+    addressCell.setAttribute('data-label', 'Address');
+    addressCell.textContent = sanitize(apartment.address || '');
+    tr.appendChild(addressCell);
+    
+    // Electricity Code cell
+    const elecCell = document.createElement('td');
+    elecCell.className = 'desktop-cell';
+    elecCell.setAttribute('data-label', 'Electricity Code');
+    elecCell.textContent = sanitize(apartment.electricity_code || '');
+    tr.appendChild(elecCell);
+    
+    // Heating Code cell
+    const heatCell = document.createElement('td');
+    heatCell.className = 'desktop-cell';
+    heatCell.setAttribute('data-label', 'Heating Code');
+    heatCell.textContent = sanitize(apartment.heating_code || '');
+    tr.appendChild(heatCell);
+    
+    // Water Code cell
+    const waterCell = document.createElement('td');
+    waterCell.className = 'desktop-cell';
+    waterCell.setAttribute('data-label', 'Water Code');
+    waterCell.textContent = sanitize(apartment.water_code || '');
+    tr.appendChild(waterCell);
+    
+    // Waste Code cell
+    const wasteCell = document.createElement('td');
+    wasteCell.className = 'desktop-cell';
+    wasteCell.setAttribute('data-label', 'Waste Code');
+    wasteCell.textContent = sanitize(apartment.waste_code || '');
+    tr.appendChild(wasteCell);
+    
+    // Status cell
+    const statusCell = document.createElement('td');
+    statusCell.className = 'desktop-cell';
+    statusCell.setAttribute('data-label', 'Status');
+    const desktopStatusBadge = document.createElement('span');
+    desktopStatusBadge.className = `status-badge ${hasActiveContract ? 'occupied' : 'available'}`;
+    desktopStatusBadge.textContent = statusText;
+    statusCell.appendChild(desktopStatusBadge);
+    tr.appendChild(statusCell);
+    
+    // Actions cell
+    const actionsCell = document.createElement('td');
+    actionsCell.className = 'desktop-cell';
+    actionsCell.setAttribute('data-label', 'Actions');
+    actionsCell.setAttribute('data-collapsible', 'true');
+    const actionsGroup = document.createElement('div');
+    actionsGroup.className = 'actions-group';
+    
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn btn-outline-secondary btn-sm';
+    editBtn.setAttribute('data-action', 'edit-apartment');
+    editBtn.setAttribute('data-id', apartment.id);
+    editBtn.textContent = translate("edit") || "Edit";
+    editBtn.addEventListener("click", () => editApartment(apartment.id));
+    actionsGroup.appendChild(editBtn);
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn btn-outline-danger btn-sm';
+    deleteBtn.setAttribute('data-action', 'delete-apartment');
+    deleteBtn.setAttribute('data-id', apartment.id);
+    deleteBtn.textContent = translate("delete") || "Delete";
+    deleteBtn.addEventListener("click", () => handleDeleteApartment(apartment.id));
+    actionsGroup.appendChild(deleteBtn);
+    
+    actionsCell.appendChild(actionsGroup);
+    tr.appendChild(actionsCell);
+    
+    // ID cell
+    const idCell = document.createElement('td');
+    idCell.className = 'desktop-cell';
+    idCell.setAttribute('data-label', 'ID');
+    idCell.textContent = apartment.id;
+    tr.appendChild(idCell);
+    
+    elements.apartmentsTableBody.appendChild(tr);
   });
 }
 
 function renderTenantsTable() {
-  elements.tenantsTableBody.innerHTML = state.tenants
-    .map(
-      (tenant) => `
-      <tr>
-        <td data-label="Full Name">${sanitize(tenant.full_name)}</td>
-        <td data-label="Email">${sanitize(tenant.email || "")}</td>
-        <td data-label="Phone">${sanitize(tenant.phone || "")}</td>
-        <td data-label="ID">${tenant.id}</td>
-      </tr>
-    `
-    )
-    .join("");
+  // Clear container using DOM methods
+  clear(elements.tenantsTableBody);
+  
+  // Create rows using DOM methods
+  state.tenants.forEach((tenant) => {
+    const tr = document.createElement('tr');
+    
+    const nameCell = document.createElement('td');
+    nameCell.setAttribute('data-label', 'Full Name');
+    nameCell.textContent = sanitize(tenant.full_name);
+    tr.appendChild(nameCell);
+    
+    const emailCell = document.createElement('td');
+    emailCell.setAttribute('data-label', 'Email');
+    emailCell.textContent = sanitize(tenant.email || "");
+    tr.appendChild(emailCell);
+    
+    const phoneCell = document.createElement('td');
+    phoneCell.setAttribute('data-label', 'Phone');
+    phoneCell.textContent = sanitize(tenant.phone || "");
+    tr.appendChild(phoneCell);
+    
+    const idCell = document.createElement('td');
+    idCell.setAttribute('data-label', 'ID');
+    idCell.textContent = tenant.id;
+    tr.appendChild(idCell);
+    
+    elements.tenantsTableBody.appendChild(tr);
+  });
 }
 
 function renderContractsTable() {
@@ -3130,73 +3882,105 @@ function renderContractsTable() {
       ? translate("contractDeactivate")
       : translate("contractActivate");
     const actionType = isActive ? "deactivate" : "activate";
-    return `
-      <tr>
-        <td data-label="Apartment">${sanitize(apartment?.name || translate("unknown"))}</td>
-        <td data-label="Tenant">${sanitize(tenant?.full_name || translate("unknown"))}</td>
-        <td data-label="Start Date">${formatDate(contract.start_date)}</td>
-        <td data-label="End Date">${formatDate(contract.end_date)}</td>
-        <td data-label="Monthly Rent">${formatCurrency(contract.monthly_rent)}</td>
-        <td data-label="Monthly Garbage">${formatCurrency(contract.monthly_garbage)}</td>
-        <td data-label="Monthly Maintenance">${formatCurrency(contract.monthly_maintenance)}</td>
-        <td data-label="Deposit">${formatCurrency(contract.deposit_amount)}</td>
-        <td data-label="Active">${contract.is_active ? translate("yes") : translate("no")}</td>
-        <td data-label="Actions">
-          <div class="actions-group">
-            <button
-              type="button"
-              data-action="${actionType}-contract"
-              data-id="${contract.id}"
-            >
-              ${actionLabel}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
+    
+    // Create row using DOM methods
+    const tr = document.createElement('tr');
+    
+    // Apartment cell
+    const apartmentCell = document.createElement('td');
+    apartmentCell.setAttribute('data-label', 'Apartment');
+    apartmentCell.textContent = sanitize(apartment?.name || translate("unknown"));
+    tr.appendChild(apartmentCell);
+    
+    // Tenant cell
+    const tenantCell = document.createElement('td');
+    tenantCell.setAttribute('data-label', 'Tenant');
+    tenantCell.textContent = sanitize(tenant?.full_name || translate("unknown"));
+    tr.appendChild(tenantCell);
+    
+    // Start Date cell
+    const startDateCell = document.createElement('td');
+    startDateCell.setAttribute('data-label', 'Start Date');
+    startDateCell.textContent = formatDate(contract.start_date);
+    tr.appendChild(startDateCell);
+    
+    // End Date cell
+    const endDateCell = document.createElement('td');
+    endDateCell.setAttribute('data-label', 'End Date');
+    endDateCell.textContent = formatDate(contract.end_date);
+    tr.appendChild(endDateCell);
+    
+    // Monthly Rent cell
+    const rentCell = document.createElement('td');
+    rentCell.setAttribute('data-label', 'Monthly Rent');
+    rentCell.textContent = formatCurrency(contract.monthly_rent);
+    tr.appendChild(rentCell);
+    
+    // Monthly Garbage cell
+    const garbageCell = document.createElement('td');
+    garbageCell.setAttribute('data-label', 'Monthly Garbage');
+    garbageCell.textContent = formatCurrency(contract.monthly_garbage);
+    tr.appendChild(garbageCell);
+    
+    // Monthly Maintenance cell
+    const maintenanceCell = document.createElement('td');
+    maintenanceCell.setAttribute('data-label', 'Monthly Maintenance');
+    maintenanceCell.textContent = formatCurrency(contract.monthly_maintenance);
+    tr.appendChild(maintenanceCell);
+    
+    // Deposit cell
+    const depositCell = document.createElement('td');
+    depositCell.setAttribute('data-label', 'Deposit');
+    depositCell.textContent = formatCurrency(contract.deposit_amount);
+    tr.appendChild(depositCell);
+    
+    // Active cell
+    const activeCell = document.createElement('td');
+    activeCell.setAttribute('data-label', 'Active');
+    activeCell.textContent = contract.is_active ? translate("yes") : translate("no");
+    tr.appendChild(activeCell);
+    
+    // Actions cell
+    const actionsCell = document.createElement('td');
+    actionsCell.setAttribute('data-label', 'Actions');
+    const actionsGroup = document.createElement('div');
+    actionsGroup.className = 'actions-group';
+    const actionBtn = document.createElement('button');
+    actionBtn.type = 'button';
+    actionBtn.className = 'btn btn-outline-primary btn-sm';
+    actionBtn.setAttribute('data-action', `${actionType}-contract`);
+    actionBtn.setAttribute('data-id', contract.id);
+    actionBtn.textContent = actionLabel;
+    actionBtn.addEventListener("click", () =>
+      handleContractStatusChange(contract.id, !isActive)
+    );
+    actionsGroup.appendChild(actionBtn);
+    actionsCell.appendChild(actionsGroup);
+    tr.appendChild(actionsCell);
+    
+    return tr;
   };
 
-  const activeRows = activeContracts.map(buildRow);
-  const inactiveRows = inactiveContracts.map(buildRow);
-
+  // Render active contracts
   if (elements.contractsActiveTableBody) {
-    elements.contractsActiveTableBody.innerHTML = activeRows.join("");
-
-    elements.contractsActiveTableBody
-      .querySelectorAll("button[data-action='deactivate-contract']")
-      .forEach((button) =>
-        button.addEventListener("click", () =>
-          handleContractStatusChange(button.dataset.id, false)
-        )
-      );
-
-    elements.contractsActiveTableBody
-      .querySelectorAll("button[data-action='activate-contract']")
-      .forEach((button) =>
-        button.addEventListener("click", () =>
-          handleContractStatusChange(button.dataset.id, true)
-        )
-      );
+    // Clear container using DOM methods
+    clear(elements.contractsActiveTableBody);
+    
+    activeContracts.forEach(contract => {
+      const row = buildRow(contract);
+      elements.contractsActiveTableBody.appendChild(row);
+    });
   }
 
+  // Render inactive contracts
   if (elements.contractsInactiveTableBody) {
-    elements.contractsInactiveTableBody.innerHTML = inactiveRows.join("");
-
-    elements.contractsInactiveTableBody
-      .querySelectorAll("button[data-action='deactivate-contract']")
-      .forEach((button) =>
-        button.addEventListener("click", () =>
-          handleContractStatusChange(button.dataset.id, false)
-        )
-      );
-
-    elements.contractsInactiveTableBody
-      .querySelectorAll("button[data-action='activate-contract']")
-      .forEach((button) =>
-        button.addEventListener("click", () =>
-          handleContractStatusChange(button.dataset.id, true)
-        )
-      );
+    // Clear container using DOM methods
+    clear(elements.contractsInactiveTableBody);
+    
+    inactiveContracts.forEach(contract => {
+      const row = buildRow(contract);
+      elements.contractsInactiveTableBody.appendChild(row);
+    });
   }
 }
 
@@ -3226,11 +4010,25 @@ async function handleContractStatusChange(contractId, shouldActivate) {
     return;
   }
 
+  // Update apartment rental_status based on contract status
+  if (contract.apartment_id) {
+    const newRentalStatus = shouldActivate ? "rented" : "available";
+    const { error: apartmentError } = await supabase
+      .from("apartments")
+      .update({ rental_status: newRentalStatus })
+      .eq("id", contract.apartment_id);
+    
+    if (apartmentError) {
+      console.warn("Failed to update apartment rental_status:", apartmentError);
+    }
+  }
+
   notify(
     "success",
     translate(shouldActivate ? "successContractActivate" : "successContractDeactivate")
   );
   await loadContracts();
+  await loadApartments();
 }
 
 function getDebtPaymentSummary(debtId) {
@@ -3397,126 +4195,326 @@ function renderDebtsTable() {
     statusHeader.style.display = isUtilityView ? 'none' : '';
   }
 
-  elements.debtsTableBody.innerHTML = filtered
-    .map((debt) => {
-      const tenant = state.tenants.find((t) => equalsId(t.id, debt.tenant_id));
-      const status = getDebtStatus(debt);
-      const typeLabel = getDebtTypeLabel(debt);
-      const isEditing = state.editingDebtId && equalsId(state.editingDebtId, debt.id);
+  clear(elements.debtsTableBody);
+  
+  // Render rows using DOM methods
+  filtered.forEach((debt) => {
+    const tenant = state.tenants.find((t) => equalsId(t.id, debt.tenant_id));
+    const status = getDebtStatus(debt);
+    const typeLabel = getDebtTypeLabel(debt);
+    const isEditing = state.editingDebtId && equalsId(state.editingDebtId, debt.id);
 
-      if (isEditing) {
-        // Render editable row
-        const amountValue = normalizeCurrency(debt.amount).toFixed(2);
-        const dueDateValue = debt.due_date || "";
-        const notesValue = stripElectricityCutMarker(debt.notes || "").replace(/"/g, "&quot;");
-        const isUtilityEdit = isUtilityType(debt.type);
-        
-        // Build type options
-        const typeOptions = [
-          { value: "rent", label: translate("debtRent") || "Rent" },
-          { value: "maintenance", label: translate("debtMaintenance") || "Maintenance" },
-          { value: "garbage", label: translate("debtGarbage") || "Garbage" },
-          { value: "thermos", label: translate("debtThermos") || "Thermos" },
-          { value: "electricity", label: translate("debtElectricity") || "Electricity" },
-          { value: "water", label: translate("debtWater") || "Water" },
-          { value: "damage", label: translate("debtDamage") || "Damage" },
-          { value: "other", label: translate("debtOther") || "Other" },
-        ].map(opt => 
-          `<option value="${opt.value}" ${debt.type === opt.value ? "selected" : ""}>${sanitize(opt.label)}</option>`
-        ).join("");
-
-        return `
-          <tr class="editing-row">
-            <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
-            <td>
-              <select class="inline-edit-input" data-field="type" required>
-                ${typeOptions}
-              </select>
-            </td>
-            <td>
-              <input 
-                type="number" 
-                class="inline-edit-input" 
-                data-field="amount" 
-                value="${amountValue}" 
-                min="0" 
-                step="0.01" 
-                required
-              />
-            </td>
-            <td>
-              <input 
-                type="date" 
-                class="inline-edit-input" 
-                data-field="due_date" 
-                value="${dueDateValue}" 
-                required
-              />
-            </td>
-            <td>${isUtilityEdit ? "" : `<span class="tag ${status.class}">${status.label}</span>`}</td>
-            <td>${sanitize(formatReferenceForDisplay(debt.reference))}</td>
-            <td>
-              <input 
-                type="text" 
-                class="inline-edit-input" 
-                data-field="notes" 
-                value="${notesValue}" 
-                placeholder="${translate("notes") || "Notes"}"
-              />
-            </td>
-            <td>
-              <div class="actions-group">
-                <button type="button" class="button-primary" data-action="save-debt" data-id="${debt.id}">
-                  ${translate("save") || "Save"}
-                </button>
-                <button type="button" class="button-muted" data-action="cancel-edit-debt" data-id="${debt.id}">
-                  ${translate("cancelEdit") || "Cancel"}
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
+    const tr = document.createElement('tr');
+    tr.classList.add('collapsed'); // Collapsed by default on mobile
+    
+    if (isEditing) {
+      // Render editable row
+      tr.className = 'editing-row';
+      const amountValue = normalizeCurrency(debt.amount).toFixed(2);
+      const dueDateValue = debt.due_date || "";
+      const notesValue = stripElectricityCutMarker(debt.notes || "");
+      const isUtilityEdit = isUtilityType(debt.type);
+      
+      // Tenant cell
+      const tenantCell = document.createElement('td');
+      tenantCell.textContent = sanitize(tenant?.full_name || translate("unknown"));
+      tr.appendChild(tenantCell);
+      
+      // Type cell with select
+      const typeCell = document.createElement('td');
+      const typeSelect = document.createElement('select');
+      typeSelect.className = 'inline-edit-input form-select';
+      typeSelect.setAttribute('data-field', 'type');
+      typeSelect.required = true;
+      
+      const typeOptions = [
+        { value: "rent", label: translate("debtRent") || "Rent" },
+        { value: "maintenance", label: translate("debtMaintenance") || "Maintenance" },
+        { value: "garbage", label: translate("debtGarbage") || "Garbage" },
+        { value: "thermos", label: translate("debtThermos") || "Thermos" },
+        { value: "electricity", label: translate("debtElectricity") || "Electricity" },
+        { value: "water", label: translate("debtWater") || "Water" },
+        { value: "damage", label: translate("debtDamage") || "Damage" },
+        { value: "other", label: translate("debtOther") || "Other" },
+      ];
+      
+      typeOptions.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = sanitize(opt.label);
+        if (debt.type === opt.value) option.selected = true;
+        typeSelect.appendChild(option);
+      });
+      typeCell.appendChild(typeSelect);
+      tr.appendChild(typeCell);
+      
+      // Amount cell
+      const amountCell = document.createElement('td');
+      const amountInput = document.createElement('input');
+      amountInput.type = 'number';
+      amountInput.className = 'inline-edit-input form-control';
+      amountInput.setAttribute('data-field', 'amount');
+      amountInput.value = amountValue;
+      amountInput.min = '0';
+      amountInput.step = '0.01';
+      amountInput.required = true;
+      amountCell.appendChild(amountInput);
+      tr.appendChild(amountCell);
+      
+      // Due date cell
+      const dueDateCell = document.createElement('td');
+      const dueDateInput = document.createElement('input');
+      dueDateInput.type = 'date';
+      dueDateInput.className = 'inline-edit-input form-control';
+      dueDateInput.setAttribute('data-field', 'due_date');
+      dueDateInput.value = dueDateValue;
+      dueDateInput.required = true;
+      dueDateCell.appendChild(dueDateInput);
+      tr.appendChild(dueDateCell);
+      
+      // Status cell (empty for utilities)
+      const statusCell = document.createElement('td');
+      if (!isUtilityEdit) {
+        const statusTag = document.createElement('span');
+        statusTag.className = `badge ${status.class === 'overdue' ? 'bg-danger' : status.class === 'paid' ? 'bg-success' : 'bg-warning'}`;
+        statusTag.textContent = status.label;
+        statusCell.appendChild(statusTag);
       }
-
+      tr.appendChild(statusCell);
+      
+      // Reference cell
+      const refCell = document.createElement('td');
+      refCell.textContent = sanitize(formatReferenceForDisplay(debt.reference));
+      tr.appendChild(refCell);
+      
+      // Notes cell
+      const notesCell = document.createElement('td');
+      const notesInput = document.createElement('input');
+      notesInput.type = 'text';
+      notesInput.className = 'inline-edit-input form-control';
+      notesInput.setAttribute('data-field', 'notes');
+      notesInput.value = notesValue;
+      notesInput.placeholder = translate("notes") || "Notes";
+      notesCell.appendChild(notesInput);
+      tr.appendChild(notesCell);
+      
+      // Actions cell
+      const actionsCell = document.createElement('td');
+      const actionsGroup = document.createElement('div');
+      actionsGroup.className = 'btn-group';
+      
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'btn btn-primary btn-sm';
+      saveBtn.setAttribute('data-action', 'save-debt');
+      saveBtn.setAttribute('data-id', debt.id);
+      saveBtn.textContent = translate("save") || "Save";
+      saveBtn.addEventListener("click", () => handleSaveDebt(debt.id));
+      actionsGroup.appendChild(saveBtn);
+      
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'btn btn-outline-secondary btn-sm';
+      cancelBtn.setAttribute('data-action', 'cancel-edit-debt');
+      cancelBtn.setAttribute('data-id', debt.id);
+      cancelBtn.textContent = translate("cancelEdit") || "Cancel";
+      cancelBtn.addEventListener("click", () => {
+        state.editingDebtId = null;
+        renderDebtsTable();
+      });
+      actionsGroup.appendChild(cancelBtn);
+      
+      actionsCell.appendChild(actionsGroup);
+      tr.appendChild(actionsCell);
+    } else {
       // Render normal row
       const showMarkPaid = !isUtilityType(debt.type);
       const isUtility = isUtilityType(debt.type);
-      return `
-        <tr>
-          <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
-          <td>${sanitize(typeLabel)}</td>
-          <td>${formatCurrency(debt.amount)}</td>
-          <td>${formatDate(debt.due_date)}</td>
-          <td>${isUtility ? "" : `<span class="tag ${status.class}">${status.label}</span>`}</td>
-          <td>${sanitize(formatReferenceForDisplay(debt.reference))}</td>
-          <td>${sanitize(stripElectricityCutMarker(debt.notes || ""))}</td>
-          <td>
-            <div class="actions-group">
-              <button type="button" class="button-secondary" data-action="edit-debt" data-id="${debt.id}">
-                ${translate("edit")}
-              </button>
-              <button type="button" class="button-danger" data-action="delete-debt" data-id="${debt.id}">
-                ${translate("delete")}
-              </button>
-              ${showMarkPaid ? `<button type="button" class="button-primary" data-action="mark-paid" data-id="${debt.id}" ${
-        debt.is_paid ? "disabled" : ""
-      }>
-                ${translate("markPaid")}
-              </button>` : ""}
-            </div>
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
+      
+      // Summary cell (shown when collapsed)
+      const summaryCell = document.createElement('td');
+      summaryCell.className = 'mobile-summary-cell';
+      const tenantName = sanitize(tenant?.full_name || translate("unknown"));
+      const shortDate = formatDateShortYear(debt.due_date);
+      const amount = formatCurrency(debt.amount);
+      const isPaid = !isUtility && debt.is_paid;
+      const statusBall = isPaid ? '<span class="status-ball status-paid"></span>' : '<span class="status-ball status-unpaid"></span>';
+      
+      // Create structured summary
+      const summaryRow = document.createElement('div');
+      summaryRow.className = 'summary-row';
+      
+      const mainInfo = document.createElement('div');
+      mainInfo.className = 'summary-main-info';
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'summary-name';
+      nameSpan.textContent = tenantName;
+      mainInfo.appendChild(nameSpan);
+      
+      const separator1 = document.createElement('span');
+      separator1.textContent = '•';
+      separator1.style.opacity = '0.5';
+      mainInfo.appendChild(separator1);
+      
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'summary-type';
+      typeSpan.textContent = sanitize(typeLabel);
+      mainInfo.appendChild(typeSpan);
+      
+      const separator2 = document.createElement('span');
+      separator2.textContent = '•';
+      separator2.style.opacity = '0.5';
+      mainInfo.appendChild(separator2);
+      
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'summary-date';
+      dateSpan.textContent = shortDate;
+      mainInfo.appendChild(dateSpan);
+      
+      summaryRow.appendChild(mainInfo);
+      
+      const amountSpan = document.createElement('span');
+      amountSpan.className = 'summary-amount';
+      amountSpan.textContent = amount;
+      summaryRow.appendChild(amountSpan);
+      
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'summary-status';
+      statusDiv.innerHTML = statusBall;
+      summaryRow.appendChild(statusDiv);
+      
+      // Actions in summary (for mobile collapse view)
+      const summaryActionsGroup = document.createElement('div');
+      summaryActionsGroup.className = 'summary-actions btn-group';
+      
+      const summaryEditBtn = document.createElement('button');
+      summaryEditBtn.type = 'button';
+      summaryEditBtn.className = 'btn btn-outline-secondary btn-sm';
+      summaryEditBtn.setAttribute('data-action', 'edit-debt');
+      summaryEditBtn.setAttribute('data-id', debt.id);
+      summaryEditBtn.textContent = translate("edit");
+      summaryEditBtn.addEventListener("click", (e) => { e.stopPropagation(); startEditDebt(debt.id); });
+      summaryActionsGroup.appendChild(summaryEditBtn);
+      
+      const summaryDeleteBtn = document.createElement('button');
+      summaryDeleteBtn.type = 'button';
+      summaryDeleteBtn.className = 'btn btn-outline-danger btn-sm';
+      summaryDeleteBtn.setAttribute('data-action', 'delete-debt');
+      summaryDeleteBtn.setAttribute('data-id', debt.id);
+      summaryDeleteBtn.textContent = translate("delete");
+      summaryDeleteBtn.addEventListener("click", (e) => { e.stopPropagation(); handleDeleteDebt(debt.id); });
+      summaryActionsGroup.appendChild(summaryDeleteBtn);
+      
+      if (showMarkPaid && !debt.is_paid) {
+        const summaryMarkPaidBtn = document.createElement('button');
+        summaryMarkPaidBtn.type = 'button';
+        summaryMarkPaidBtn.className = 'btn btn-primary btn-sm';
+        summaryMarkPaidBtn.setAttribute('data-action', 'mark-paid');
+        summaryMarkPaidBtn.setAttribute('data-id', debt.id);
+        summaryMarkPaidBtn.textContent = translate("markPaid");
+        summaryMarkPaidBtn.addEventListener("click", (e) => { e.stopPropagation(); handleMarkDebtPaid(debt.id); });
+        summaryActionsGroup.appendChild(summaryMarkPaidBtn);
+      }
+      
+      summaryRow.appendChild(summaryActionsGroup);
+      summaryCell.appendChild(summaryRow);
+      tr.appendChild(summaryCell);
+      
+      // Tenant cell
+      const tenantCell = document.createElement('td');
+      tenantCell.className = 'desktop-cell';
+      tenantCell.textContent = tenantName;
+      tr.appendChild(tenantCell);
+      
+      // Type cell
+      const typeCell = document.createElement('td');
+      typeCell.className = 'desktop-cell';
+      typeCell.textContent = sanitize(typeLabel);
+      tr.appendChild(typeCell);
+      
+      // Amount cell
+      const amountCell = document.createElement('td');
+      amountCell.className = 'desktop-cell';
+      amountCell.textContent = formatCurrency(debt.amount);
+      tr.appendChild(amountCell);
+      
+      // Due date cell
+      const dueDateCell = document.createElement('td');
+      dueDateCell.className = 'desktop-cell';
+      dueDateCell.textContent = formatDate(debt.due_date);
+      tr.appendChild(dueDateCell);
+      
+      // Status cell
+      const statusCell = document.createElement('td');
+      statusCell.className = 'desktop-cell';
+      if (!isUtility) {
+        const statusTag = document.createElement('span');
+        statusTag.className = `badge ${status.class === 'overdue' ? 'bg-danger' : status.class === 'paid' ? 'bg-success' : 'bg-warning'}`;
+        statusTag.textContent = status.label;
+        statusCell.appendChild(statusTag);
+      }
+      tr.appendChild(statusCell);
+      
+      // Reference cell (collapsible)
+      const refCell = document.createElement('td');
+      refCell.setAttribute('data-collapsible', 'true');
+      refCell.textContent = sanitize(formatReferenceForDisplay(debt.reference));
+      tr.appendChild(refCell);
+      
+      // Notes cell (collapsible)
+      const notesCell = document.createElement('td');
+      notesCell.setAttribute('data-collapsible', 'true');
+      notesCell.textContent = sanitize(stripElectricityCutMarker(debt.notes || ""));
+      tr.appendChild(notesCell);
+      
+      // Actions cell (collapsible)
+      const actionsCell = document.createElement('td');
+      actionsCell.setAttribute('data-collapsible', 'true');
+      const actionsGroup = document.createElement('div');
+      actionsGroup.className = 'btn-group';
+      
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn btn-outline-secondary btn-sm';
+      editBtn.setAttribute('data-action', 'edit-debt');
+      editBtn.setAttribute('data-id', debt.id);
+      editBtn.textContent = translate("edit");
+      editBtn.addEventListener("click", () => startEditDebt(debt.id));
+      actionsGroup.appendChild(editBtn);
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'btn btn-outline-danger btn-sm';
+      deleteBtn.setAttribute('data-action', 'delete-debt');
+      deleteBtn.setAttribute('data-id', debt.id);
+      deleteBtn.textContent = translate("delete");
+      deleteBtn.addEventListener("click", () => handleDeleteDebt(debt.id));
+      actionsGroup.appendChild(deleteBtn);
+      
+      if (showMarkPaid && !debt.is_paid) {
+        const markPaidBtn = document.createElement('button');
+        markPaidBtn.type = 'button';
+        markPaidBtn.className = 'btn btn-primary btn-sm';
+        markPaidBtn.setAttribute('data-action', 'mark-paid');
+        markPaidBtn.setAttribute('data-id', debt.id);
+        markPaidBtn.textContent = translate("markPaid");
+        markPaidBtn.addEventListener("click", () => handleMarkDebtPaid(debt.id));
+        actionsGroup.appendChild(markPaidBtn);
+      }
+      
+      actionsCell.appendChild(actionsGroup);
+      tr.appendChild(actionsCell);
+    }
+    
+    elements.debtsTableBody.appendChild(tr);
+  });
   
   // Render utility summary if viewing a utility type
   renderUtilitySummary();
 }
 
-function isUtilityType(type) {
-  return UTILITY_TYPES.includes(type);
-}
+const isUtilityType = (t) => UTILITY_TYPES.includes(t);
 
 function renderUtilitySummary() {
   const activeType = getActiveExpenseType();
@@ -3592,8 +4590,20 @@ function renderUtilitySummary() {
   // Render expenses table with columns: #, Tenant, Type, Amount, Due Date, Reference, Actions
   if (elements.utilityExpensesTableBody) {
     const typeLabel = translate(`debt${capitalize(activeType)}`) || activeType;
-    elements.utilityExpensesTableBody.innerHTML = utilityExpenses
-      .map((expense, index) => {
+    
+    // Clear container using DOM methods
+    clear(elements.utilityExpensesTableBody);
+    
+    if (utilityExpenses.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '7');
+      td.style.cssText = 'text-align:center;color:#6b7280;';
+      td.textContent = translate("noData") || "No data";
+      tr.appendChild(td);
+      elements.utilityExpensesTableBody.appendChild(tr);
+    } else {
+      utilityExpenses.forEach((expense, index) => {
         const tenant = state.tenants.find((t) => equalsId(t.id, expense.tenant_id));
         const tenantName = tenant?.full_name || translate("unknown") || "Unknown";
         const billDate = expense.bill_date || expense.due_date || "";
@@ -3602,90 +4612,228 @@ function renderUtilitySummary() {
         const dataSource = isFromUtilityTable ? "utility_bills" : "debts";
         const isEditing = state.editingUtilityBillId && equalsId(state.editingUtilityBillId, expense.id);
         
+        const tr = document.createElement('tr');
+        
         if (isEditing) {
-          // Render editable row
-          const amountValue = normalizeCurrency(expense.amount).toFixed(2);
-          const dateValue = expense.bill_date || expense.due_date || "";
-          return `
-          <tr class="editing-row">
-            <td>${index + 1}</td>
-            <td>${sanitize(tenantName)}</td>
-            <td>${sanitize(typeLabel)}</td>
-            <td>
-              <input type="number" class="inline-edit-input" data-field="amount" value="${amountValue}" min="0" step="0.01" required />
-            </td>
-            <td>
-              <input type="date" class="inline-edit-input" data-field="bill_date" value="${dateValue}" required />
-            </td>
-            <td>${sanitize(reference)}</td>
-            <td>
-              <div class="actions-group">
-                <button type="button" class="button-primary" data-action="save-utility-bill" data-id="${expense.id}" data-source="${dataSource}">
-                  ${translate("save") || "Save"}
-                </button>
-                <button type="button" class="button-muted" data-action="cancel-edit-utility-bill">
-                  ${translate("cancelEdit") || "Cancel"}
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
+          tr.className = 'editing-row';
+          
+          // Index cell
+          const indexCell = document.createElement('td');
+          indexCell.textContent = index + 1;
+          tr.appendChild(indexCell);
+          
+          // Tenant cell
+          const tenantCell = document.createElement('td');
+          tenantCell.textContent = sanitize(tenantName);
+          tr.appendChild(tenantCell);
+          
+          // Type cell
+          const typeCell = document.createElement('td');
+          typeCell.textContent = sanitize(typeLabel);
+          tr.appendChild(typeCell);
+          
+          // Amount cell with input
+          const amountCell = document.createElement('td');
+          const amountInput = document.createElement('input');
+          amountInput.type = 'number';
+          amountInput.className = 'inline-edit-input form-control';
+          amountInput.setAttribute('data-field', 'amount');
+          amountInput.value = normalizeCurrency(expense.amount).toFixed(2);
+          amountInput.min = '0';
+          amountInput.step = '0.01';
+          amountInput.required = true;
+          amountCell.appendChild(amountInput);
+          tr.appendChild(amountCell);
+          
+          // Date cell with input
+          const dateCell = document.createElement('td');
+          const dateInput = document.createElement('input');
+          dateInput.type = 'date';
+          dateInput.className = 'inline-edit-input form-control';
+          dateInput.setAttribute('data-field', 'bill_date');
+          dateInput.value = expense.bill_date || expense.due_date || "";
+          dateInput.required = true;
+          dateCell.appendChild(dateInput);
+          tr.appendChild(dateCell);
+          
+          // Reference cell
+          const refCell = document.createElement('td');
+          refCell.textContent = sanitize(reference);
+          tr.appendChild(refCell);
+          
+          // Actions cell
+          const actionsCell = document.createElement('td');
+          const actionsGroup = document.createElement('div');
+          actionsGroup.className = 'btn-group';
+          
+          const saveBtn = document.createElement('button');
+          saveBtn.type = 'button';
+          saveBtn.className = 'btn btn-primary btn-sm';
+          saveBtn.setAttribute('data-action', 'save-utility-bill');
+          saveBtn.setAttribute('data-id', expense.id);
+          saveBtn.setAttribute('data-source', dataSource);
+          saveBtn.textContent = translate("save") || "Save";
+          saveBtn.addEventListener("click", () => saveUtilityBill(expense.id, dataSource));
+          actionsGroup.appendChild(saveBtn);
+          
+          const cancelBtn = document.createElement('button');
+          cancelBtn.type = 'button';
+          cancelBtn.className = 'btn btn-outline-secondary btn-sm';
+          cancelBtn.setAttribute('data-action', 'cancel-edit-utility-bill');
+          cancelBtn.textContent = translate("cancelEdit") || "Cancel";
+          cancelBtn.addEventListener("click", () => {
+            state.editingUtilityBillId = null;
+            renderUtilitySummary();
+          });
+          actionsGroup.appendChild(cancelBtn);
+          
+          actionsCell.appendChild(actionsGroup);
+          tr.appendChild(actionsCell);
+        } else {
+          // Index cell
+          const indexCell = document.createElement('td');
+          indexCell.textContent = index + 1;
+          tr.appendChild(indexCell);
+          
+          // Tenant cell
+          const tenantCell = document.createElement('td');
+          tenantCell.textContent = sanitize(tenantName);
+          tr.appendChild(tenantCell);
+          
+          // Type cell
+          const typeCell = document.createElement('td');
+          typeCell.textContent = sanitize(typeLabel);
+          tr.appendChild(typeCell);
+          
+          // Amount cell
+          const amountCell = document.createElement('td');
+          amountCell.textContent = formatCurrency(expense.amount);
+          tr.appendChild(amountCell);
+          
+          // Date cell
+          const dateCell = document.createElement('td');
+          dateCell.textContent = formatDate(billDate);
+          tr.appendChild(dateCell);
+          
+          // Reference cell
+          const refCell = document.createElement('td');
+          refCell.textContent = sanitize(reference);
+          tr.appendChild(refCell);
+          
+          // Actions cell
+          const actionsCell = document.createElement('td');
+          const actionsGroup = document.createElement('div');
+          actionsGroup.className = 'btn-group';
+          
+          const editBtn = document.createElement('button');
+          editBtn.type = 'button';
+          editBtn.className = 'btn btn-outline-secondary btn-sm';
+          editBtn.setAttribute('data-action', 'edit-utility-bill');
+          editBtn.setAttribute('data-id', expense.id);
+          editBtn.setAttribute('data-source', dataSource);
+          editBtn.textContent = translate("edit");
+          editBtn.addEventListener("click", () => editUtilityBill(expense.id, dataSource));
+          actionsGroup.appendChild(editBtn);
+          
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = 'button';
+          deleteBtn.className = 'btn btn-outline-danger btn-sm';
+          deleteBtn.setAttribute('data-action', 'delete-utility-bill');
+          deleteBtn.setAttribute('data-id', expense.id);
+          deleteBtn.setAttribute('data-source', dataSource);
+          deleteBtn.textContent = translate("delete");
+          deleteBtn.addEventListener("click", () => deleteUtilityBill(expense.id, dataSource));
+          actionsGroup.appendChild(deleteBtn);
+          
+          actionsCell.appendChild(actionsGroup);
+          tr.appendChild(actionsCell);
         }
         
-        return `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${sanitize(tenantName)}</td>
-          <td>${sanitize(typeLabel)}</td>
-          <td>${formatCurrency(expense.amount)}</td>
-          <td>${formatDate(billDate)}</td>
-          <td>${sanitize(reference)}</td>
-          <td>
-            <div class="actions-group">
-              <button type="button" class="button-secondary" data-action="edit-utility-bill" data-id="${expense.id}" data-source="${dataSource}">
-                ${translate("edit")}
-              </button>
-              <button type="button" class="button-danger" data-action="delete-utility-bill" data-id="${expense.id}" data-source="${dataSource}">
-                ${translate("delete")}
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-      })
-      .join("") || `<tr><td colspan="7" style="text-align:center;color:#6b7280;">${translate("noData") || "No data"}</td></tr>`;
+        elements.utilityExpensesTableBody.appendChild(tr);
+      });
+    }
   }
   
   // Render payments table with columns: #, Tenant, Type, Amount, Date, Actions (no reference)
   if (elements.utilityPaymentsTableBody) {
     const typeLabel = translate(`debt${capitalize(activeType)}`) || activeType;
-    elements.utilityPaymentsTableBody.innerHTML = utilityPayments
-      .map((payment, index) => {
+    
+    // Clear container using DOM methods
+    clear(elements.utilityPaymentsTableBody);
+    
+    if (utilityPayments.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '6');
+      td.style.cssText = 'text-align:center;color:#6b7280;';
+      td.textContent = translate("noData") || "No data";
+      tr.appendChild(td);
+      elements.utilityPaymentsTableBody.appendChild(tr);
+    } else {
+      utilityPayments.forEach((payment, index) => {
         const tenant = state.tenants.find((t) => equalsId(t.id, payment.tenant_id));
         const tenantName = tenant?.full_name || translate("unknown") || "Unknown";
         const isFromUtilityTable = !!payment.type;
         const dataSource = isFromUtilityTable ? "utility_payments" : "payments";
-        return `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${sanitize(tenantName)}</td>
-          <td>${sanitize(typeLabel)}</td>
-          <td>${formatCurrency(payment.amount)}</td>
-          <td>${formatDate(payment.payment_date)}</td>
-          <td>
-            <div class="actions-group">
-              <button type="button" class="button-secondary" data-action="edit-utility-payment" data-id="${payment.id}" data-source="${dataSource}">
-                ${translate("edit")}
-              </button>
-              <button type="button" class="button-danger" data-action="delete-utility-payment" data-id="${payment.id}" data-source="${dataSource}">
-                ${translate("delete")}
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-      })
-      .join("") || `<tr><td colspan="6" style="text-align:center;color:#6b7280;">${translate("noData") || "No data"}</td></tr>`;
+        
+        const tr = document.createElement('tr');
+        
+        // Index cell
+        const indexCell = document.createElement('td');
+        indexCell.textContent = index + 1;
+        tr.appendChild(indexCell);
+        
+        // Tenant cell
+        const tenantCell = document.createElement('td');
+        tenantCell.textContent = sanitize(tenantName);
+        tr.appendChild(tenantCell);
+        
+        // Type cell
+        const typeCell = document.createElement('td');
+        typeCell.textContent = sanitize(typeLabel);
+        tr.appendChild(typeCell);
+        
+        // Amount cell
+        const amountCell = document.createElement('td');
+        amountCell.textContent = formatCurrency(payment.amount);
+        tr.appendChild(amountCell);
+        
+        // Date cell
+        const dateCell = document.createElement('td');
+        dateCell.textContent = formatDate(payment.payment_date);
+        tr.appendChild(dateCell);
+        
+        // Actions cell
+        const actionsCell = document.createElement('td');
+        const actionsGroup = document.createElement('div');
+        actionsGroup.className = 'btn-group';
+        
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'btn btn-outline-secondary btn-sm';
+        editBtn.setAttribute('data-action', 'edit-utility-payment');
+        editBtn.setAttribute('data-id', payment.id);
+        editBtn.setAttribute('data-source', dataSource);
+        editBtn.textContent = translate("edit");
+        editBtn.addEventListener("click", () => editUtilityPayment(payment.id, dataSource));
+        actionsGroup.appendChild(editBtn);
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'btn btn-outline-danger btn-sm';
+        deleteBtn.setAttribute('data-action', 'delete-utility-payment');
+        deleteBtn.setAttribute('data-id', payment.id);
+        deleteBtn.setAttribute('data-source', dataSource);
+        deleteBtn.textContent = translate("delete");
+        deleteBtn.addEventListener("click", () => deleteUtilityPayment(payment.id, dataSource));
+        actionsGroup.appendChild(deleteBtn);
+        
+        actionsCell.appendChild(actionsGroup);
+        tr.appendChild(actionsCell);
+        
+        elements.utilityPaymentsTableBody.appendChild(tr);
+      });
+    }
   }
 }
 
@@ -3899,151 +5047,319 @@ function renderPaymentsTable() {
       })
     : paymentsToFilter;
   
-  const rows = filteredPayments
-    .map((payment) => {
-      const tenant = state.tenants.find((t) =>
-        equalsId(t.id, payment.tenant_id)
-      );
-      const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
-      // Use payment's own type if no linked debt
-      const typeLabel = debt ? getDebtTypeLabel(debt) : (payment.type ? translate(`debt${capitalize(payment.type)}`) || payment.type : "-");
-      const isEditing = state.editingPaymentId && equalsId(state.editingPaymentId, payment.id);
+  // Helper function to create payment row using DOM methods
+  const createPaymentRow = (payment) => {
+    const tenant = state.tenants.find((t) => equalsId(t.id, payment.tenant_id));
+    const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
+    const typeLabel = debt ? getDebtTypeLabel(debt) : (payment.type ? translate(`debt${capitalize(payment.type)}`) || payment.type : "-");
+    const isEditing = state.editingPaymentId && equalsId(state.editingPaymentId, payment.id);
+    
+    const tr = document.createElement('tr');
+    
+    if (isEditing) {
+      tr.className = 'editing-row';
       
-      if (isEditing) {
-        // Render editable row
-        const paymentDateValue = payment.payment_date || "";
-        const amountValue = normalizeCurrency(payment.amount).toFixed(2);
-        // Escape HTML for text inputs but keep values clean
-        const methodValue = (payment.method || "").replace(/"/g, "&quot;");
-        // Use debt's reference if available, otherwise use payment's reference
-        const referenceValue = formatReferenceForDisplay(debt && debt.reference ? debt.reference : payment.reference || "").replace(/"/g, "&quot;");
-        const methodPlaceholder = (translate("paymentMethod") || "Method").replace(/"/g, "&quot;");
-        const referencePlaceholder = (translate("paymentReference") || "Reference").replace(/"/g, "&quot;");
-        
-        return `
-          <tr class="editing-row">
-            <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
-            <td>${sanitize(typeLabel)}</td>
-            <td>
-              <input 
-                type="number" 
-                class="inline-edit-input" 
-                data-field="amount" 
-                value="${amountValue}" 
-                min="0" 
-                step="0.01" 
-                required
-              />
-            </td>
-            <td>${debt ? formatDate(debt.due_date) : "-"}</td>
-            <td>
-              <input 
-                type="date" 
-                class="inline-edit-input" 
-                data-field="payment_date" 
-                value="${paymentDateValue}" 
-                required
-              />
-            </td>
-            <td>
-              <input 
-                type="text" 
-                class="inline-edit-input" 
-                data-field="method" 
-                value="${methodValue}" 
-                placeholder="${methodPlaceholder}"
-              />
-            </td>
-            <td>
-              ${debt && debt.reference 
-                ? `<span class="reference-display">${sanitize(formatReferenceForDisplay(debt.reference))}</span>
-                   <input 
-                     type="hidden" 
-                     data-field="reference" 
-                     value="${debt.reference}"
-                   />`
-                : `<input 
-                     type="text" 
-                     class="inline-edit-input" 
-                     data-field="reference" 
-                     value="${referenceValue}" 
-                     placeholder="${referencePlaceholder}"
-                   />`
-              }
-            </td>
-            <td>
-              <div class="actions-group">
-                <button type="button" class="button-primary" data-action="save-payment" data-id="${payment.id}">
-                  ${translate("save") || "Save"}
-                </button>
-                <button type="button" class="button-muted" data-action="cancel-edit-payment" data-id="${payment.id}">
-                  ${translate("cancelEdit") || "Cancel"}
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
+      // Tenant cell
+      const tenantCell = document.createElement('td');
+      tenantCell.textContent = sanitize(tenant?.full_name || translate("unknown"));
+      tr.appendChild(tenantCell);
+      
+      // Type cell
+      const typeCell = document.createElement('td');
+      typeCell.textContent = sanitize(typeLabel);
+      tr.appendChild(typeCell);
+      
+      // Amount cell with input
+      const amountCell = document.createElement('td');
+      const amountInput = document.createElement('input');
+      amountInput.type = 'number';
+      amountInput.className = 'inline-edit-input form-control';
+      amountInput.setAttribute('data-field', 'amount');
+      amountInput.value = normalizeCurrency(payment.amount).toFixed(2);
+      amountInput.min = '0';
+      amountInput.step = '0.01';
+      amountInput.required = true;
+      amountCell.appendChild(amountInput);
+      tr.appendChild(amountCell);
+      
+      // Due date cell
+      const dueDateCell = document.createElement('td');
+      dueDateCell.textContent = debt ? formatDate(debt.due_date) : "-";
+      tr.appendChild(dueDateCell);
+      
+      // Payment date cell with input
+      const paymentDateCell = document.createElement('td');
+      const paymentDateInput = document.createElement('input');
+      paymentDateInput.type = 'date';
+      paymentDateInput.className = 'inline-edit-input form-control';
+      paymentDateInput.setAttribute('data-field', 'payment_date');
+      paymentDateInput.value = payment.payment_date || "";
+      paymentDateInput.required = true;
+      paymentDateCell.appendChild(paymentDateInput);
+      tr.appendChild(paymentDateCell);
+      
+      // Method cell with input
+      const methodCell = document.createElement('td');
+      const methodInput = document.createElement('input');
+      methodInput.type = 'text';
+      methodInput.className = 'inline-edit-input form-control';
+      methodInput.setAttribute('data-field', 'method');
+      methodInput.value = payment.method || "";
+      methodInput.placeholder = translate("paymentMethod") || "Method";
+      methodCell.appendChild(methodInput);
+      tr.appendChild(methodCell);
+      
+      // Reference cell
+      const refCell = document.createElement('td');
+      if (debt && debt.reference) {
+        const refSpan = document.createElement('span');
+        refSpan.className = 'reference-display';
+        refSpan.textContent = sanitize(formatReferenceForDisplay(debt.reference));
+        refCell.appendChild(refSpan);
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.setAttribute('data-field', 'reference');
+        hiddenInput.value = debt.reference;
+        refCell.appendChild(hiddenInput);
+      } else {
+        const refInput = document.createElement('input');
+        refInput.type = 'text';
+        refInput.className = 'inline-edit-input form-control';
+        refInput.setAttribute('data-field', 'reference');
+        refInput.value = formatReferenceForDisplay(payment.reference || "");
+        refInput.placeholder = translate("paymentReference") || "Reference";
+        refCell.appendChild(refInput);
       }
+      tr.appendChild(refCell);
       
-      // Render normal row
-      return `
-        <tr>
-          <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
-          <td>${sanitize(typeLabel)}</td>
-          <td>${formatCurrency(payment.amount)}</td>
-          <td>${debt ? formatDate(debt.due_date) : "-"}</td>
-          <td>${formatDate(payment.payment_date)}</td>
-          <td>${sanitize(payment.method || "")}</td>
-          <td>${sanitize(formatReferenceForDisplay(payment.reference))}</td>
-          <td>
-            <div class="actions-group">
-              <button type="button" class="button-secondary" data-action="edit-payment" data-id="${payment.id}">
-                ${translate("edit")}
-              </button>
-              <button type="button" class="button-danger" data-action="delete-payment" data-id="${payment.id}">
-                ${translate("delete")}
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
+      // Actions cell
+      const actionsCell = document.createElement('td');
+      const actionsGroup = document.createElement('div');
+      actionsGroup.className = 'btn-group';
+      
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'btn btn-primary btn-sm';
+      saveBtn.setAttribute('data-action', 'save-payment');
+      saveBtn.setAttribute('data-id', payment.id);
+      saveBtn.textContent = translate("save") || "Save";
+      saveBtn.addEventListener("click", () => handleSavePayment(payment.id));
+      actionsGroup.appendChild(saveBtn);
+      
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'btn btn-outline-secondary btn-sm';
+      cancelBtn.setAttribute('data-action', 'cancel-edit-payment');
+      cancelBtn.setAttribute('data-id', payment.id);
+      cancelBtn.textContent = translate("cancelEdit") || "Cancel";
+      cancelBtn.addEventListener("click", () => {
+        state.editingPaymentId = null;
+        renderPaymentsTable();
+      });
+      actionsGroup.appendChild(cancelBtn);
+      
+      actionsCell.appendChild(actionsGroup);
+      tr.appendChild(actionsCell);
+    } else {
+      tr.classList.add('collapsed'); // Collapsed by default on mobile
+      
+      // Summary cell (shown when collapsed)
+      const summaryCell = document.createElement('td');
+      summaryCell.className = 'mobile-summary-cell';
+      const tenantName = sanitize(tenant?.full_name || translate("unknown"));
+      const shortDate = formatDateShortYear(payment.payment_date);
+      const amount = formatCurrency(payment.amount);
+      
+      const summaryRow = document.createElement('div');
+      summaryRow.className = 'summary-row';
+      
+      const mainInfo = document.createElement('div');
+      mainInfo.className = 'summary-main-info';
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'summary-name';
+      nameSpan.textContent = tenantName;
+      mainInfo.appendChild(nameSpan);
+      
+      const separator1 = document.createElement('span');
+      separator1.textContent = '•';
+      separator1.style.opacity = '0.5';
+      mainInfo.appendChild(separator1);
+      
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'summary-type';
+      typeSpan.textContent = sanitize(typeLabel);
+      mainInfo.appendChild(typeSpan);
+      
+      const separator2 = document.createElement('span');
+      separator2.textContent = '•';
+      separator2.style.opacity = '0.5';
+      mainInfo.appendChild(separator2);
+      
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'summary-date';
+      dateSpan.textContent = shortDate;
+      mainInfo.appendChild(dateSpan);
+      
+      summaryRow.appendChild(mainInfo);
+      
+      const amountSpan = document.createElement('span');
+      amountSpan.className = 'summary-amount';
+      amountSpan.textContent = amount;
+      summaryRow.appendChild(amountSpan);
+      
+      summaryCell.appendChild(summaryRow);
+      tr.appendChild(summaryCell);
+      
+      // Tenant cell
+      const tenantCell = document.createElement('td');
+      tenantCell.className = 'desktop-cell';
+      tenantCell.textContent = tenantName;
+      tr.appendChild(tenantCell);
+      
+      // Type cell
+      const typeCell = document.createElement('td');
+      typeCell.className = 'desktop-cell';
+      typeCell.textContent = sanitize(typeLabel);
+      tr.appendChild(typeCell);
+      
+      // Amount cell
+      const amountCell = document.createElement('td');
+      amountCell.className = 'desktop-cell';
+      amountCell.textContent = amount;
+      tr.appendChild(amountCell);
+      
+      // Due date cell
+      const dueDateCell = document.createElement('td');
+      dueDateCell.className = 'desktop-cell';
+      dueDateCell.textContent = debt ? formatDate(debt.due_date) : "-";
+      tr.appendChild(dueDateCell);
+      
+      // Payment date cell
+      const paymentDateCell = document.createElement('td');
+      paymentDateCell.className = 'desktop-cell';
+      paymentDateCell.textContent = formatDate(payment.payment_date);
+      tr.appendChild(paymentDateCell);
+      
+      // Method cell
+      const methodCell = document.createElement('td');
+      methodCell.className = 'desktop-cell';
+      methodCell.textContent = sanitize(payment.method || "");
+      tr.appendChild(methodCell);
+      
+      // Reference cell
+      const refCell = document.createElement('td');
+      refCell.className = 'desktop-cell';
+      refCell.textContent = sanitize(formatReferenceForDisplay(payment.reference));
+      tr.appendChild(refCell);
+      
+      // Actions cell
+      const actionsCell = document.createElement('td');
+      actionsCell.className = 'desktop-cell';
+      actionsCell.setAttribute('data-collapsible', 'true');
+      const actionsGroup = document.createElement('div');
+      actionsGroup.className = 'btn-group';
+      
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn btn-outline-secondary btn-sm';
+      editBtn.setAttribute('data-action', 'edit-payment');
+      editBtn.setAttribute('data-id', payment.id);
+      editBtn.textContent = translate("edit");
+      editBtn.addEventListener("click", () => startEditPayment(payment.id));
+      actionsGroup.appendChild(editBtn);
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'btn btn-outline-danger btn-sm';
+      deleteBtn.setAttribute('data-action', 'delete-payment');
+      deleteBtn.setAttribute('data-id', payment.id);
+      deleteBtn.textContent = translate("delete");
+      deleteBtn.addEventListener("click", () => handleDeletePayment(payment.id));
+      actionsGroup.appendChild(deleteBtn);
+      
+      actionsCell.appendChild(actionsGroup);
+      tr.appendChild(actionsCell);
+    }
+    
+    return tr;
+  };
+  
+  // Clear containers using DOM methods
   if (elements.paymentsTableBody) {
-    elements.paymentsTableBody.innerHTML = rows;
+    clear(elements.paymentsTableBody);
+    filteredPayments.forEach(payment => {
+      const row = createPaymentRow(payment);
+      elements.paymentsTableBody.appendChild(row);
+    });
   }
   if (elements.expensesPaymentsTableBody) {
-    elements.expensesPaymentsTableBody.innerHTML = rows;
+    while (elements.expensesPaymentsTableBody.firstChild) {
+      elements.expensesPaymentsTableBody.removeChild(elements.expensesPaymentsTableBody.firstChild);
+    }
+    filteredPayments.forEach(payment => {
+      const row = createPaymentRow(payment);
+      elements.expensesPaymentsTableBody.appendChild(row.cloneNode(true));
+    });
   }
 }
 
 function renderOpenExpensesTable() {
   if (!elements.openExpensesTableBody) return;
+  
+  // Clear container using DOM methods
+  clear(elements.openExpensesTableBody);
+  
   const filteredDebts = getFilteredDebts();
   // Exclude utility types from open expenses (they don't have is_paid status)
-  const openRows = (filteredDebts || [])
-    .filter((debt) => !debt.is_paid && !isUtilityType(debt.type))
-    .map((debt) => {
+  const openDebts = (filteredDebts || []).filter((debt) => !debt.is_paid && !isUtilityType(debt.type));
+  
+  if (openDebts.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.setAttribute('colspan', '5');
+    td.textContent = sanitize(translate("summaryNoData"));
+    tr.appendChild(td);
+    elements.openExpensesTableBody.appendChild(tr);
+  } else {
+    openDebts.forEach((debt) => {
       const tenant = state.tenants.find((t) => equalsId(t.id, debt.tenant_id));
       const status = getDebtStatus(debt);
       const typeLabel = getDebtTypeLabel(debt);
-      return `
-        <tr>
-          <td>${sanitize(tenant?.full_name || translate("unknown"))}</td>
-          <td>${sanitize(typeLabel)}</td>
-          <td>${formatCurrency(debt.amount)}</td>
-          <td>${formatDate(debt.due_date)}</td>
-          <td><span class="tag ${status.class}">${status.label}</span></td>
-        </tr>
-      `;
-    })
-    .join("");
-
-  elements.openExpensesTableBody.innerHTML = openRows || `
-    <tr>
-      <td colspan="5">${sanitize(translate("summaryNoData"))}</td>
-    </tr>
-  `;
+      
+      const tr = document.createElement('tr');
+      
+      // Tenant cell
+      const tenantCell = document.createElement('td');
+      tenantCell.textContent = sanitize(tenant?.full_name || translate("unknown"));
+      tr.appendChild(tenantCell);
+      
+      // Type cell
+      const typeCell = document.createElement('td');
+      typeCell.textContent = sanitize(typeLabel);
+      tr.appendChild(typeCell);
+      
+      // Amount cell
+      const amountCell = document.createElement('td');
+      amountCell.textContent = formatCurrency(debt.amount);
+      tr.appendChild(amountCell);
+      
+      // Due date cell
+      const dueDateCell = document.createElement('td');
+      dueDateCell.textContent = formatDate(debt.due_date);
+      tr.appendChild(dueDateCell);
+      
+      // Status cell
+      const statusCell = document.createElement('td');
+      const statusTag = document.createElement('span');
+      statusTag.className = `badge ${status.class === 'overdue' ? 'bg-danger' : 'bg-warning'}`;
+      statusTag.textContent = status.label;
+      statusCell.appendChild(statusTag);
+      tr.appendChild(statusCell);
+      
+      elements.openExpensesTableBody.appendChild(tr);
+    });
+  }
 }
 
 async function renderAdminSummaryWithAnimation() {
@@ -4178,27 +5494,31 @@ function renderAdminSummary() {
 
 function populateApartmentSelects() {
   const currentValue = elements.contractApartment.value;
-  const options = state.apartments
-    .map(
-      (apartment) =>
-        `<option value="${apartment.id}">${sanitize(apartment.name)}</option>`
-    )
-    .join("");
-  elements.contractApartment.innerHTML =
-    `<option value="">${translate("selectApartment")}</option>` + options;
+  // Clear select using DOM methods
+  while (elements.contractApartment.firstChild) {
+    elements.contractApartment.removeChild(elements.contractApartment.firstChild);
+  }
+  
+  // Add default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = translate("selectApartment");
+  elements.contractApartment.appendChild(defaultOption);
+  
+  // Add apartment options
+  state.apartments.forEach(apartment => {
+    const option = document.createElement('option');
+    option.value = apartment.id;
+    option.textContent = sanitize(apartment.name);
+    elements.contractApartment.appendChild(option);
+  });
+  
   if (currentValue) {
     elements.contractApartment.value = currentValue;
   }
 }
 
 function populateTenantSelects() {
-  const options = state.tenants
-    .map(
-      (tenant) =>
-        `<option value="${tenant.id}">${sanitize(tenant.full_name)}</option>`
-    )
-    .join("");
-
   [
     elements.contractTenant,
     elements.debtTenant,
@@ -4206,8 +5526,27 @@ function populateTenantSelects() {
   ].forEach((select) => {
     if (!select) return;
     const currentValue = select.value;
+    
+    // Clear select using DOM methods
+    while (select.firstChild) {
+      select.removeChild(select.firstChild);
+    }
+    
+    // Add default option
     const placeholder = translate("selectTenant");
-    select.innerHTML = `<option value="">${placeholder}</option>${options}`;
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = placeholder;
+    select.appendChild(defaultOption);
+    
+    // Add tenant options
+    state.tenants.forEach(tenant => {
+      const option = document.createElement('option');
+      option.value = tenant.id;
+      option.textContent = sanitize(tenant.full_name);
+      select.appendChild(option);
+    });
+    
     if (currentValue) {
       select.value = currentValue;
     }
@@ -4216,23 +5555,33 @@ function populateTenantSelects() {
 
 function populateContractSelects() {
   const currentValue = elements.debtContract.value;
-  const options = state.contracts
+  // Clear select using DOM methods
+  while (elements.debtContract.firstChild) {
+    elements.debtContract.removeChild(elements.debtContract.firstChild);
+  }
+  
+  // Add default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = translate("selectContract");
+  elements.debtContract.appendChild(defaultOption);
+  
+  // Add contract options
+  state.contracts
     .filter((contract) => contract && contract.is_active)
-    .map((contract) => {
+    .forEach((contract) => {
       const tenant = state.tenants.find((t) => equalsId(t.id, contract.tenant_id));
       const apartment = state.apartments.find(
         (a) => equalsId(a.id, contract.apartment_id)
       );
-      return `<option value="${contract.id}">
-        ${sanitize(apartment?.name || translate("unknown"))} — ${sanitize(
+      const option = document.createElement('option');
+      option.value = contract.id;
+      option.textContent = `${sanitize(apartment?.name || translate("unknown"))} — ${sanitize(
         tenant?.full_name || translate("unknown")
-      )}
-      </option>`;
-    })
-    .join("");
-
-  elements.debtContract.innerHTML =
-    `<option value="">${translate("selectContract")}</option>` + options;
+      )}`;
+      elements.debtContract.appendChild(option);
+    });
+  
   const hasPrevious = currentValue
     ? elements.debtContract.querySelector(`option[value="${currentValue}"]`)
     : null;
@@ -4270,29 +5619,40 @@ function populateDebtSelects() {
     : "all";
   const unpaidDebts = state.debts.filter((debt) => !debt.is_paid);
 
+  // Clear select using DOM methods
+  while (elements.paymentDebt.firstChild) {
+    elements.paymentDebt.removeChild(elements.paymentDebt.firstChild);
+  }
+  
+  // Add placeholder option
+  const placeholderOption = document.createElement('option');
+  placeholderOption.value = '';
+  placeholderOption.textContent = translate("selectDebt");
+  elements.paymentDebt.appendChild(placeholderOption);
+
   // Add direct payment option for utility types (allows payment without expense)
-  let directPaymentOptions = "";
   if (typeFilterValue && isUtilityType(typeFilterValue)) {
     const typeLabel = translate(`debt${capitalize(typeFilterValue)}`) || sanitize(typeFilterValue);
-    directPaymentOptions = `
-      <option value="direct:${typeFilterValue}" data-type="${typeFilterValue}" data-direct="true">
-        ${typeLabel} — ${translate("directPayment") || "Direct Payment"}
-      </option>
-    `;
+    const directOption = document.createElement('option');
+    directOption.value = `direct:${typeFilterValue}`;
+    directOption.setAttribute('data-type', typeFilterValue);
+    directOption.setAttribute('data-direct', 'true');
+    directOption.textContent = `${typeLabel} — ${translate("directPayment") || "Direct Payment"}`;
+    elements.paymentDebt.appendChild(directOption);
   }
 
   // For utilities, group by tenant and show difference (expenses - payments)
-  const utilityOptions = UTILITY_PAYMENT_TYPES.flatMap((type) => {
+  UTILITY_PAYMENT_TYPES.forEach((type) => {
     if (
       typeFilterValue &&
       typeFilterValue !== "all" &&
       typeFilterValue !== type
     ) {
-      return [];
+      return;
     }
     // Get all debts of this type (not just unpaid)
     const allDebtsOfType = state.debts.filter((debt) => debt.type === type);
-    if (!allDebtsOfType.length) return [];
+    if (!allDebtsOfType.length) return;
     
     // Group by tenant
     const byTenant = {};
@@ -4316,24 +5676,27 @@ function populateDebtSelects() {
     
     const typeLabel = translate(`debt${capitalize(type)}`) || sanitize(type);
     
-    return Object.entries(byTenant)
+    Object.entries(byTenant)
       .filter(([_, data]) => {
         // Only show if there's a positive difference (owes money)
         const difference = data.totalExpenses - data.totalPayments;
         return difference > 0.01;
       })
-      .map(([tenantId, data]) => {
+      .forEach(([tenantId, data]) => {
         const tenant = state.tenants.find((t) => equalsId(t.id, tenantId));
         const tenantName = tenant?.full_name || translate("unknown");
         const debtIds = data.debts.map(d => d.id).join(",");
         const difference = data.totalExpenses - data.totalPayments;
-    return `
-          <option value="utility:${type}:${tenantId}" data-type="${type}" data-total="${difference.toFixed(2)}" data-tenant="${tenantId}" data-debt-ids="${debtIds}">
-            ${sanitize(tenantName)} - ${typeLabel} - ${translate("difference") || "Difference"}: ${formatCurrency(difference)}
-      </option>
-    `;
+        const utilityOption = document.createElement('option');
+        utilityOption.value = `utility:${type}:${tenantId}`;
+        utilityOption.setAttribute('data-type', type);
+        utilityOption.setAttribute('data-total', difference.toFixed(2));
+        utilityOption.setAttribute('data-tenant', tenantId);
+        utilityOption.setAttribute('data-debt-ids', debtIds);
+        utilityOption.textContent = `${sanitize(tenantName)} - ${typeLabel} - ${translate("difference") || "Difference"}: ${formatCurrency(difference)}`;
+        elements.paymentDebt.appendChild(utilityOption);
       });
-  }).join("");
+  });
 
   // Filter out utility types from individual debt list (they are shown grouped by tenant)
   const filteredDebts = unpaidDebts.filter((debt) => {
@@ -4343,22 +5706,18 @@ function populateDebtSelects() {
     return debt.type === typeFilterValue;
   });
 
-  const debtOptions = filteredDebts
-    .map((debt) => {
-      const amount = normalizeCurrency(debt.amount);
-      const dueDate = debt.due_date || "";
-      return `
-        <option value="${debt.id}" data-type="${debt.type}" data-amount="${amount.toFixed(
-        2
-      )}" data-due="${dueDate}">
-          ${formatDebtOption(debt)}
-        </option>
-      `;
-    })
-    .join("");
-
-  const placeholder = `<option value="">${translate("selectDebt")}</option>`;
-  elements.paymentDebt.innerHTML = placeholder + directPaymentOptions + utilityOptions + debtOptions;
+  // Add individual debt options
+  filteredDebts.forEach((debt) => {
+    const amount = normalizeCurrency(debt.amount);
+    const dueDate = debt.due_date || "";
+    const debtOption = document.createElement('option');
+    debtOption.value = debt.id;
+    debtOption.setAttribute('data-type', debt.type);
+    debtOption.setAttribute('data-amount', amount.toFixed(2));
+    debtOption.setAttribute('data-due', dueDate);
+    debtOption.textContent = formatDebtOption(debt);
+    elements.paymentDebt.appendChild(debtOption);
+  });
 
   let appliedPreviousSelection = false;
   if (currentValue) {
@@ -5396,8 +6755,27 @@ function populateTenantSelector() {
         }>${sanitize(tenant.full_name)}</option>`
     )
     .join("");
-  elements.tenantSelect.innerHTML =
-    `<option value="">${translate("selectTenant")}</option>` + options;
+  // Clear select using DOM methods
+  while (elements.tenantSelect.firstChild) {
+    elements.tenantSelect.removeChild(elements.tenantSelect.firstChild);
+  }
+  
+  // Add default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = translate("selectTenant");
+  elements.tenantSelect.appendChild(defaultOption);
+  
+  // Add tenant options
+  state.tenants.forEach(tenant => {
+    const option = document.createElement('option');
+    option.value = tenant.id;
+    option.textContent = sanitize(tenant.full_name);
+    if (previouslySelected && equalsId(tenant.id, previouslySelected)) {
+      option.selected = true;
+    }
+    elements.tenantSelect.appendChild(option);
+  });
 }
 
 function setTemporaryLanguage(language) {
@@ -5508,28 +6886,43 @@ function addPhotoPreview(dataUrl, index) {
   preview.draggable = true;
   preview.dataset.index = index;
   preview.dataset.photoUrl = dataUrl;
-  preview.innerHTML = `
-    <img src="${dataUrl}" alt="Preview" class="photo-preview-img" data-index="${index}" draggable="false" />
-    <button type="button" class="photo-preview-remove" data-index="${index}">&times;</button>
-    <div class="photo-preview-drag-handle" title="Drag to reorder">⋮⋮</div>
-  `;
   
-  // Click on image to review/zoom (but not when dragging)
-  preview.querySelector(".photo-preview-img").addEventListener("click", (e) => {
+  // Create image using DOM methods
+  const img = document.createElement("img");
+  img.src = dataUrl;
+  img.alt = "Preview";
+  img.className = "photo-preview-img";
+  img.setAttribute('data-index', index);
+  img.draggable = false;
+  img.addEventListener("click", (e) => {
     if (!isDraggingPhoto) {
       e.stopPropagation();
       openPhotoReview(index);
     }
   });
+  preview.appendChild(img);
   
   // Remove button
-  preview.querySelector(".photo-preview-remove").addEventListener("click", (e) => {
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "photo-preview-remove";
+  removeBtn.setAttribute('data-index', index);
+  removeBtn.textContent = "×";
+  removeBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     uploadedPhotos.splice(index, 1);
     preview.remove();
     updatePhotoPreviews();
     updatePhotoCount();
   });
+  preview.appendChild(removeBtn);
+  
+  // Drag handle
+  const dragHandle = document.createElement("div");
+  dragHandle.className = "photo-preview-drag-handle";
+  dragHandle.title = "Drag to reorder";
+  dragHandle.textContent = "⋮⋮";
+  preview.appendChild(dragHandle);
   
   // Drag and drop handlers for reordering
   preview.addEventListener("dragstart", (e) => {
@@ -5688,7 +7081,10 @@ function updatePhotoPreviews() {
   const previewContainer = document.getElementById("photoPreviewContainer");
   if (!previewContainer) return;
   
-  previewContainer.innerHTML = "";
+  // Clear container using DOM methods
+  while (previewContainer.firstChild) {
+    previewContainer.removeChild(previewContainer.firstChild);
+  }
   uploadedPhotos.forEach((photo, index) => {
     addPhotoPreview(photo, index);
   });
@@ -5738,7 +7134,14 @@ function initializeApartmentMap() {
   // Check if Leaflet is loaded
   if (typeof L === 'undefined') {
     console.error("Leaflet is not loaded.");
-    mapContainer.innerHTML = '<p style="padding: 2rem; text-align: center; color: #dc2626;">Map library not loaded. Please refresh the page.</p>';
+    // Clear container using DOM methods
+    while (mapContainer.firstChild) {
+      mapContainer.removeChild(mapContainer.firstChild);
+    }
+    const errorP = document.createElement('p');
+    errorP.style.cssText = 'padding: 2rem; text-align: center; color: #dc2626;';
+    errorP.textContent = 'Map library not loaded. Please refresh the page.';
+    mapContainer.appendChild(errorP);
     return;
   }
   
@@ -5777,8 +7180,16 @@ function initializeApartmentMap() {
       mapContainer.style.width = '100%';
     }
     
-    // Show loading indicator
-    mapContainer.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 400px; color: #666;"><p>Loading map...</p></div>';
+    // Show loading indicator using DOM methods
+    while (mapContainer.firstChild) {
+      mapContainer.removeChild(mapContainer.firstChild);
+    }
+    const loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; height: 400px; color: #666;';
+    const loadingP = document.createElement('p');
+    loadingP.textContent = 'Loading map...';
+    loadingDiv.appendChild(loadingP);
+    mapContainer.appendChild(loadingDiv);
     
     // Use requestAnimationFrame to defer initialization slightly for better UX
     requestAnimationFrame(() => {
@@ -5824,6 +7235,9 @@ function initializeApartmentMap() {
       // Start with OpenStreetMap (faster to load) instead of satellite
       osmLayer.addTo(apartmentMap);
       L.control.layers(baseMaps).addTo(apartmentMap);
+      
+      // Expose map globally for access from other modules (e.g., tenant view)
+      window.apartmentMap = apartmentMap;
       
       mapInitialized = true;
       
@@ -6092,22 +7506,27 @@ function initializePhotoViewer() {
     const thumbnailsContainer = document.getElementById("photoViewerThumbnails");
     if (!thumbnailsContainer) return;
     
+    // Clear container using DOM methods
+    while (thumbnailsContainer.firstChild) {
+      thumbnailsContainer.removeChild(thumbnailsContainer.firstChild);
+    }
+    
     if (currentPhotos.length <= 1) {
-      thumbnailsContainer.innerHTML = "";
       return;
     }
     
-    thumbnailsContainer.innerHTML = currentPhotos
-      .map((photo, index) => `
-        <div class="photo-thumbnail-item ${index === currentIndex ? 'active' : ''}" data-index="${index}">
-          <img src="${photo}" alt="Thumbnail ${index + 1}" />
-        </div>
-      `)
-      .join("");
-    
-    // Add click handlers for thumbnails
-    thumbnailsContainer.querySelectorAll(".photo-thumbnail-item").forEach((thumb, index) => {
-      thumb.addEventListener("click", () => {
+    // Create thumbnails using DOM methods
+    currentPhotos.forEach((photo, index) => {
+      const thumbnailDiv = document.createElement('div');
+      thumbnailDiv.className = `photo-thumbnail-item ${index === currentIndex ? 'active' : ''}`;
+      thumbnailDiv.setAttribute('data-index', index);
+      
+      const thumbnailImg = document.createElement('img');
+      thumbnailImg.src = photo;
+      thumbnailImg.alt = `Thumbnail ${index + 1}`;
+      thumbnailDiv.appendChild(thumbnailImg);
+      
+      thumbnailDiv.addEventListener("click", () => {
         clearAutoSwipeTimer();
         currentIndex = index;
         updatePhotoViewer();
@@ -6116,6 +7535,8 @@ function initializePhotoViewer() {
           startAutoSwipeTimer();
         }
       });
+      
+      thumbnailsContainer.appendChild(thumbnailDiv);
     });
   }
   
@@ -6200,7 +7621,7 @@ async function editApartment(apartmentId) {
     // Try to get all columns explicitly first
     let { data: fullApartment, error } = await supabase
       .from("apartments")
-      .select("id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, monthly_rent, features")
+      .select("id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, monthly_rent, features, rental_status, rental_rules")
       .eq("id", apartmentId)
       .single();
     
@@ -6234,7 +7655,7 @@ async function editApartment(apartmentId) {
   
   // Show form
   if (elements.apartmentForm) {
-    elements.apartmentForm.style.display = "grid";
+    elements.apartmentForm.classList.remove("hidden");
   }
   if (elements.toggleApartmentFormBtn) {
     elements.toggleApartmentFormBtn.textContent = translate("cancel") || "Cancel";
@@ -6248,6 +7669,21 @@ async function editApartment(apartmentId) {
   if (elements.apartmentHeatingCode) elements.apartmentHeatingCode.value = apartment.heating_code || "";
   if (elements.apartmentWaterCode) elements.apartmentWaterCode.value = apartment.water_code || "";
   if (elements.apartmentWasteCode) elements.apartmentWasteCode.value = apartment.waste_code || "";
+  if (elements.apartmentRentalStatus) elements.apartmentRentalStatus.value = apartment.rental_status || "available";
+  
+  // Populate rental rules section (visible only when renting)
+  const rentalKeys = ["heating_cooling", "appliances", "pet_policy", "smoking", "min_rental_period", "contract_type", "notice_period", "repairs_paid_by", "subletting_rules", "is_owner_direct"];
+  let rentalRules = {};
+  if (apartment.rental_rules) {
+    try {
+      rentalRules = typeof apartment.rental_rules === "string" ? JSON.parse(apartment.rental_rules) : apartment.rental_rules;
+    } catch (e) { /* ignore */ }
+  }
+  rentalKeys.forEach((key) => {
+    const el = elements.apartmentForm?.querySelector(`[name="rental_rules_${key}"]`);
+    if (el && rentalRules[key] != null) el.value = rentalRules[key];
+  });
+  if (typeof window.toggleRentalRulesSection === "function") window.toggleRentalRulesSection();
   
   // Populate new fields if they exist (will be empty if columns don't exist in DB yet)
   if (elements.apartmentCondition) elements.apartmentCondition.value = apartment.condition || "";
@@ -6415,7 +7851,11 @@ function cancelEditApartment() {
   if (elements.apartmentId) elements.apartmentId.value = "";
   uploadedPhotos = [];
   const previewContainer = document.getElementById("photoPreviewContainer");
-  if (previewContainer) previewContainer.innerHTML = "";
+  if (previewContainer) {
+    while (previewContainer.firstChild) {
+      previewContainer.removeChild(previewContainer.firstChild);
+    }
+  }
   
   // Reset feature buttons
   const featuresButtonsContainer = document.getElementById("apartmentFeaturesButtons");
@@ -6446,6 +7886,7 @@ function cancelEditApartment() {
   if (elements.apartmentCancelBtn) {
     elements.apartmentCancelBtn.classList.add("hidden");
   }
+  if (typeof window.toggleRentalRulesSection === "function") window.toggleRentalRulesSection();
 }
 
 async function onCreateApartment(event) {
@@ -6517,6 +7958,7 @@ async function onCreateApartment(event) {
     water_code: formData.get("water_code")?.trim() || null,
     waste_code: formData.get("waste_code")?.trim() || null,
     photos: photos,
+    rental_status: formData.get("rental_status") || "available",
   };
   
   // Only include features if it has a value (will be excluded if column doesn't exist)
@@ -6552,6 +7994,21 @@ async function onCreateApartment(event) {
       }
     }
   });
+  
+  // Rental rules (only when available or rented; clear when not_renting)
+  const rentalStatus = (formData.get("rental_status") || "available").toLowerCase();
+  if (rentalStatus === "available" || rentalStatus === "rented") {
+    const rentalKeys = ["heating_cooling", "appliances", "pet_policy", "smoking", "min_rental_period", "contract_type", "notice_period", "repairs_paid_by", "subletting_rules", "is_owner_direct"];
+    const rentalRules = {};
+    rentalKeys.forEach((key) => {
+      const el = event.target.querySelector(`[name="rental_rules_${key}"]`);
+      const val = el ? (el.value || "").trim() : "";
+      if (val) rentalRules[key] = val;
+    });
+    payload.rental_rules = Object.keys(rentalRules).length > 0 ? JSON.stringify(rentalRules) : null;
+  } else {
+    payload.rental_rules = null;
+  }
   
   // Remove undefined values from payload
   Object.keys(payload).forEach(key => {
@@ -6602,6 +8059,7 @@ async function onCreateApartment(event) {
           water_code: updatePayload.water_code,
           waste_code: updatePayload.waste_code,
           photos: updatePayload.photos,
+          rental_status: updatePayload.rental_status || "available",
         };
         
         // Don't include features, description, or other optional fields that might not exist
@@ -6641,7 +8099,7 @@ async function onCreateApartment(event) {
     cancelEditApartment();
     // Hide form after successful submission
     if (elements.apartmentForm) {
-      elements.apartmentForm.style.display = "none";
+      elements.apartmentForm.classList.add("hidden");
     }
     if (elements.toggleApartmentFormBtn) {
       elements.toggleApartmentFormBtn.textContent = translate("addApartment") || "Add Apartment";
@@ -6872,6 +8330,18 @@ async function onCreateContract(event) {
     return;
   }
 
+  // Update apartment rental_status to "rented" if contract is active
+  if (payload.is_active && payload.apartment_id) {
+    const { error: apartmentError } = await supabase
+      .from("apartments")
+      .update({ rental_status: "rented" })
+      .eq("id", payload.apartment_id);
+    
+    if (apartmentError) {
+      console.warn("Failed to update apartment rental_status:", apartmentError);
+    }
+  }
+
   event.target.reset();
   elements.contractActive.checked = true;
   notify("success", translate("successAddContract"));
@@ -6885,6 +8355,7 @@ async function onCreateContract(event) {
   }
   
   loadContracts();
+  await loadApartments();
 }
 
 async function onCreateDebt(event) {
@@ -7993,20 +9464,8 @@ function sortDebtsByDueDateAsc(a, b) {
   return normalizeCurrency(a.amount) - normalizeCurrency(b.amount);
 }
 
-function equalsId(a, b) {
-  if (a === null || a === undefined || b === null || b === undefined) {
-    return false;
-  }
-  return String(a) === String(b);
-}
-
-function sanitize(value) {
-  if (value === null || value === undefined) return "";
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
+const equalsId = (a, b) => (a != null && b != null) && String(a) === String(b);
+const sanitize = (v) => v == null ? "" : String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 function formatNumber(value) {
   const number =
@@ -8022,11 +9481,7 @@ function formatNumber(value) {
   }
 }
 
-function normalizeCurrency(value) {
-  const numeric = Number.parseFloat(value);
-  if (!Number.isFinite(numeric)) return 0;
-  return Math.round(numeric * 100) / 100;
-}
+const normalizeCurrency = (v) => { const n = Number.parseFloat(v); return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0; };
 
 function incrementPdfGeneratedCount() {
   state.pdfGeneratedCount = (state.pdfGeneratedCount || 0) + 1;
@@ -8053,6 +9508,22 @@ function formatCurrency(amount) {
   return `${formatted}€`;
 }
 
+function formatDateShortYear(value) {
+  if (!value) return "-";
+  try {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) {
+      return value;
+    }
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2); // Last 2 digits
+    return `${day}.${month}.${year}`;
+  } catch {
+    return "-";
+  }
+}
+
 function formatDate(value) {
   if (!value) return "-";
   try {
@@ -8072,10 +9543,7 @@ function formatDate(value) {
   }
 }
 
-function capitalize(value) {
-  if (!value) return "";
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
+const capitalize = (v) => v ? v.charAt(0).toUpperCase() + v.slice(1) : "";
 
 async function getNextReferenceNumberValue() {
   try {
@@ -8230,9 +9698,15 @@ async function handleSignup(event) {
 
     notify("success", translate("signupSuccess"));
     // Switch to login view
-    if (elements.signupCard) elements.signupCard.style.display = "none";
+    if (elements.signupCard) {
+      elements.signupCard.classList.add("hidden");
+      elements.signupCard.style.display = "none";
+    }
     const loginCard = document.querySelector(".login-card:not(#signupCard)");
-    if (loginCard) loginCard.style.display = "block";
+    if (loginCard) {
+      loginCard.classList.remove("hidden");
+      loginCard.style.display = "block";
+    }
     if (elements.signupForm) elements.signupForm.reset();
   } catch (error) {
     console.error("Signup error:", error);
@@ -8257,12 +9731,15 @@ async function handleLogout() {
     state.contracts = [];
     state.debts = [];
     state.payments = [];
-    if (elements.debtsTableBody) elements.debtsTableBody.innerHTML = "";
-    if (elements.paymentsTableBody) elements.paymentsTableBody.innerHTML = "";
-    if (elements.apartmentsTableBody) elements.apartmentsTableBody.innerHTML = "";
-    if (elements.tenantsTableBody) elements.tenantsTableBody.innerHTML = "";
-    if (elements.contractsActiveTableBody) elements.contractsActiveTableBody.innerHTML = "";
-    if (elements.contractsInactiveTableBody) elements.contractsInactiveTableBody.innerHTML = "";
+    // Clear all table bodies using DOM methods
+    if (elements.debtsTableBody) {
+      clear(elements.debtsTableBody);
+    }
+    if (elements.paymentsTableBody) clear(elements.paymentsTableBody);
+    if (elements.apartmentsTableBody) clear(elements.apartmentsTableBody);
+    if (elements.tenantsTableBody) clear(elements.tenantsTableBody);
+    if (elements.contractsActiveTableBody) clear(elements.contractsActiveTableBody);
+    if (elements.contractsInactiveTableBody) clear(elements.contractsInactiveTableBody);
   } catch (error) {
     console.error("Logout error:", error);
     notify("error", translate("errorLoad"));
@@ -8315,8 +9792,10 @@ function formatReferenceForDisplay(reference) {
 function showConfirmationAnimation(animationType) {
   if (!elements.confirmationModal || !elements.confirmationAnimationContainer) return;
   
-  // Clear container
-  elements.confirmationAnimationContainer.innerHTML = '';
+  // Clear container using DOM methods
+  while (elements.confirmationAnimationContainer.firstChild) {
+    elements.confirmationAnimationContainer.removeChild(elements.confirmationAnimationContainer.firstChild);
+  }
   
   // Show modal
   elements.confirmationModal.style.display = 'flex';
@@ -8344,7 +9823,10 @@ function showConfirmationAnimation(animationType) {
         if (elements.confirmationModal) {
           elements.confirmationModal.style.display = 'none';
           elements.confirmationModal.classList.remove('hiding');
-          elements.confirmationAnimationContainer.innerHTML = '';
+          // Clear confirmation animation container
+          while (elements.confirmationAnimationContainer.firstChild) {
+            elements.confirmationAnimationContainer.removeChild(elements.confirmationAnimationContainer.firstChild);
+          }
         }
       }, 300);
     }
@@ -8355,7 +9837,10 @@ function showConfirmationAnimation(animationType) {
     console.error('Failed to load GIF:', gifFile);
     // Fallback to icon
     const icon = animationType === "edit" ? "✎" : "✓";
-    elements.confirmationAnimationContainer.innerHTML = `<div style="color: #08a88a; font-size: 6rem; font-weight: bold; line-height: 1; animation: scaleIn 0.3s ease-out;">${icon}</div>`;
+    const iconDiv = document.createElement('div');
+    iconDiv.style.cssText = 'color: #08a88a; font-size: 6rem; font-weight: bold; line-height: 1; animation: scaleIn 0.3s ease-out;';
+    iconDiv.textContent = icon;
+    elements.confirmationAnimationContainer.appendChild(iconDiv);
     // Hide after fallback
     setTimeout(() => {
       hideConfirmationModal();
@@ -8418,22 +9903,36 @@ function renderTenantInfo(tenant) {
   const entryDate =
     (primaryContract && primaryContract.start_date) || tenant.entry_date;
 
-  elements.tenantInfoList.innerHTML = `
-    <dt>${translate("tenantFullName")}:</dt>
-    <dd>${sanitize(tenant.full_name)}</dd>
-    <dt>${translate("tenantEmail")}:</dt>
-    <dd>${sanitize(tenant.email || "-")}</dd>
-    <dt>${translate("tenantPhone")}:</dt>
-    <dd>${sanitize(tenant.phone || "-")}</dd>
-    <dt>${translate("tenantSince")}:</dt>
-    <dd>${formatDate(entryDate)}</dd>
-  `;
+  clear(elements.tenantInfoList);
+  
+  // Create definition list items using DOM methods
+  function addDefinitionItem(dtText, ddText) {
+    const dt = document.createElement('dt');
+    dt.textContent = dtText;
+    elements.tenantInfoList.appendChild(dt);
+    
+    const dd = document.createElement('dd');
+    dd.textContent = ddText;
+    elements.tenantInfoList.appendChild(dd);
+  }
+  
+  addDefinitionItem(`${translate("tenantFullName")}:`, sanitize(tenant.full_name));
+  addDefinitionItem(`${translate("tenantEmail")}:`, sanitize(tenant.email || "-"));
+  addDefinitionItem(`${translate("tenantPhone")}:`, sanitize(tenant.phone || "-"));
+  addDefinitionItem(`${translate("tenantSince")}:`, formatDate(entryDate));
 }
 
 function renderTenantContract(tenantId) {
+  clear(elements.tenantContractList);
+  
   const contract = getPrimaryContractForTenant(tenantId);
   if (!contract) {
-    elements.tenantContractList.innerHTML = `<dt>${translate("status")}:</dt><dd>${translate("unknown")}</dd>`;
+    const dt = document.createElement('dt');
+    dt.textContent = `${translate("status")}:`;
+    elements.tenantContractList.appendChild(dt);
+    const dd = document.createElement('dd');
+    dd.textContent = translate("unknown");
+    elements.tenantContractList.appendChild(dd);
     return;
   }
 
@@ -8441,18 +9940,21 @@ function renderTenantContract(tenantId) {
     (apartment) => equalsId(apartment.id, contract.apartment_id)
   );
 
-  elements.tenantContractList.innerHTML = `
-    <dt>${translate("selectApartment")}:</dt>
-    <dd>${sanitize(apartment?.name || translate("unknown"))}</dd>
-    <dt>${translate("startDate")}:</dt>
-    <dd>${formatDate(contract.start_date)}</dd>
-    <dt>${translate("endDate")}:</dt>
-    <dd>${formatDate(contract.end_date)}</dd>
-    <dt>${translate("monthlyRent")}:</dt>
-    <dd>${formatCurrency(contract.monthly_rent)}</dd>
-    <dt>${translate("contractActive")}:</dt>
-    <dd>${contract.is_active ? translate("yes") : translate("no")}</dd>
-  `;
+  // Helper function to add definition items
+  function addDefinitionItem(dtText, ddText) {
+    const dt = document.createElement('dt');
+    dt.textContent = dtText;
+    elements.tenantContractList.appendChild(dt);
+    const dd = document.createElement('dd');
+    dd.textContent = ddText;
+    elements.tenantContractList.appendChild(dd);
+  }
+
+  addDefinitionItem(`${translate("selectApartment")}:`, sanitize(apartment?.name || translate("unknown")));
+  addDefinitionItem(`${translate("startDate")}:`, formatDate(contract.start_date));
+  addDefinitionItem(`${translate("endDate")}:`, formatDate(contract.end_date));
+  addDefinitionItem(`${translate("monthlyRent")}:`, formatCurrency(contract.monthly_rent));
+  addDefinitionItem(`${translate("contractActive")}:`, contract.is_active ? translate("yes") : translate("no"));
 }
 
 function renderTenantDebts() {
@@ -8482,45 +9984,80 @@ function renderTenantDebts() {
     }
   });
   
-  const rows = [];
+  clear(elements.tenantDebtsTableBody);
+  
+  if (regularDebts.length === 0 && Object.keys(utilityBalances).length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.setAttribute('colspan', '5');
+    td.textContent = translate("noDebtsFound");
+    tr.appendChild(td);
+    elements.tenantDebtsTableBody.appendChild(tr);
+    return;
+  }
   
   // Add regular debts with status
   regularDebts.forEach((debt) => {
-      const status = getDebtStatus(debt);
-    rows.push(`
-        <tr>
-          <td>${sanitize(getDebtTypeLabel(debt))}</td>
-          <td>${formatCurrency(debt.amount)}</td>
-          <td>${formatDate(debt.due_date)}</td>
-          <td><span class="tag ${status.class}">${status.label}</span></td>
-        <td>${formatReferenceNumber(debt.reference)}</td>
-        </tr>
-    `);
+    const status = getDebtStatus(debt);
+    const tr = document.createElement('tr');
+    
+    const typeCell = document.createElement('td');
+    typeCell.textContent = sanitize(getDebtTypeLabel(debt));
+    tr.appendChild(typeCell);
+    
+    const amountCell = document.createElement('td');
+    amountCell.textContent = formatCurrency(debt.amount);
+    tr.appendChild(amountCell);
+    
+    const dueDateCell = document.createElement('td');
+    dueDateCell.textContent = formatDate(debt.due_date);
+    tr.appendChild(dueDateCell);
+    
+    const statusCell = document.createElement('td');
+    const statusTag = document.createElement('span');
+    statusTag.className = `badge ${status.class === 'overdue' ? 'bg-danger' : status.class === 'paid' ? 'bg-success' : 'bg-warning'}`;
+    statusTag.textContent = status.label;
+    statusCell.appendChild(statusTag);
+    tr.appendChild(statusCell);
+    
+    const refCell = document.createElement('td');
+    refCell.textContent = formatReferenceNumber(debt.reference);
+    tr.appendChild(refCell);
+    
+    elements.tenantDebtsTableBody.appendChild(tr);
   });
   
   // Add utility balances as summary rows
   Object.entries(utilityBalances).forEach(([type, balance]) => {
     const typeLabel = translate(`debt${capitalize(type)}`) || type;
     const balanceLabel = balance > 0 ? translate("owes") || "Owes" : translate("credit") || "Credit";
-    rows.push(`
-      <tr>
-        <td>${sanitize(typeLabel)}</td>
-        <td>${formatCurrency(Math.abs(balance))}</td>
-        <td>-</td>
-        <td><span class="tag ${balance > 0 ? 'tag-overdue' : 'tag-paid'}">${balanceLabel}</span></td>
-        <td>-</td>
-      </tr>
-    `);
+    const tr = document.createElement('tr');
+    
+    const typeCell = document.createElement('td');
+    typeCell.textContent = sanitize(typeLabel);
+    tr.appendChild(typeCell);
+    
+    const amountCell = document.createElement('td');
+    amountCell.textContent = formatCurrency(Math.abs(balance));
+    tr.appendChild(amountCell);
+    
+    const dueDateCell = document.createElement('td');
+    dueDateCell.textContent = '-';
+    tr.appendChild(dueDateCell);
+    
+    const statusCell = document.createElement('td');
+    const statusTag = document.createElement('span');
+    statusTag.className = `badge ${balance > 0 ? 'bg-danger' : 'bg-success'}`;
+    statusTag.textContent = balanceLabel;
+    statusCell.appendChild(statusTag);
+    tr.appendChild(statusCell);
+    
+    const refCell = document.createElement('td');
+    refCell.textContent = '-';
+    tr.appendChild(refCell);
+    
+    elements.tenantDebtsTableBody.appendChild(tr);
   });
-  
-  if (!rows.length) {
-    elements.tenantDebtsTableBody.innerHTML = `<tr><td colspan="5">${translate(
-      "noDebtsFound"
-    )}</td></tr>`;
-    return;
-  }
-  
-  elements.tenantDebtsTableBody.innerHTML = rows.join("");
 }
 
 function renderTenantPayments() {
@@ -8528,28 +10065,52 @@ function renderTenantPayments() {
   const targetPayments = state.payments.filter(
     (payment) => equalsId(payment.tenant_id, tenantId)
   );
+  
+  clear(elements.tenantPaymentsTableBody);
+  
   if (!targetPayments.length) {
-    elements.tenantPaymentsTableBody.innerHTML = `<tr><td colspan="5">${translate(
-      "noPaymentsFound"
-    )}</td></tr>`;
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.setAttribute('colspan', '5');
+    td.textContent = translate("noPaymentsFound");
+    tr.appendChild(td);
+    elements.tenantPaymentsTableBody.appendChild(tr);
     return;
   }
 
-  elements.tenantPaymentsTableBody.innerHTML = targetPayments
-    .map((payment) => {
-      const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
-      const debtLabel = debt ? getDebtTypeLabel(debt) : "-";
-      return `
-        <tr>
-          <td>${formatCurrency(payment.amount)}</td>
-          <td>${sanitize(debtLabel)}</td>
-          <td>${formatDate(payment.payment_date)}</td>
-          <td>${sanitize(payment.method || "-")}</td>
-          <td>${sanitize(formatReferenceForDisplay(payment.reference))}</td>
-        </tr>
-      `;
-    })
-    .join("");
+  targetPayments.forEach((payment) => {
+    const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
+    const debtLabel = debt ? getDebtTypeLabel(debt) : "-";
+    
+    const tr = document.createElement('tr');
+    
+    // Amount cell
+    const amountCell = document.createElement('td');
+    amountCell.textContent = formatCurrency(payment.amount);
+    tr.appendChild(amountCell);
+    
+    // Type cell
+    const typeCell = document.createElement('td');
+    typeCell.textContent = sanitize(debtLabel);
+    tr.appendChild(typeCell);
+    
+    // Date cell
+    const dateCell = document.createElement('td');
+    dateCell.textContent = formatDate(payment.payment_date);
+    tr.appendChild(dateCell);
+    
+    // Method cell
+    const methodCell = document.createElement('td');
+    methodCell.textContent = sanitize(payment.method || "-");
+    tr.appendChild(methodCell);
+    
+    // Reference cell
+    const refCell = document.createElement('td');
+    refCell.textContent = sanitize(formatReferenceForDisplay(payment.reference));
+    tr.appendChild(refCell);
+    
+    elements.tenantPaymentsTableBody.appendChild(tr);
+  });
 }
 
 function renderTenantFinancialSummary(tenantId) {
@@ -8599,22 +10160,28 @@ function renderTenantFinancialSummary(tenantId) {
   
   const primaryContract = getPrimaryContractForTenant(tenantId);
 
-  elements.tenantFinancialList.innerHTML = `
-    <dt>${translate("totalDebt")}:</dt>
-    <dd>${formatCurrency(totalDebt)}</dd>
-    <dt>${translate("totalPaid")}:</dt>
-    <dd>${formatCurrency(totalPaid)}</dd>
-    <dt>${translate("totalUnpaid")}:</dt>
-    <dd>${formatCurrency(totalUnpaid)}</dd>
-    <dt>${translate("contractActive")}:</dt>
-    <dd>${
-      primaryContract
-        ? primaryContract.is_active
-          ? translate("yes")
-          : translate("no")
-        : translate("unknown")
-    }</dd>
-  `;
+  clear(elements.tenantFinancialList);
+  
+  // Helper function to add definition items
+  function addDefinitionItem(dtText, ddText) {
+    const dt = document.createElement('dt');
+    dt.textContent = dtText;
+    elements.tenantFinancialList.appendChild(dt);
+    const dd = document.createElement('dd');
+    dd.textContent = ddText;
+    elements.tenantFinancialList.appendChild(dd);
+  }
+  
+  addDefinitionItem(`${translate("totalDebt")}:`, formatCurrency(totalDebt));
+  addDefinitionItem(`${translate("totalPaid")}:`, formatCurrency(totalPaid));
+  addDefinitionItem(`${translate("totalUnpaid")}:`, formatCurrency(totalUnpaid));
+  addDefinitionItem(`${translate("contractActive")}:`, 
+    primaryContract
+      ? primaryContract.is_active
+        ? translate("yes")
+        : translate("no")
+      : translate("unknown")
+  );
 }
 
 function exportDebtsToPdf() {

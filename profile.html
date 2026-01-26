@@ -8,7 +8,6 @@
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/responsive.css" />
   </head>
   <body>
     <div class="logo-bar">
@@ -160,7 +159,7 @@
       </section>
 
       <!-- Change Password Modal -->
-      <div id="changePasswordModal" class="change-password-modal" style="display: none;">
+      <div id="changePasswordModal" class="change-password-modal hidden">
         <div class="change-password-modal-content">
           <button class="change-password-close" id="changePasswordClose">&times;</button>
           <h3>Change Password</h3>
@@ -207,7 +206,7 @@
                   </button>
                 </div>
               </div>
-              <div id="oldPasswordError" class="error-message" style="display: none;"></div>
+              <div id="oldPasswordError" class="error-message hidden"></div>
             </div>
             <div class="form-actions">
               <button type="button" class="button-secondary" id="cancelOldPassword">Cancel</button>
@@ -216,7 +215,7 @@
           </div>
 
           <!-- Step 2: Enter New Password -->
-          <div id="newPasswordStep" class="password-step" style="display: none;">
+          <div id="newPasswordStep" class="password-step hidden">
             <div class="form-group">
               <label for="newPasswordInput">New Password</label>
               <div class="password-field">
@@ -300,7 +299,7 @@
                   </button>
                 </div>
               </div>
-              <div id="newPasswordError" class="error-message" style="display: none;"></div>
+              <div id="newPasswordError" class="error-message hidden"></div>
             </div>
             <div class="form-actions">
               <button type="button" class="button-secondary" id="cancelNewPassword">Cancel</button>
@@ -569,7 +568,10 @@
               });
             }
             
-            el.innerHTML = "";
+            // Clear container using DOM methods
+            while (el.firstChild) {
+              el.removeChild(el.firstChild);
+            }
             el.appendChild(input);
           });
         }
@@ -581,7 +583,11 @@
             const input = document.getElementById(`${id}Input`);
             const value =
               save && input ? input.value.trim() : originalValues[id] || "";
-            el.innerHTML = value || "-";
+            // Clear container using DOM methods
+            while (el.firstChild) {
+              el.removeChild(el.firstChild);
+            }
+            el.textContent = value || "-";
           });
         }
 
@@ -884,8 +890,10 @@
         
         const isTenant = role === "Tenant";
         
-        // Clear existing navigation
-        navContainer.innerHTML = "";
+        // Clear existing navigation using DOM methods
+        while (navContainer.firstChild) {
+          navContainer.removeChild(navContainer.firstChild);
+        }
         
         // Statistics button (always shown, but disabled if already on statistics page)
         const statsBtn = document.createElement("button");
@@ -898,7 +906,10 @@
         } else {
         statsBtn.onclick = () => window.location.href = "statistics.html";
         }
-        statsBtn.innerHTML = '<span data-i18n="floatingNavStatistics">Statistics</span>';
+        const statsSpan = document.createElement("span");
+        statsSpan.setAttribute("data-i18n", "floatingNavStatistics");
+        statsSpan.textContent = "Statistics";
+        statsBtn.appendChild(statsSpan);
         navContainer.appendChild(statsBtn);
         
         // Divider
@@ -912,21 +923,30 @@
           tenantApartmentsBtn.className = "top-nav-btn";
           tenantApartmentsBtn.id = "topNavTenantApartments";
           tenantApartmentsBtn.onclick = () => window.location.href = "tenant-apartments.html";
-          tenantApartmentsBtn.innerHTML = '<span data-i18n="floatingNavTenantApartments">Tenant - Apartment</span>';
+          const tenantApartmentsSpan = document.createElement("span");
+          tenantApartmentsSpan.setAttribute("data-i18n", "floatingNavTenantApartments");
+          tenantApartmentsSpan.textContent = "Tenant - Apartment";
+          tenantApartmentsBtn.appendChild(tenantApartmentsSpan);
           navContainer.appendChild(tenantApartmentsBtn);
           
           const tenantContractsBtn = document.createElement("button");
           tenantContractsBtn.className = "top-nav-btn";
           tenantContractsBtn.id = "topNavTenantContracts";
           tenantContractsBtn.onclick = () => window.location.href = "tenant-contracts.html";
-          tenantContractsBtn.innerHTML = '<span data-i18n="floatingNavTenantContracts">Tenant Contracts</span>';
+          const tenantContractsSpan = document.createElement("span");
+          tenantContractsSpan.setAttribute("data-i18n", "floatingNavTenantContracts");
+          tenantContractsSpan.textContent = "Tenant Contracts";
+          tenantContractsBtn.appendChild(tenantContractsSpan);
           navContainer.appendChild(tenantContractsBtn);
           
           const tenantExpensesBtn = document.createElement("button");
           tenantExpensesBtn.className = "top-nav-btn";
           tenantExpensesBtn.id = "topNavTenantExpenses";
           tenantExpensesBtn.onclick = () => window.location.href = "tenant-expenses.html";
-          tenantExpensesBtn.innerHTML = '<span data-i18n="floatingNavTenantExpenses">Tenant Expenses</span>';
+          const tenantExpensesSpan = document.createElement("span");
+          tenantExpensesSpan.setAttribute("data-i18n", "floatingNavTenantExpenses");
+          tenantExpensesSpan.textContent = "Tenant Expenses";
+          tenantExpensesBtn.appendChild(tenantExpensesSpan);
           navContainer.appendChild(tenantExpensesBtn);
         } else {
           // Landlord navigation: Administrator | Tenant View
@@ -934,14 +954,20 @@
           adminBtn.className = "top-nav-btn";
           adminBtn.id = "topNavAdmin";
           adminBtn.onclick = () => window.location.href = "index.html";
-          adminBtn.innerHTML = '<span data-i18n="floatingNavAdmin">Administrator</span>';
+          const adminSpan = document.createElement("span");
+          adminSpan.setAttribute("data-i18n", "floatingNavAdmin");
+          adminSpan.textContent = "Administrator";
+          adminBtn.appendChild(adminSpan);
           navContainer.appendChild(adminBtn);
           
           const tenantViewBtn = document.createElement("button");
           tenantViewBtn.className = "top-nav-btn";
           tenantViewBtn.id = "topNavTenant";
           tenantViewBtn.onclick = () => window.location.href = "index.html?view=tenant";
-          tenantViewBtn.innerHTML = '<span data-i18n="floatingNavTenant">Tenant View</span>';
+          const tenantViewSpan = document.createElement("span");
+          tenantViewSpan.setAttribute("data-i18n", "floatingNavTenant");
+          tenantViewSpan.textContent = "Tenant View";
+          tenantViewBtn.appendChild(tenantViewSpan);
           navContainer.appendChild(tenantViewBtn);
         }
         
@@ -955,7 +981,10 @@
         profileBtn.className = "top-nav-btn";
         profileBtn.id = "topNavProfile";
         profileBtn.onclick = () => window.location.href = "profile.html";
-        profileBtn.innerHTML = '<span data-i18n="floatingNavProfile">Profile</span>';
+        const profileSpan = document.createElement("span");
+        profileSpan.setAttribute("data-i18n", "floatingNavProfile");
+        profileSpan.textContent = "Profile";
+        profileBtn.appendChild(profileSpan);
         navContainer.appendChild(profileBtn);
         
         // Apply translations

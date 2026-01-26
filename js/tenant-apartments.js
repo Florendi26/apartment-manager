@@ -76,6 +76,8 @@ function initializeTenantPhotoViewer() {
     currentIndex = Math.max(0, Math.min(startIndex, currentPhotos.length - 1));
     clearAutoSwipeTimer();
     updatePhotoViewer();
+    // Remove hidden class and show modal
+    modal.classList.remove("hidden");
     modal.style.display = "flex";
     document.body.style.overflow = "hidden";
   };
@@ -130,30 +132,36 @@ function initializeTenantPhotoViewer() {
     const thumbnailsContainer = document.getElementById("photoViewerThumbnails");
     if (!thumbnailsContainer) return;
     
+    // Clear container using DOM methods
+    while (thumbnailsContainer.firstChild) {
+      thumbnailsContainer.removeChild(thumbnailsContainer.firstChild);
+    }
+    
     if (currentPhotos.length <= 1) {
-      thumbnailsContainer.innerHTML = "";
       return;
     }
     
-    thumbnailsContainer.innerHTML = currentPhotos
-      .map((photo, index) => `
-        <div class="photo-thumbnail-item ${index === currentIndex ? 'active' : ''}" data-index="${index}">
-          <img src="${photo}" alt="Thumbnail ${index + 1}" />
-        </div>
-      `)
-      .join("");
-    
-    // Add click handlers for thumbnails
-    thumbnailsContainer.querySelectorAll(".photo-thumbnail-item").forEach((thumb, index) => {
-      thumb.addEventListener("click", () => {
+    // Create thumbnails using DOM methods
+    currentPhotos.forEach((photo, index) => {
+      const thumbnailDiv = document.createElement('div');
+      thumbnailDiv.className = `photo-thumbnail-item ${index === currentIndex ? 'active' : ''}`;
+      thumbnailDiv.setAttribute('data-index', index);
+      
+      const thumbnailImg = document.createElement('img');
+      thumbnailImg.src = photo;
+      thumbnailImg.alt = `Thumbnail ${index + 1}`;
+      thumbnailDiv.appendChild(thumbnailImg);
+      
+      thumbnailDiv.addEventListener("click", () => {
         clearAutoSwipeTimer();
         currentIndex = index;
         updatePhotoViewer();
-        // Restart timer if still zoomed
         if (image.classList.contains("zoomed")) {
           startAutoSwipeTimer();
         }
       });
+      
+      thumbnailsContainer.appendChild(thumbnailDiv);
     });
   }
   
@@ -179,6 +187,7 @@ function initializeTenantPhotoViewer() {
     clearAutoSwipeTimer();
     image.classList.remove("zoomed");
     modal.style.display = "none";
+    modal.classList.add("hidden");
     document.body.style.overflow = "";
     currentPhotos = [];
     currentIndex = 0;
@@ -251,7 +260,14 @@ function getPlaceholderImage() {
 async function tenantLoadAvailableApartmentsWithPictures() {
   const grid = document.getElementById("tenantApartmentsGrid");
   if (!grid) return;
-  grid.innerHTML = `<p>${tenantGetTranslation("tenantLoadingApartments")}</p>`;
+  
+  // Clear container and show loading using DOM methods
+  while (grid.firstChild) {
+    grid.removeChild(grid.firstChild);
+  }
+  const loadingP = document.createElement('p');
+  loadingP.textContent = tenantGetTranslation("tenantLoadingApartments");
+  grid.appendChild(loadingP);
 
   // Load contracts and apartments in parallel for better performance
   const [contractsResult, apartmentsResult] = await Promise.all([
@@ -262,18 +278,31 @@ async function tenantLoadAvailableApartmentsWithPictures() {
     tenantSupabase
       .from("apartments")
       .select("id, name, address, photos")
+      .eq("rental_status", "available")
       .order("created_at", { ascending: false })
   ]);
 
   if (contractsResult.error) {
     console.error("tenant apartments contracts", contractsResult.error);
-    grid.innerHTML = `<p>${tenantGetTranslation("tenantFailedLoadApartments")}</p>`;
+    // Clear container and show error using DOM methods
+    while (grid.firstChild) {
+      grid.removeChild(grid.firstChild);
+    }
+    const errorP = document.createElement('p');
+    errorP.textContent = tenantGetTranslation("tenantFailedLoadApartments");
+    grid.appendChild(errorP);
     return;
   }
 
   if (apartmentsResult.error) {
     console.error("tenant apartments", apartmentsResult.error);
-    grid.innerHTML = `<p>${tenantGetTranslation("tenantFailedLoadApartments")}</p>`;
+    // Clear container and show error using DOM methods
+    while (grid.firstChild) {
+      grid.removeChild(grid.firstChild);
+    }
+    const errorP = document.createElement('p');
+    errorP.textContent = tenantGetTranslation("tenantFailedLoadApartments");
+    grid.appendChild(errorP);
     return;
   }
 
@@ -289,7 +318,13 @@ async function tenantLoadAvailableApartmentsWithPictures() {
   );
 
   if (!apartments || apartments.length === 0) {
-    grid.innerHTML = `<p>${tenantGetTranslation("tenantNoApartmentsAvailable")}</p>`;
+    // Clear container and show message using DOM methods
+    while (grid.firstChild) {
+      grid.removeChild(grid.firstChild);
+    }
+    const noAptsP = document.createElement('p');
+    noAptsP.textContent = tenantGetTranslation("tenantNoApartmentsAvailable");
+    grid.appendChild(noAptsP);
     return;
   }
 
@@ -299,7 +334,11 @@ async function tenantLoadAvailableApartmentsWithPictures() {
   // Store apartments for lazy rendering
   tenantApartmentsAll = apartments;
   tenantApartmentsRenderedCount = 0;
-  grid.innerHTML = "";
+  
+  // Clear container using DOM methods
+  while (grid.firstChild) {
+    grid.removeChild(grid.firstChild);
+  }
   
   // Render initial batch
   renderMoreTenantApartments(requestContractText, requestViewingText);
@@ -343,9 +382,9 @@ function renderMoreTenantApartments(requestContractText, requestViewingText) {
       const photoData = JSON.stringify(allPhotos).replace(/'/g, "&#39;");
       const apartmentData = JSON.stringify(apt).replace(/'/g, "&#39;");
       return `
-        <div class="card apartment-card" data-apartment-id="${apt.id}" data-apartment-data='${apartmentData}' style="cursor: pointer;">
+        <div class="card apartment-card cursor-pointer" data-apartment-id="${apt.id}" data-apartment-data='${apartmentData}'>
           <div class="apartment-image-wrapper">
-            <img src="${allPhotos[0]}" alt="${apt.name || "Apartment"}" class="apartment-image" data-photos='${photoData}' data-apartment-id="${apt.id}" loading="lazy" onerror="this.onerror=null; this.src='${placeholderImg}'" style="opacity: 1;" />
+            <img src="${allPhotos[0]}" alt="${apt.name || "Apartment"}" class="apartment-image" data-photos='${photoData}' data-apartment-id="${apt.id}" loading="lazy" onerror="this.onerror=null; this.src='${placeholderImg}'" />
           </div>
           <div class="apartment-content">
             <h3>${apt.name || "Apartment"}</h3>
@@ -443,6 +482,31 @@ function setupTenantApartmentCardHandlers() {
         
         if (apartment) {
           showApartmentDetails(apartment);
+          
+          // Zoom map to apartment location if coordinates exist
+          if (apartment.latitude && apartment.longitude) {
+            const lat = parseFloat(apartment.latitude);
+            const lng = parseFloat(apartment.longitude);
+            if (!isNaN(lat) && !isNaN(lng)) {
+              // Check for global map variable (exposed from app.js)
+              if (typeof window !== 'undefined' && window.apartmentMap) {
+                try {
+                  // Use flyTo for smooth animation
+                  window.apartmentMap.flyTo([lat, lng], 15, {
+                    animate: true,
+                    duration: 1.0
+                  });
+                } catch (e) {
+                  // Fallback to setView if flyTo fails
+                  try {
+                    window.apartmentMap.setView([lat, lng], 15);
+                  } catch (e2) {
+                    console.error("Error zooming map:", e2);
+                  }
+                }
+              }
+            }
+          }
         }
       } else {
         // Fallback to stored data if no ID found
@@ -551,6 +615,7 @@ function initializeApartmentDetailsModal() {
   // Close modal
   closeBtn.addEventListener("click", () => {
     modal.style.display = "none";
+    modal.classList.add("hidden");
     document.body.style.overflow = "";
     currentApartmentId = null;
   });
@@ -559,6 +624,7 @@ function initializeApartmentDetailsModal() {
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
       modal.style.display = "none";
+      modal.classList.add("hidden");
       document.body.style.overflow = "";
       currentApartmentId = null;
     }
@@ -570,6 +636,7 @@ function initializeApartmentDetailsModal() {
       if (currentApartmentId) {
         await tenantCreateRequest(currentApartmentId, "contract");
         modal.style.display = "none";
+        modal.classList.add("hidden");
         document.body.style.overflow = "";
       }
     });
@@ -580,6 +647,7 @@ function initializeApartmentDetailsModal() {
       if (currentApartmentId) {
         await tenantCreateRequest(currentApartmentId, "viewing");
         modal.style.display = "none";
+        modal.classList.add("hidden");
         document.body.style.overflow = "";
       }
     });
@@ -589,6 +657,7 @@ function initializeApartmentDetailsModal() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal.style.display !== "none") {
       modal.style.display = "none";
+      modal.classList.add("hidden");
       document.body.style.overflow = "";
       currentApartmentId = null;
     }
@@ -620,19 +689,27 @@ function initializeApartmentDetailsModal() {
     // Set title
     document.getElementById("apartmentDetailsTitle").textContent = apartment.name || "Apartment";
     
-    // Set photos with click handlers
+    // Set photos with click handlers using DOM methods
     const photosContainer = document.getElementById("apartmentDetailsPhotos");
-    photosContainer.innerHTML = photos.map((photo, index) => `
-      <img src="${photo}" alt="Apartment Photo ${index + 1}" class="apartment-detail-photo" data-photo-index="${index}" loading="lazy" onerror="this.src='${placeholderImg}'" />
-    `).join("");
+    // Clear container using DOM methods
+    while (photosContainer.firstChild) {
+      photosContainer.removeChild(photosContainer.firstChild);
+    }
     
-    // Add click handlers to photos to open photo viewer
-    photosContainer.querySelectorAll(".apartment-detail-photo").forEach((img, index) => {
+    photos.forEach((photo, index) => {
+      const img = document.createElement('img');
+      img.src = photo;
+      img.alt = `Apartment Photo ${index + 1}`;
+      img.className = 'apartment-detail-photo';
+      img.setAttribute('data-photo-index', index);
+      img.loading = 'lazy';
+      img.addEventListener('error', function() { this.src = placeholderImg; });
       img.addEventListener("click", () => {
         if (window.openPhotoViewer) {
           window.openPhotoViewer(photos, index);
         }
       });
+      photosContainer.appendChild(img);
     });
     
     // Update translations first
@@ -655,26 +732,147 @@ function initializeApartmentDetailsModal() {
           ? (apartment.features.startsWith('[') ? JSON.parse(apartment.features) : apartment.features.split(',').map(f => f.trim()))
           : apartment.features;
         
+        // Clear container using DOM methods
+        while (featuresContainer.firstChild) {
+          featuresContainer.removeChild(featuresContainer.firstChild);
+        }
+        
         if (Array.isArray(features) && features.length > 0) {
-          featuresContainer.innerHTML = features.map(feature => 
-            `<span class="feature-badge">${feature}</span>`
-          ).join("");
+          features.forEach(feature => {
+            const badge = document.createElement('span');
+            badge.className = 'feature-badge';
+            badge.textContent = feature;
+            featuresContainer.appendChild(badge);
+          });
         } else {
-          featuresContainer.innerHTML = `<span class="feature-badge">${tenantGetTranslation("apartmentDetailsNoFeatures")}</span>`;
+          const badge = document.createElement('span');
+          badge.className = 'feature-badge';
+          badge.textContent = tenantGetTranslation("apartmentDetailsNoFeatures");
+          featuresContainer.appendChild(badge);
         }
       } catch (e) {
-        featuresContainer.innerHTML = `<span class="feature-badge">${tenantGetTranslation("apartmentDetailsNoFeatures")}</span>`;
+        // Clear container using DOM methods
+        while (featuresContainer.firstChild) {
+          featuresContainer.removeChild(featuresContainer.firstChild);
+        }
+        const badge = document.createElement('span');
+        badge.className = 'feature-badge';
+        badge.textContent = tenantGetTranslation("apartmentDetailsNoFeatures");
+        featuresContainer.appendChild(badge);
       }
     } else {
-      featuresContainer.innerHTML = `<span class="feature-badge">${tenantGetTranslation("apartmentDetailsNoFeatures")}</span>`;
+      // Clear container using DOM methods
+      while (featuresContainer.firstChild) {
+        featuresContainer.removeChild(featuresContainer.firstChild);
+      }
+      const badge = document.createElement('span');
+      badge.className = 'feature-badge';
+      badge.textContent = tenantGetTranslation("apartmentDetailsNoFeatures");
+      featuresContainer.appendChild(badge);
     }
     
     // Set description
     document.getElementById("apartmentDetailsDescriptionValue").textContent = apartment.description || tenantGetTranslation("apartmentDetailsNoDescription");
     
-    // Show modal
+    // Rental rules (when renting and landlord has filled them)
+    const rentalRulesSection = document.getElementById("apartmentDetailsRentalRulesSection");
+    const rentalRulesContainer = document.getElementById("apartmentDetailsRentalRulesContainer");
+    if (rentalRulesSection && rentalRulesContainer) {
+      let rules = {};
+      if (apartment.rental_rules) {
+        try {
+          rules = typeof apartment.rental_rules === "string" ? JSON.parse(apartment.rental_rules) : apartment.rental_rules;
+        } catch (e) { /* ignore */ }
+      }
+      const labelKeys = {
+        heating_cooling: "rentalHeatingCooling",
+        appliances: "rentalAppliances",
+        pet_policy: "rentalPetPolicy",
+        smoking: "rentalSmoking",
+        min_rental_period: "rentalMinPeriod",
+        contract_type: "rentalContractType",
+        notice_period: "rentalNoticePeriod",
+        repairs_paid_by: "rentalRepairsPaidBy",
+        subletting_rules: "rentalSubletting",
+        is_owner_direct: "rentalOwnerDirect"
+      };
+      const valueToKey = {
+        heating_cooling: { ac: "rentalOptAc", radiator: "rentalOptRadiator", ac_radiator: "rentalOptAcRadiator", central_heating: "rentalOptCentralHeating", none: "rentalOptNone" },
+        appliances: { full: "rentalOptFull", fridge_stove: "rentalOptFridgeStove", none: "rentalOptNone" },
+        pet_policy: { allowed: "rentalOptAllowed", not_allowed: "rentalOptNotAllowed", negotiable: "rentalOptNegotiable" },
+        smoking: { allowed: "rentalOptAllowed", not_allowed: "rentalOptNotAllowed" },
+        min_rental_period: { "1_month": "rentalOpt1Month", "3_months": "rentalOpt3Months", "6_months": "rentalOpt6Months", "1_year": "rentalOpt1Year", "2_years": "rentalOpt2Years" },
+        notice_period: { "30_days": "rentalOpt30Days", "60_days": "rentalOpt60Days", "90_days": "rentalOpt90Days" },
+        contract_type: { written: "rentalOptWritten", notarized: "rentalOptNotarized", registered: "rentalOptRegistered" },
+        repairs_paid_by: { landlord: "rentalOptLandlord", tenant: "rentalOptTenant", shared: "rentalOptShared" },
+        subletting_rules: { not_allowed: "rentalOptNotAllowed", allowed_with_permission: "rentalOptAllowedWithPermission", allowed: "rentalOptAllowed" },
+        is_owner_direct: { owner: "rentalOptOwner", agency: "rentalOptAgency" }
+      };
+      const groups = [
+        { titleKey: "rentalRulesFeatures", keys: ["heating_cooling", "appliances", "pet_policy", "smoking", "min_rental_period"] },
+        { titleKey: "rentalRulesLegal", keys: ["contract_type", "notice_period", "repairs_paid_by", "subletting_rules"], hintKey: "rentalRulesLegalHint" },
+        { titleKey: "rentalRulesLandlord", keys: ["is_owner_direct"] }
+      ];
+      const hasAny = Object.keys(rules).some((k) => rules[k] != null && String(rules[k]).trim() !== "");
+      if (hasAny) {
+        while (rentalRulesContainer.firstChild) rentalRulesContainer.removeChild(rentalRulesContainer.firstChild);
+        groups.forEach((g) => {
+          const filled = g.keys.filter((k) => rules[k] != null && String(rules[k]).trim() !== "");
+          if (filled.length === 0) return;
+          const block = document.createElement("div");
+          block.className = "rental-rules-block";
+          const h4 = document.createElement("h4");
+          h4.className = "rental-rules-block-title";
+          h4.textContent = tenantGetTranslation(g.titleKey);
+          block.appendChild(h4);
+          if (g.hintKey) {
+            const hintText = tenantGetTranslation(g.hintKey);
+            if (hintText && hintText.trim() !== "") {
+              const hint = document.createElement("p");
+              hint.className = "rental-rules-hint";
+              hint.textContent = hintText;
+              block.appendChild(hint);
+            }
+          }
+          const dl = document.createElement("dl");
+          dl.className = "apartment-details-list";
+          filled.forEach((k) => {
+            const dt = document.createElement("dt");
+            dt.textContent = tenantGetTranslation(labelKeys[k] || k) + ":";
+            const dd = document.createElement("dd");
+            let val = rules[k];
+            const map = valueToKey[k];
+            if (map && map[val]) val = tenantGetTranslation(map[val]);
+            dd.textContent = (val != null && String(val).trim() !== "") ? val : "-";
+            dl.appendChild(dt);
+            dl.appendChild(dd);
+          });
+          block.appendChild(dl);
+          rentalRulesContainer.appendChild(block);
+        });
+        rentalRulesSection.classList.remove("hidden");
+      } else {
+        rentalRulesSection.classList.add("hidden");
+      }
+    }
+    
+    // Show modal - remove hidden class and set display
+    modal.classList.remove("hidden");
     modal.style.display = "flex";
     document.body.style.overflow = "hidden";
+    
+    // Scroll modal into view immediately to ensure it's visible
+    modal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Scroll to pictures section within the modal content immediately
+    const modalContent = modal.querySelector('.apartment-details-content');
+    if (photosContainer && modalContent) {
+      // Wait for modal to render, then scroll to pictures
+      requestAnimationFrame(() => {
+        const photosTop = photosContainer.offsetTop;
+        modalContent.scrollTo({ top: Math.max(0, photosTop - 20), behavior: 'smooth' });
+      });
+    }
   };
 }
 
@@ -683,10 +881,45 @@ async function tenantCreateRequest(apartmentId, requestType) {
   if (!user) return;
 
   // Get tenant profile
-  const tenantProfile = await tenantLoadProfileByEmail(user);
+  let tenantProfile = await tenantLoadProfileByEmail(user);
+  
+  // If tenant profile exists but doesn't have user_id, update it
+  if (tenantProfile && !tenantProfile.user_id) {
+    const { error: updateError } = await tenantSupabase
+      .from("tenants")
+      .update({ user_id: user.id })
+      .eq("id", tenantProfile.id);
+    
+    if (!updateError) {
+      tenantProfile.user_id = user.id;
+    }
+  }
+  
+  // If no tenant profile exists, create one automatically using auth user data
   if (!tenantProfile) {
-    tenantNotify("error", tenantGetTranslation("tenantNoProfileLinked") || "Please complete your profile first.");
-    return;
+    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || "Tenant";
+    const phone = user.user_metadata?.phone || null;
+    
+    const { data: newProfile, error: createError } = await tenantSupabase
+      .from("tenants")
+      .insert({
+        full_name: fullName,
+        email: user.email,
+        phone: phone,
+        user_id: user.id, // Link to auth user for RLS policies
+        entry_date: new Date().toISOString().split('T')[0]
+      })
+      .select()
+      .single();
+    
+    if (createError) {
+      console.error("Error creating tenant profile:", createError);
+      tenantNotify("error", tenantGetTranslation("tenantRequestError") || "Failed to create tenant profile. Please try again.");
+      return;
+    }
+    
+    tenantProfile = newProfile;
+    tenantNotify("success", "Tenant profile created successfully!");
   }
 
   // Get apartment details

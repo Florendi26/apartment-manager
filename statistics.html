@@ -8,7 +8,6 @@
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/responsive.css" />
   </head>
   <body>
     <div class="logo-bar">
@@ -77,9 +76,9 @@
       
       <section id="adminView" class="view active">
         <section id="adminSummary" class="card admin-summary">
-          <header style="display: flex; justify-content: space-between; align-items: center;">
+          <header class="flex-header">
             <h3 id="statisticsHeaderTitle" data-i18n="myStatistics">My Statistics</h3>
-            <button type="button" id="statisticsToggleBtn" class="button-secondary" style="margin-left: auto;">
+            <button type="button" id="statisticsToggleBtn" class="button-secondary margin-left-auto">
               <span id="statisticsToggleText">Show Overall</span>
             </button>
           </header>
@@ -124,14 +123,14 @@
         </section>
 
         <!-- Expense Categories Statistics Section -->
-        <section id="categoryStatistics" class="card admin-summary" style="margin-top: 1.5rem;">
+        <section id="categoryStatistics" class="card admin-summary category-statistics">
           <header>
             <h3 data-i18n="categoryStatistics">Expense Categories</h3>
           </header>
           
           <!-- Rent Row -->
-          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Rent</h4>
-          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <h4 class="category-header">Rent</h4>
+          <div class="metrics-grid category-metrics-grid">
             <div class="metric-card">
               <span class="metric-label">Expenses</span>
               <span class="metric-value" id="statRentExpensesValue">€0.00</span>
@@ -147,8 +146,8 @@
           </div>
           
           <!-- Garbage Row -->
-          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Garbage</h4>
-          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <h4 class="category-header">Garbage</h4>
+          <div class="metrics-grid category-metrics-grid">
             <div class="metric-card">
               <span class="metric-label">Expenses</span>
               <span class="metric-value" id="statGarbageExpensesValue">€0.00</span>
@@ -164,8 +163,8 @@
           </div>
           
           <!-- Maintenance Row -->
-          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Maintenance</h4>
-          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <h4 class="category-header">Maintenance</h4>
+          <div class="metrics-grid category-metrics-grid">
             <div class="metric-card">
               <span class="metric-label">Expenses</span>
               <span class="metric-value" id="statMaintenanceExpensesValue">€0.00</span>
@@ -181,8 +180,8 @@
           </div>
           
           <!-- Electricity Row -->
-          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Electricity</h4>
-          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <h4 class="category-header">Electricity</h4>
+          <div class="metrics-grid category-metrics-grid">
             <div class="metric-card">
               <span class="metric-label">Expenses</span>
               <span class="metric-value" id="statElectricityExpensesValue">€0.00</span>
@@ -198,8 +197,8 @@
           </div>
           
           <!-- Water Row -->
-          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Water</h4>
-          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <h4 class="category-header">Water</h4>
+          <div class="metrics-grid category-metrics-grid">
             <div class="metric-card">
               <span class="metric-label">Expenses</span>
               <span class="metric-value" id="statWaterExpensesValue">€0.00</span>
@@ -215,8 +214,8 @@
           </div>
           
           <!-- Heating Row -->
-          <h4 style="margin: 1rem 0 0.5rem; color: #22c55e;">Heating</h4>
-          <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <h4 class="category-header">Heating</h4>
+          <div class="metrics-grid category-metrics-grid">
             <div class="metric-card">
               <span class="metric-label">Expenses</span>
               <span class="metric-value" id="statHeatingExpensesValue">€0.00</span>

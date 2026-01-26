@@ -8,7 +8,6 @@
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/responsive.css" />
   </head>
   <body>
     <div class="logo-bar">
@@ -33,28 +32,29 @@
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
           </svg>
         </button>
-        <button
-          type="button"
-          id="tenantThemeToggleBtn"
-          class="icon-button"
-          title="Theme"
-          aria-label="Toggle Theme"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-light">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-          </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-dark" style="display: none;">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-          </svg>
-        </button>
+        <label class="theme-switch" for="tenantThemeToggleSwitch" title="Toggle Theme" aria-label="Toggle Theme">
+          <input type="checkbox" id="tenantThemeToggleSwitch" class="theme-switch-input" />
+          <span class="theme-switch-container">
+            <span class="theme-switch-toggle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-switch-icon-light">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-switch-icon-dark">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                <circle cx="18" cy="6" r="1" fill="currentColor"></circle>
+                <circle cx="19" cy="10" r="0.5" fill="currentColor"></circle>
+              </svg>
+            </span>
+          </span>
+        </label>
         <button
           type="button"
           id="menuToggleBtn"
@@ -75,6 +75,21 @@
       <section id="tenantNotificationArea" aria-live="polite"></section>
 
       <section class="view active">
+        <div id="tenantSummary" class="grid">
+          <article class="card">
+            <h3 data-i18n="tenantInfo">Tenant Info</h3>
+            <dl id="tenantInfoList"></dl>
+          </article>
+          <article class="card">
+            <h3 data-i18n="contractInfo">Contract Info</h3>
+            <dl id="tenantContractList"></dl>
+          </article>
+          <article class="card">
+            <h3 data-i18n="financialSummary">Financial Summary</h3>
+            <dl id="tenantFinancialList"></dl>
+          </article>
+        </div>
+
         <article class="card">
           <header>
             <h3 data-i18n="tenantExpensesSummary">Summary</h3>
@@ -95,17 +110,38 @@
           </div>
         </article>
 
-        <article class="card">
-          <header>
+        <article class="card tenant-expenses-summary collapsible-card">
+          <header class="collapsible-header flex-header cursor-pointer">
             <h3 data-i18n="tenantExpensesByType">By Type</h3>
+            <div class="flex-header-content">
+              <span data-i18n="pdfOptionsHeading">Export Tenant PDF</span>
+              <div class="pdf-format-selector">
+                <label>
+                  <input type="radio" name="tenantPdfFormat" value="normal" checked>
+                  <span data-i18n="pdfFormatNormal">Normal</span>
+                </label>
+                <label>
+                  <input type="radio" name="tenantPdfFormat" value="detailed">
+                  <span data-i18n="pdfFormatDetailed">Detailed</span>
+                </label>
+              </div>
+              <div class="flex-gap-wrap">
+                <button type="button" id="exportTenantExpensesPdf" class="button-primary" data-i18n="pdfOptionEnglish">
+                  Download in English
+                </button>
+                <button type="button" id="exportTenantExpensesPdfSq" class="button-primary" data-i18n="pdfOptionAlbanian">
+                  Download in Albanian
+                </button>
+              </div>
+            </div>
           </header>
-          <div class="table-wrapper">
+          <div class="summary-panel collapsible-content collapsed">
             <table>
               <thead>
                 <tr>
                   <th data-i18n="tenantExpensesType">Type</th>
-                  <th data-i18n="tenantExpensesTotalExpenses">Expenses</th>
-                  <th data-i18n="tenantExpensesTotalPayments">Payments</th>
+                  <th data-i18n="tenantExpensesTotalExpenses">Total Expenses</th>
+                  <th data-i18n="tenantExpensesTotalPayments">Total Payments</th>
                   <th data-i18n="tenantExpensesBalance">Balance</th>
                 </tr>
               </thead>
@@ -114,11 +150,11 @@
           </div>
         </article>
 
-        <article class="card">
-          <header>
+        <article class="card collapsible-card">
+          <header class="collapsible-header cursor-pointer">
             <h3 data-i18n="tenantExpensesAllExpenses">All Expenses</h3>
           </header>
-          <div class="table-wrapper">
+          <div class="table-wrapper collapsible-content collapsed">
             <table>
               <thead>
                 <tr>
@@ -133,11 +169,11 @@
           </div>
         </article>
 
-        <article class="card">
-          <header>
+        <article class="card collapsible-card">
+          <header class="collapsible-header cursor-pointer">
             <h3 data-i18n="tenantExpensesAllPayments">All Payments</h3>
           </header>
-          <div class="table-wrapper">
+          <div class="table-wrapper collapsible-content collapsed">
             <table>
               <thead>
                 <tr>
@@ -182,9 +218,12 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
     <script src="js/config.js"></script>
     <script src="js/languages.js"></script>
     <script src="js/tenant-common.js"></script>
+    <script src="js/pdf-export.js"></script>
     <script src="js/tenant-expenses.js"></script>
   </body>
   </html>
