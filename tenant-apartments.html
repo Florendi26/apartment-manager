@@ -137,6 +137,104 @@
         </div>
       </div>
       
+      <!-- Contract Preview Modal -->
+      <div id="contractPreviewModal" class="contract-preview-modal hidden">
+        <div class="contract-preview-content">
+          <button class="contract-preview-close" id="contractPreviewClose">&times;</button>
+          <div class="contract-preview-header">
+            <h2 data-i18n="contractPreviewTitle">Contract Preview</h2>
+            <div class="contract-countdown" id="contractCountdown">
+              <span data-i18n="contractExpirationText">Kjo kërkesë do të skadojë pas:</span>
+              <span class="countdown-timer" id="countdownTimer">60:00</span>
+            </div>
+          </div>
+          <div class="contract-preview-body" id="contractPreviewBody">
+            <!-- Contract content will be inserted here -->
+          </div>
+          <div class="contract-request-form" id="contractRequestForm">
+            <h3 data-i18n="contractRequestFormTitle">Konfigurimi i Kontratës</h3>
+            
+            <div class="field">
+              <label>
+                <input type="radio" name="priceAcceptance" value="accepted" id="priceAccepted" checked>
+                <span data-i18n="priceAccepted">Çmimi më konvenon</span>
+              </label>
+              <label>
+                <input type="radio" name="priceAcceptance" value="negotiate" id="priceNegotiate">
+                <span data-i18n="priceNegotiate">Dëshiroj të negocioj çmimin</span>
+              </label>
+            </div>
+
+            <div class="field-group">
+              <div class="field">
+                <label for="contractStartDate" data-i18n="contractStartDate">Data e Fillimit</label>
+                <input type="date" id="contractStartDate" name="start_date" required>
+              </div>
+              <div class="field">
+                <label for="contractEndDate" data-i18n="contractEndDate">Data e Mbarimit</label>
+                <input type="date" id="contractEndDate" name="end_date">
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="contractMinDuration" data-i18n="contractMinDuration">Kohëzgjatja Minimale (muaj)</label>
+              <input type="number" id="contractMinDuration" name="min_duration" min="1" value="12" required>
+            </div>
+
+            <div class="field">
+              <label data-i18n="paymentMethod">Metoda e Pagesës</label>
+              <div class="radio-group">
+                <label>
+                  <input type="radio" name="paymentMethod" value="from_today" id="paymentFromToday" checked>
+                  <span data-i18n="paymentFromToday">Nga sot (pjesë-pjesë)</span>
+                </label>
+                <label>
+                  <input type="radio" name="paymentMethod" value="full" id="paymentFull">
+                  <span data-i18n="paymentFull">Pagesë e plotë</span>
+                </label>
+              </div>
+              <div id="paymentCalculation" class="payment-calculation" style="margin-top: 10px; padding: 10px; background-color: var(--bg-secondary, #f5f5f5); border-radius: 4px; display: none;">
+                <p style="margin: 0; font-size: 0.9em;">
+                  <strong data-i18n="calculatedPayment">Pagesa e llogaritur:</strong>
+                  <span id="calculatedPaymentAmount">0 EUR</span>
+                </p>
+                <p style="margin: 5px 0 0 0; font-size: 0.85em; color: var(--text-secondary, #666);" id="paymentCalculationDetails"></p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="contractDeposit" data-i18n="contractDeposit">Depozita</label>
+              <select id="contractDeposit" name="deposit">
+                <option value="full_rent" data-i18n="depositFullRent">Pagesë e plotë (1 qira)</option>
+                <option value="half_rent" data-i18n="depositHalfRent" selected>Gjysmë qera (0.5 qira)</option>
+                <option value="custom" data-i18n="depositCustom">Shumë tjetër</option>
+              </select>
+              <div id="depositCalculation" class="payment-calculation" style="margin-top: 10px; padding: 10px; background-color: var(--bg-secondary, #f5f5f5); border-radius: 4px;">
+                <p style="margin: 0; font-size: 0.9em;">
+                  <strong data-i18n="calculatedDeposit">Depozita e llogaritur:</strong>
+                  <span id="calculatedDepositAmount">0 EUR</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="field" id="customDepositField" style="display: none;">
+              <label for="customDepositAmount" data-i18n="customDepositAmount">Shuma e Depozitës (EUR)</label>
+              <input type="number" id="customDepositAmount" name="custom_deposit" min="0" step="0.01">
+            </div>
+
+            <div class="field">
+              <label for="contractNotes" data-i18n="contractNotes">Shënime shtesë (opsionale)</label>
+              <textarea id="contractNotes" name="notes" rows="3" placeholder="Çdo informacion shtesë që dëshironi të përmendni..."></textarea>
+            </div>
+          </div>
+          <div class="contract-preview-actions">
+            <!-- Print button will be inserted here dynamically -->
+            <button type="button" class="button-secondary" id="contractPreviewCancel" data-i18n="cancel">Cancel</button>
+            <button type="button" class="button-primary" id="contractPreviewSubmit" data-i18n="submitContractRequest">Dërgo Kërkesën për Kontratë</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Photo Viewer Modal -->
       <div id="photoViewerModal" class="photo-viewer-modal hidden">
         <div class="photo-viewer-content">

@@ -384,6 +384,50 @@
                     <option value="Other" data-i18n="municipalityOther">Other</option>
                   </select>
                 </div>
+                <div class="field" id="apartmentNeighborhoodField" style="display: none;">
+                  <label for="apartmentNeighborhood" data-i18n="apartmentNeighborhood">Neighborhood</label>
+                  <select id="apartmentNeighborhood" name="neighborhood">
+                    <option value="">-</option>
+                    <option value="Aktash">Aktash</option>
+                    <option value="Arbëri - Dragodan">Arbëri - Dragodan</option>
+                    <option value="Bregu i Diellit">Bregu i Diellit</option>
+                    <option value="Çagllavicë">Çagllavicë</option>
+                    <option value="Dardani">Dardani</option>
+                    <option value="Dodona">Dodona</option>
+                    <option value="Gërmi">Gërmi</option>
+                    <option value="Kalabri - Emshir">Kalabri - Emshir</option>
+                    <option value="Kolovicë">Kolovicë</option>
+                    <option value="Lagjia Qëndresa">Lagjia Qëndresa</option>
+                    <option value="Lagjia Vellusha">Lagjia Vellusha</option>
+                    <option value="Lagjia E Muhaxherëve">Lagjia E Muhaxherëve</option>
+                    <option value="Lagjia e Prishtinës">Lagjia e Prishtinës</option>
+                    <option value="Lagjia NIC">Lagjia NIC</option>
+                    <option value="Lagjia Qershia">Lagjia Qershia</option>
+                    <option value="Lakrishtë">Lakrishtë</option>
+                    <option value="Marigona Hill">Marigona Hill</option>
+                    <option value="Marigona Residenc">Marigona Residenc</option>
+                    <option value="Mati">Mati</option>
+                    <option value="Mati 1">Mati 1</option>
+                    <option value="Parku i Qytetit - 4 Llullat - Sllovenia Sport">Parku i Qytetit - 4 Llullat - Sllovenia Sport</option>
+                    <option value="Pejton">Pejton</option>
+                    <option value="Prishtina e Re">Prishtina e Re</option>
+                    <option value="Prugoc">Prugoc</option>
+                    <option value="Qafa">Qafa</option>
+                    <option value="Qendra">Qendra</option>
+                    <option value="Rruga A">Rruga A</option>
+                    <option value="Rruga B">Rruga B</option>
+                    <option value="Rruga C">Rruga C</option>
+                    <option value="Rruga E">Rruga E</option>
+                    <option value="Sami Frashëri">Sami Frashëri</option>
+                    <option value="Sofali">Sofali</option>
+                    <option value="Taslixhe">Taslixhe</option>
+                    <option value="Taukbashqe">Taukbashqe</option>
+                    <option value="Tophane">Tophane</option>
+                    <option value="Ulpianë">Ulpianë</option>
+                    <option value="Velani">Velani</option>
+                    <option value="Veternik">Veternik</option>
+                  </select>
+                </div>
                 <div class="field">
                   <label for="apartmentMonthlyRent" data-i18n="apartmentMonthlyRent">Monthly Rent Price (EUR)</label>
                   <input
@@ -1188,6 +1232,28 @@
             </div>
           </article>
         </section>
+
+        <!-- Contract Preview Modal for Admin -->
+        <div id="adminContractPreviewModal" class="contract-preview-modal hidden">
+          <div class="contract-preview-content">
+            <button class="contract-preview-close" id="adminContractPreviewClose">&times;</button>
+            <div class="contract-preview-header">
+              <h2 data-i18n="contractPreviewTitle">Contract Preview</h2>
+              <div class="contract-countdown" id="adminContractCountdown">
+                <span data-i18n="contractExpirationText">Kjo kërkesë do të skadojë pas:</span>
+                <span class="countdown-timer" id="adminCountdownTimer">60:00</span>
+              </div>
+            </div>
+            <div class="contract-preview-body" id="adminContractPreviewBody">
+              <!-- Contract content will be inserted here -->
+            </div>
+            <div class="contract-preview-actions">
+              <button type="button" class="button-secondary" id="adminContractPreviewCancel" data-i18n="cancel">Cancel</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="adminContractPreviewReject" disabled data-i18n="reject">Reject</button>
+              <button type="button" class="btn btn-primary btn-sm" id="adminContractPreviewAccept" disabled data-i18n="accept">Accept</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="tenantView" class="view">
