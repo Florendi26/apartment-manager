@@ -148,6 +148,7 @@ const state = {
   globalTenantFilter: null, // Global tenant filter for all views
   globalContractFilter: null, // Global contract filter for all views
   paginationInstances: {}, // Store pagination instances for each table
+  paymentRequestsData: null, // { requests, tenantsMap } for filtering
 };
 
 // Table mapping for split tables
@@ -602,6 +603,7 @@ function cacheElements() {
     clearTenantFilter: document.getElementById("clearTenantFilter"),
     globalContractFilter: document.getElementById("globalContractFilter"),
     clearContractFilter: document.getElementById("clearContractFilter"),
+    paymentProofFilterType: document.getElementById("paymentProofFilterType"),
   });
   if (elements.debtFormCancelEdit) {
     elements.debtFormCancelEdit.addEventListener("click", () => {
@@ -790,6 +792,10 @@ function attachEventListeners() {
     elements.clearContractFilter.addEventListener("click", clearGlobalContractFilter);
   }
 
+  // Payment proofs filters
+  if (elements.paymentProofFilterType) {
+    elements.paymentProofFilterType.addEventListener("change", renderPaymentRequestsFiltered);
+  }
   elements.apartmentForm.addEventListener("submit", onCreateApartment);
   
   // Feature buttons click handlers
@@ -888,11 +894,11 @@ function attachEventListeners() {
   if (elements.toggleContractFormBtn) {
     elements.toggleContractFormBtn.addEventListener("click", () => {
       const form = elements.contractForm;
-      const isVisible = form.style.display !== "none";
+      const isVisible = !form.classList.contains("hidden");
       
       if (isVisible) {
         // Hide form
-        form.style.display = "none";
+        form.classList.add("hidden");
         elements.toggleContractFormBtn.textContent = translate("addContract") || "Add Contract";
         // Reset form
         form.reset();
@@ -900,7 +906,8 @@ function attachEventListeners() {
           elements.contractActive.checked = true;
         }
       } else {
-        // Show form
+        // Show form (remove .hidden which uses !important)
+        form.classList.remove("hidden");
         form.style.display = "grid";
         elements.toggleContractFormBtn.textContent = translate("cancel") || "Cancel";
         // Scroll to form
@@ -1022,6 +1029,7 @@ function attachEventListeners() {
   if (elements.markPaidCancel) {
     elements.markPaidCancel.addEventListener("click", () => {
       if (elements.markPaidModal) {
+        elements.markPaidModal.classList.add("hidden");
         elements.markPaidModal.style.display = "none";
       }
       state.markPaidDebtId = null;
@@ -1152,6 +1160,9 @@ function handleGlobalContractFilterChange() {
   renderPaymentsTable();
   renderOpenExpensesTable();
   renderUtilitySummary();
+  renderPaymentRequestsFiltered();
+  refreshTenantSummaries();
+  populateDebtSelects();
 }
 
 function clearGlobalContractFilter() {
@@ -1173,6 +1184,9 @@ function clearGlobalContractFilter() {
   renderPaymentsTable();
   renderOpenExpensesTable();
   renderUtilitySummary();
+  renderPaymentRequestsFiltered();
+  refreshTenantSummaries();
+  populateDebtSelects();
 }
 
 function updateFormContractLock() {
@@ -1400,6 +1414,9 @@ function setAdminPage(page, expenseCategory = state.expensesCategory) {
   updateAdminNavActive(page, expenseCategory);
   if (page === "expenses") {
     applyExpensesCategory(expenseCategory);
+  }
+  if (page === "expenses" || page === "payment-proofs") {
+    loadPaymentRequests(); // Refresh payment requests when viewing expenses or dedicated payment proofs page
     // Ensure pagination loads when expenses page is shown
     setTimeout(() => {
       if (state.paginationInstances.debts) {
@@ -1631,29 +1648,36 @@ function refreshTenantSummaries() {
 function buildTenantSummaryData() {
   // Get the active expense type filter
   const activeExpenseType = getActiveExpenseType();
-  
-  return (state.tenants || [])
+  const debts = getFilteredDebts();
+  const payments = getFilteredPayments();
+
+  // When contract filter is active, only include tenants from that contract
+  let tenantsToShow = state.tenants || [];
+  if (state.globalContractFilter) {
+    const contract = state.contracts.find((c) => equalsId(c.id, state.globalContractFilter));
+    if (contract) {
+      tenantsToShow = state.tenants.filter((t) => equalsId(t.id, contract.tenant_id));
+    }
+  }
+
+  return tenantsToShow
     .map((tenant) => {
       const tenantName = tenant.full_name || translate("unknown");
-      const openDebts = (state.debts || [])
+      const openDebts = debts
         .filter(
           (debt) => equalsId(debt.tenant_id, tenant.id) && !debt.is_paid
         )
         .filter((debt) => {
-          // Filter by expense type if a filter is active
           if (activeExpenseType) {
             return debt.type === activeExpenseType;
           }
           return true;
         });
-      const tenantPayments = (state.payments || [])
-        .filter((payment) => equalsId(payment.tenant_id, tenant.id))
+      const tenantPayments = (payments || [])
+        .filter((p) => equalsId(p.tenant_id, tenant.id))
         .filter((payment) => {
-          // Filter by expense type if a filter is active
           if (activeExpenseType) {
-            // Check payment's own type first
             if (payment.type === activeExpenseType) return true;
-            // Fall back to checking linked debt
             const debt = state.debts.find((d) => equalsId(d.id, payment.debt_id));
             return debt && debt.type === activeExpenseType;
           }
@@ -1669,7 +1693,17 @@ function buildTenantSummaryData() {
         (sum, payment) => sum + (parseFloat(payment.amount) || 0),
         0
       );
-      if (!expensesCount && !paymentsCount) {
+
+      // Last expense date: most recent due_date for this tenant (and type when filtered)
+      const tenantDebtsFiltered = activeExpenseType
+        ? debts.filter((d) => equalsId(d.tenant_id, tenant.id) && d.type === activeExpenseType)
+        : debts.filter((d) => equalsId(d.tenant_id, tenant.id));
+      const dates = tenantDebtsFiltered
+        .map((d) => d.due_date || d.bill_date)
+        .filter(Boolean);
+      const lastExpenseDate = dates.length ? dates.sort().pop() : null;
+
+      if (!expensesCount && !paymentsCount && !lastExpenseDate) {
         return null;
       }
       return {
@@ -1679,6 +1713,7 @@ function buildTenantSummaryData() {
         expensesAmount,
         paymentsCount,
         paymentsAmount,
+        lastExpenseDate,
       };
     })
     .filter(Boolean)
@@ -1693,7 +1728,7 @@ function renderTenantSummaryBody(target, summary) {
   if (!summary.length) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.setAttribute('colspan', '5');
+    td.setAttribute('colspan', '6');
     td.textContent = sanitize(translate("summaryNoData"));
     tr.appendChild(td);
     target.appendChild(tr);
@@ -1706,6 +1741,10 @@ function renderTenantSummaryBody(target, summary) {
     const tenantCell = document.createElement('td');
     tenantCell.textContent = sanitize(row.tenantName);
     tr.appendChild(tenantCell);
+    
+    const lastExpenseCell = document.createElement('td');
+    lastExpenseCell.textContent = row.lastExpenseDate ? formatDate(row.lastExpenseDate) : "-";
+    tr.appendChild(lastExpenseCell);
     
     const expensesCountCell = document.createElement('td');
     expensesCountCell.textContent = row.expensesCount;
@@ -1941,6 +1980,7 @@ async function loadInitialData() {
     loadUtilityBills(),
     loadUtilityPayments(),
     loadRequests(),
+    loadPaymentRequests(),
   ]);
   
   // Ensure apartments table is rendered after all data is loaded
@@ -2239,9 +2279,6 @@ async function syncApartmentRentalStatus() {
 async function loadDebts() {
   // Load from all split bill tables
   await loadAllBills();
-  
-  // Setup pagination after loading
-  setupDebtsPagination();
   
   // Combine all bills into state.debts for backward compatibility
   state.debts = [
@@ -2888,6 +2925,113 @@ function setupDebtsPagination() {
       const typeLabel = getDebtTypeLabel(debt);
       const isUtility = isUtilityType(debt.type);
       const showMarkPaid = !isUtility;
+      const isEditing = state.editingDebtId && equalsId(state.editingDebtId, debt.id);
+
+      if (isEditing) {
+        // Render editable row (inline edit)
+        const row = document.createElement('tr');
+        row.className = 'editing-row';
+        const amountValue = normalizeCurrency(debt.amount).toFixed(2);
+        const dueDateValue = debt.due_date || "";
+        const notesValue = stripElectricityCutMarker(debt.notes || "");
+        const isUtilityEdit = isUtilityType(debt.type);
+
+        const summaryCell = document.createElement('td');
+        summaryCell.className = 'mobile-summary-cell';
+        summaryCell.textContent = sanitize(tenant?.full_name || "") + " • " + sanitize(typeLabel);
+        row.appendChild(summaryCell);
+
+        const tenantCell = document.createElement('td');
+        tenantCell.textContent = sanitize(tenant?.full_name || translate("unknown"));
+        row.appendChild(tenantCell);
+
+        const typeCell = document.createElement('td');
+        const typeSelect = document.createElement('select');
+        typeSelect.className = 'inline-edit-input form-select';
+        typeSelect.setAttribute('data-field', 'type');
+        typeSelect.required = true;
+        [{ value: "rent", label: translate("debtRent") || "Rent" }, { value: "maintenance", label: translate("debtMaintenance") || "Maintenance" }, { value: "garbage", label: translate("debtGarbage") || "Garbage" }, { value: "thermos", label: translate("debtThermos") || "Thermos" }, { value: "electricity", label: translate("debtElectricity") || "Electricity" }, { value: "water", label: translate("debtWater") || "Water" }, { value: "damage", label: translate("debtDamage") || "Damage" }, { value: "other", label: translate("debtOther") || "Other" }].forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt.value;
+          option.textContent = sanitize(opt.label);
+          if (debt.type === opt.value) option.selected = true;
+          typeSelect.appendChild(option);
+        });
+        typeCell.appendChild(typeSelect);
+        row.appendChild(typeCell);
+
+        const amountCell = document.createElement('td');
+        const amountInput = document.createElement('input');
+        amountInput.type = 'number';
+        amountInput.className = 'inline-edit-input form-control';
+        amountInput.setAttribute('data-field', 'amount');
+        amountInput.value = amountValue;
+        amountInput.min = '0';
+        amountInput.step = '0.01';
+        amountInput.required = true;
+        amountCell.appendChild(amountInput);
+        row.appendChild(amountCell);
+
+        const dueDateCell = document.createElement('td');
+        const dueDateInput = document.createElement('input');
+        dueDateInput.type = 'date';
+        dueDateInput.className = 'inline-edit-input form-control';
+        dueDateInput.setAttribute('data-field', 'due_date');
+        dueDateInput.value = dueDateValue;
+        dueDateInput.required = true;
+        dueDateCell.appendChild(dueDateInput);
+        row.appendChild(dueDateCell);
+
+        const statusCell = document.createElement('td');
+        if (!isUtilityEdit) {
+          const statusTag = document.createElement('span');
+          statusTag.className = `badge ${status.class === 'overdue' ? 'bg-danger' : status.class === 'paid' ? 'bg-success' : 'bg-warning'}`;
+          statusTag.textContent = status.label;
+          statusCell.appendChild(statusTag);
+        }
+        row.appendChild(statusCell);
+
+        const refCell = document.createElement('td');
+        refCell.textContent = sanitize(formatReferenceForDisplay(debt.reference));
+        row.appendChild(refCell);
+
+        const notesCell = document.createElement('td');
+        const notesInput = document.createElement('input');
+        notesInput.type = 'text';
+        notesInput.className = 'inline-edit-input form-control';
+        notesInput.setAttribute('data-field', 'notes');
+        notesInput.value = notesValue;
+        notesInput.placeholder = translate("notes") || "Notes";
+        notesCell.appendChild(notesInput);
+        row.appendChild(notesCell);
+
+        const actionsCell = document.createElement('td');
+        const actionsGroup = document.createElement('div');
+        actionsGroup.className = 'btn-group';
+        const saveBtn = document.createElement('button');
+        saveBtn.type = 'button';
+        saveBtn.className = 'btn btn-primary btn-sm';
+        saveBtn.setAttribute('data-action', 'save-debt');
+        saveBtn.setAttribute('data-id', debt.id);
+        saveBtn.textContent = translate("save") || "Save";
+        saveBtn.addEventListener("click", () => handleSaveDebt(debt.id));
+        actionsGroup.appendChild(saveBtn);
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'btn btn-outline-secondary btn-sm';
+        cancelBtn.setAttribute('data-action', 'cancel-edit-debt');
+        cancelBtn.setAttribute('data-id', debt.id);
+        cancelBtn.textContent = translate("cancelEdit") || "Cancel";
+        cancelBtn.addEventListener("click", () => {
+          state.editingDebtId = null;
+          renderDebtsTable();
+        });
+        actionsGroup.appendChild(cancelBtn);
+        actionsCell.appendChild(actionsGroup);
+        row.appendChild(actionsCell);
+
+        return row;
+      }
 
       const row = document.createElement('tr');
       row.classList.add('collapsed'); // Collapsed by default on mobile
@@ -3022,7 +3166,7 @@ function setupDebtsPagination() {
       if (showMarkPaid && !debt.is_paid) {
         const markPaidBtn = document.createElement('button');
         markPaidBtn.type = 'button';
-        markPaidBtn.className = 'btn btn-primary btn-sm';
+        markPaidBtn.className = 'btn btn-outline-secondary btn-sm';
         markPaidBtn.setAttribute('data-action', 'mark-paid');
         markPaidBtn.setAttribute('data-id', debt.id);
         markPaidBtn.textContent = translate("markPaid");
@@ -3537,6 +3681,238 @@ async function loadRequests() {
       elements.requestsTableBody.appendChild(tr);
     });
   }
+}
+
+async function loadPaymentRequests() {
+  const container = document.getElementById("paymentRequestsBody");
+  const historyContainer = document.getElementById("paymentRequestsHistoryBody");
+  if (!container) return;
+
+  if (!state.currentUser) {
+    container.innerHTML = '<p class="text-muted">' + (translate("paymentRequestsNone") || "No payment requests.") + '</p>';
+    if (historyContainer) historyContainer.innerHTML = "";
+    return;
+  }
+
+  const { data: landlordApartments, error: aptErr } = await supabase
+    .from("apartments")
+    .select("id")
+    .eq("landlord_id", state.currentUser.id);
+
+  if (aptErr || !landlordApartments || landlordApartments.length === 0) {
+    container.innerHTML = '<p class="text-muted">' + (translate("paymentRequestsNone") || "No payment requests.") + '</p>';
+    if (historyContainer) historyContainer.innerHTML = "";
+    return;
+  }
+
+  const apartmentIds = landlordApartments.map((a) => a.id);
+  const { data: landlordContracts, error: contractErr } = await supabase
+    .from("contracts")
+    .select("id")
+    .in("apartment_id", apartmentIds);
+
+  if (contractErr || !landlordContracts || landlordContracts.length === 0) {
+    container.innerHTML = '<p class="text-muted">' + (translate("paymentRequestsNone") || "No payment requests.") + '</p>';
+    if (historyContainer) historyContainer.innerHTML = "";
+    return;
+  }
+
+  const contractIds = landlordContracts.map((c) => c.id);
+
+  const { data: allRequests, error } = await supabase
+    .from("payment_requests")
+    .select("id, tenant_id, contract_id, bill_id, expense_type, amount, payment_date, method, proof_image, status, created_at")
+    .in("contract_id", contractIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("loadPaymentRequests", error);
+    container.innerHTML = '<p class="text-danger">' + (translate("errorLoad") || "Error loading.") + '</p>';
+    if (historyContainer) historyContainer.innerHTML = "";
+    return;
+  }
+
+  const requests = allRequests || [];
+  const tenantIds = [...new Set(requests.map((r) => r.tenant_id))];
+  const { data: tenants } = await supabase
+    .from("tenants")
+    .select("id, full_name, email")
+    .in("id", tenantIds);
+
+  const tenantsMap = {};
+  tenants?.forEach((t) => { tenantsMap[t.id] = t; });
+
+  state.paymentRequestsData = { requests, tenantsMap };
+
+  renderPaymentRequestsFiltered();
+}
+
+function renderPaymentRequestsFiltered() {
+  const container = document.getElementById("paymentRequestsBody");
+  const historyContainer = document.getElementById("paymentRequestsHistoryBody");
+  if (!container || !state.paymentRequestsData) return;
+
+  const { requests, tenantsMap } = state.paymentRequestsData;
+  const typeFilter = elements.paymentProofFilterType?.value || "all";
+
+  const filterReq = (r) => {
+    if (state.globalContractFilter && !equalsId(r.contract_id, state.globalContractFilter)) return false;
+    if (typeFilter !== "all") {
+      const reqType = (r.expense_type || "").toLowerCase();
+      const filterType = typeFilter.toLowerCase();
+      if (reqType !== filterType) return false;
+    }
+    return true;
+  };
+
+  const pending = requests.filter((r) => r.status === "pending" && filterReq(r));
+  const decided = requests.filter((r) => (r.status === "accepted" || r.status === "declined") && filterReq(r));
+
+  container.innerHTML = "";
+  if (pending.length === 0) {
+    container.innerHTML = '<p class="text-muted">' + (translate("paymentRequestsNone") || "No pending payment requests.") + '</p>';
+  } else {
+    pending.forEach((req) => {
+      const tenant = tenantsMap[req.tenant_id];
+      const typeLabel = getDebtTypeLabel({ type: req.expense_type }) || req.expense_type;
+      const card = document.createElement("div");
+      card.className = "payment-request-card";
+      card.innerHTML = `
+        <div class="payment-request-info">
+          <strong>${sanitize(tenant?.full_name || translate("unknown"))}</strong>
+          <span>${typeLabel} – ${formatCurrency(req.amount)}</span>
+          <span>${formatDate(req.payment_date)} | ${sanitize(req.method || "-")}</span>
+        </div>
+        <div class="payment-request-proof">
+          <img src="${req.proof_image}" alt="Proof" class="payment-proof-thumb" />
+        </div>
+        <div class="payment-request-actions">
+          <button type="button" class="btn btn-primary btn-sm" data-action="accept-payment-request" data-id="${req.id}">${translate("accept") || "Accept"}</button>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-action="decline-payment-request" data-id="${req.id}">${translate("reject") || "Decline"}</button>
+        </div>
+      `;
+      card.querySelector('[data-action="accept-payment-request"]').addEventListener("click", () => handleAcceptPaymentRequest(req.id));
+      card.querySelector('[data-action="decline-payment-request"]').addEventListener("click", () => handleDeclinePaymentRequest(req.id));
+      container.appendChild(card);
+    });
+  }
+
+  if (historyContainer) {
+    historyContainer.innerHTML = "";
+    if (decided.length === 0) {
+      historyContainer.innerHTML = '<p class="text-muted">' + (translate("paymentRequestsHistoryNone") || "No payment proofs decided yet.") + '</p>';
+    } else {
+      decided.forEach((req) => {
+        const tenant = tenantsMap[req.tenant_id];
+        const typeLabel = getDebtTypeLabel({ type: req.expense_type }) || req.expense_type;
+        const statusLabel = req.status === "accepted" ? (translate("paymentProofStatusAccepted") || "Accepted") : (translate("paymentProofStatusDeclined") || "Declined");
+        const statusClass = req.status === "accepted" ? "badge bg-success" : "badge bg-danger";
+        const card = document.createElement("div");
+        card.className = "payment-request-card payment-request-card-history";
+        card.innerHTML = `
+          <div class="payment-request-info">
+            <strong>${sanitize(tenant?.full_name || translate("unknown"))}</strong>
+            <span>${typeLabel} – ${formatCurrency(req.amount)}</span>
+            <span>${formatDate(req.payment_date)} | ${sanitize(req.method || "-")}</span>
+            <span class="${statusClass}">${statusLabel}</span>
+          </div>
+          <div class="payment-request-proof">
+            <img src="${req.proof_image}" alt="Proof" class="payment-proof-thumb" />
+          </div>
+        `;
+        historyContainer.appendChild(card);
+      });
+    }
+  }
+}
+
+async function handleAcceptPaymentRequest(requestId) {
+  const { data: req, error: fetchErr } = await supabase
+    .from("payment_requests")
+    .select("id, tenant_id, contract_id, bill_id, expense_type, amount, payment_date, method")
+    .eq("id", requestId)
+    .eq("status", "pending")
+    .single();
+
+  if (fetchErr || !req) {
+    notify("error", translate("errorLoad") || "Request not found or already processed.");
+    await loadPaymentRequests();
+    return;
+  }
+
+  const tableInfo = EXPENSE_TABLES[req.expense_type];
+  if (!tableInfo) {
+    notify("error", translate("errorLoad") || "Invalid expense type.");
+    return;
+  }
+
+  const { error: insertErr } = await supabase.from(tableInfo.payments).insert({
+    tenant_id: req.tenant_id,
+    contract_id: req.contract_id,
+    bill_id: req.bill_id,
+    amount: req.amount,
+    payment_date: req.payment_date,
+    method: req.method || "Payment proof",
+  });
+
+  if (insertErr) {
+    notify("error", translate("errorLoad") || "Failed to record payment.");
+    console.error("handleAcceptPaymentRequest", insertErr);
+    return;
+  }
+
+  const { error: updateErr } = await supabase
+    .from("payment_requests")
+    .update({ status: "accepted", updated_at: new Date().toISOString() })
+    .eq("id", requestId);
+
+  if (updateErr) {
+    console.error("handleAcceptPaymentRequest update", updateErr);
+  }
+
+  if (tableInfo.hasStatus && req.bill_id) {
+    const debt = state.debts.find((d) => equalsId(d.id, req.bill_id));
+    if (debt) {
+      const debtPayments = (state.payments || []).filter((p) => equalsId(p.bill_id, req.bill_id) || equalsId(p.debt_id, req.bill_id));
+      const totalPaid = debtPayments.reduce((s, p) => s + normalizeCurrency(p.amount), 0) + normalizeCurrency(req.amount);
+      const debtAmount = normalizeCurrency(debt.amount);
+      if (totalPaid >= debtAmount - 0.001) {
+        await supabase.from(tableInfo.bills).update({ is_paid: true }).eq("id", req.bill_id);
+      }
+    }
+  }
+
+  notify("success", translate("paymentRequestAccepted") || "Payment accepted and recorded.");
+  if (typeof sendNotification === "function") {
+    sendNotification(supabase, { type: "payment-proof-accepted", id: requestId });
+  }
+  await loadPayments();
+  await loadDebts();
+  await loadPaymentRequests();
+}
+
+async function handleDeclinePaymentRequest(requestId) {
+  if (!confirm(translate("confirmDeclinePaymentRequest") || "Are you sure you want to decline this payment proof?")) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("payment_requests")
+    .update({ status: "declined", updated_at: new Date().toISOString() })
+    .eq("id", requestId)
+    .eq("status", "pending");
+
+  if (error) {
+    notify("error", translate("errorLoad") || "Failed to decline.");
+    console.error("handleDeclinePaymentRequest", error);
+    return;
+  }
+
+  notify("success", translate("paymentRequestDeclined") || "Payment proof declined.");
+  if (typeof sendNotification === "function") {
+    sendNotification(supabase, { type: "payment-proof-declined", id: requestId });
+  }
+  await loadPaymentRequests();
 }
 
 // Admin Contract Preview Modal with Countdown
@@ -4754,15 +5130,9 @@ async function sendRequestNotification(requestId, status) {
     .eq("id", request.apartment_id)
     .single();
 
-  // TODO: Implement actual SMS/Email sending
-  // For now, just log it
-  console.log(`Notification: Request ${status} for apartment ${apartment?.name || request.apartment_id}`);
-  console.log(`Tenant: ${tenant.email}, Phone: ${tenant.phone || "N/A"}`);
-  
-  // You can integrate with services like:
-  // - Twilio for SMS
-  // - SendGrid, Mailgun, or Supabase Edge Functions for Email
-  // - Or use Supabase's built-in email functionality
+  if (typeof sendNotification === "function") {
+    sendNotification(supabase, { type: status === "accepted" ? "request-accepted" : "request-rejected", id: requestId });
+  }
 }
 
 function renderApartmentsTable() {
@@ -5260,8 +5630,13 @@ function renderTotalPaymentSummary(summary) {
 }
 
 function renderDebtsTable() {
-  // If pagination is set up, reset it to refresh with new filters
+  // If pagination is set up
   if (state.paginationInstances.debts) {
+    // When editing, refresh current items so the row shows edit UI without losing scroll position
+    if (state.editingDebtId) {
+      state.paginationInstances.debts.refresh();
+      return;
+    }
     state.paginationInstances.debts.reset();
     // Recalculate and render total payment summary (done in onLoadComplete)
     return;
@@ -5580,7 +5955,7 @@ function renderDebtsTable() {
       if (showMarkPaid && !debt.is_paid) {
         const summaryMarkPaidBtn = document.createElement('button');
         summaryMarkPaidBtn.type = 'button';
-        summaryMarkPaidBtn.className = 'btn btn-primary btn-sm';
+        summaryMarkPaidBtn.className = 'btn btn-outline-secondary btn-sm';
         summaryMarkPaidBtn.setAttribute('data-action', 'mark-paid');
         summaryMarkPaidBtn.setAttribute('data-id', debt.id);
         summaryMarkPaidBtn.textContent = translate("markPaid");
@@ -5666,7 +6041,7 @@ function renderDebtsTable() {
       if (showMarkPaid && !debt.is_paid) {
         const markPaidBtn = document.createElement('button');
         markPaidBtn.type = 'button';
-        markPaidBtn.className = 'btn btn-primary btn-sm';
+        markPaidBtn.className = 'btn btn-outline-secondary btn-sm';
         markPaidBtn.setAttribute('data-action', 'mark-paid');
         markPaidBtn.setAttribute('data-id', debt.id);
         markPaidBtn.textContent = translate("markPaid");
@@ -6194,8 +6569,13 @@ function editUtilityPayment(id, source) {
 }
 
 function renderPaymentsTable() {
-  // If pagination is set up, reset it to refresh with new filters
+  // If pagination is set up
   if (state.paginationInstances.payments) {
+    // When editing, refresh current items so the row shows edit UI without losing scroll position
+    if (state.editingPaymentId) {
+      state.paginationInstances.payments.refresh();
+      return;
+    }
     state.paginationInstances.payments.reset();
     return;
   }
@@ -6788,7 +7168,9 @@ function populateDebtSelects() {
   const typeFilterValue = elements.debtsFilterType
     ? elements.debtsFilterType.value
     : "all";
-  const unpaidDebts = state.debts.filter((debt) => !debt.is_paid);
+  const debts = getFilteredDebts();
+  const payments = getFilteredPayments();
+  const unpaidDebts = debts.filter((debt) => !debt.is_paid);
 
   // Clear select using DOM methods
   while (elements.paymentDebt.firstChild) {
@@ -6822,7 +7204,7 @@ function populateDebtSelects() {
       return;
     }
     // Get all debts of this type (not just unpaid)
-    const allDebtsOfType = state.debts.filter((debt) => debt.type === type);
+    const allDebtsOfType = debts.filter((debt) => debt.type === type);
     if (!allDebtsOfType.length) return;
     
     // Group by tenant
@@ -6837,7 +7219,7 @@ function populateDebtSelects() {
     }
     
     // Add payments for each tenant
-    for (const payment of state.payments) {
+    for (const payment of payments) {
       if (payment.type !== type) continue;
       const tenantId = payment.tenant_id;
       if (byTenant[tenantId]) {
@@ -6899,7 +7281,7 @@ function populateDebtSelects() {
       elements.paymentDebt.value = currentValue;
       appliedPreviousSelection = true;
     } else {
-      const debt = state.debts.find((d) => equalsId(d.id, currentValue));
+      const debt = debts.find((d) => equalsId(d.id, currentValue));
       if (debt) {
         const option = document.createElement("option");
         option.value = currentValue;
@@ -7176,8 +7558,9 @@ function startEditDebt(debtId) {
   if (!debt) return;
   state.editingDebtId = debt.id;
   
-  // Show expense form
+  // Show expense form (remove .hidden which uses !important)
   if (elements.debtForm) {
+    elements.debtForm.classList.remove("hidden");
     elements.debtForm.style.display = "grid";
   }
   if (elements.toggleExpenseFormBtn) {
@@ -7242,8 +7625,9 @@ function startEditPayment(paymentId) {
   if (!payment) return;
   state.editingPaymentId = payment.id;
   
-  // Show payment form
+  // Show payment form (remove .hidden which uses !important)
   if (elements.paymentForm) {
+    elements.paymentForm.classList.remove("hidden");
     elements.paymentForm.style.display = "grid";
   }
   if (elements.togglePaymentFormBtn) {
@@ -9529,7 +9913,7 @@ async function onCreateContract(event) {
   
   // Hide form after successful submission
   if (elements.contractForm) {
-    elements.contractForm.style.display = "none";
+    elements.contractForm.classList.add("hidden");
   }
   if (elements.toggleContractFormBtn) {
     elements.toggleContractFormBtn.textContent = translate("addContract") || "Add Contract";
@@ -10430,9 +10814,10 @@ function handleMarkDebtPaid(debtId) {
   const methodButtons = document.querySelectorAll('.payment-method-btn');
   methodButtons.forEach(btn => btn.classList.remove('active'));
 
-  // Show modal
+  // Show modal (remove .hidden - it uses !important and overrides inline display)
   if (elements.markPaidModal) {
-    elements.markPaidModal.style.display = 'flex';
+    elements.markPaidModal.classList.remove("hidden");
+    elements.markPaidModal.style.display = "flex";
   }
 }
 
@@ -10519,7 +10904,8 @@ async function submitMarkPaidPayment() {
 
   // Close modal
   if (elements.markPaidModal) {
-    elements.markPaidModal.style.display = 'none';
+    elements.markPaidModal.classList.add("hidden");
+    elements.markPaidModal.style.display = "none";
   }
 
   // Clear state

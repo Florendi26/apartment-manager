@@ -358,6 +358,48 @@ class InfiniteScrollPagination {
     }
   }
 
+  /**
+   * Re-renders currently loaded items without resetting pagination.
+   * Use when editing an item so the row updates to show edit UI.
+   */
+  refresh() {
+    if (!this.state || !this.elements.container || this.state.allItems.length === 0) {
+      return;
+    }
+
+    const items = [...this.state.allItems];
+    const fragment = document.createDocumentFragment();
+
+    items.forEach((item, index) => {
+      const itemResult = this.callbacks.renderItem(item, index);
+      if (itemResult instanceof Node) {
+        fragment.appendChild(itemResult);
+      } else if (typeof itemResult === 'string') {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(itemResult.trim(), 'text/html');
+        const temp = doc.body;
+        while (temp.firstChild) {
+          fragment.appendChild(temp.firstChild);
+        }
+      }
+    });
+
+    const children = Array.from(this.elements.container.children);
+    children.forEach(child => {
+      if (
+        child !== this.elements.sentinel &&
+        child !== this.elements.loadMoreButton &&
+        !child.hasAttribute('data-pagination-skeleton')
+      ) {
+        child.remove();
+      }
+    });
+
+    if (this.elements.sentinel && this.elements.sentinel.parentNode) {
+      this.elements.container.insertBefore(fragment, this.elements.sentinel);
+    }
+  }
+
   reset() {
     // Check if instance is still valid
     if (!this.state || !this.elements.container) {
@@ -414,12 +456,11 @@ class InfiniteScrollPagination {
       this.elements.loadMoreButton.removeEventListener('click', this.handleLoadMoreClick);
     }
 
-    // Remove DOM elements
-    if (this.elements.sentinel && this.elements.sentinel.parentNode) {
-      this.elements.sentinel.parentNode.removeChild(this.elements.sentinel);
-    }
-    if (this.elements.loadMoreButton && this.elements.loadMoreButton.parentNode) {
-      this.elements.loadMoreButton.parentNode.removeChild(this.elements.loadMoreButton);
+    // Remove DOM elements and clear container to prevent duplicate rows when recreating
+    if (this.elements.container) {
+      while (this.elements.container.firstChild) {
+        this.elements.container.removeChild(this.elements.container.firstChild);
+      }
     }
 
     // Clear state

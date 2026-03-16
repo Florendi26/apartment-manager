@@ -72,7 +72,286 @@ async function tenantExpensesInit() {
   // Setup collapsible cards
   setupCollapsibleCards();
 
+  // Setup payment proof form
+  tenantSetupPaymentProofForm();
+
   await tenantLoadExpensesAndPayments();
+}
+
+function tenantSetupPaymentProofForm() {
+  const form = document.getElementById("tenantPaymentProofForm");
+  const billSelect = document.getElementById("tenantPaymentBill");
+  const amountInput = document.getElementById("tenantPaymentAmount");
+  const dateInput = document.getElementById("tenantPaymentDate");
+  const methodInput = document.getElementById("tenantPaymentMethod");
+  const proofInput = document.getElementById("tenantPaymentProofImage");
+  const proofPreview = document.getElementById("tenantPaymentProofPreview");
+
+  if (!form || !billSelect) return;
+
+  // Set default date to today
+  if (dateInput) {
+    dateInput.value = new Date().toISOString().split("T")[0];
+  }
+
+  // Payment method buttons
+  document.querySelectorAll(".tenant-payment-method-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tenant-payment-method-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const method = btn.dataset.method;
+      if (method === "custom") {
+        if (methodInput) {
+          methodInput.classList.remove("hidden");
+          methodInput.focus();
+        }
+      } else {
+        if (methodInput) {
+          methodInput.value = method;
+          methodInput.classList.add("hidden");
+        }
+      }
+    });
+  });
+
+  // Bill change - update amount
+  billSelect.addEventListener("change", () => {
+    const val = billSelect.value;
+    if (!val) {
+      if (amountInput) amountInput.value = "";
+      return;
+    }
+    try {
+      const [type, billId] = val.split("|");
+      const expense = window._tenantUnpaidBills?.find((e) => String(e.id) === billId && e.type === type);
+      if (expense && amountInput) {
+        amountInput.value = tenantNormalizeCurrency(expense.amount).toFixed(2);
+      }
+    } catch (_) {}
+  });
+
+  // Proof image preview
+  if (proofInput && proofPreview) {
+    proofInput.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      proofPreview.classList.add("hidden");
+      proofPreview.innerHTML = "";
+      if (!file || !file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = document.createElement("img");
+        img.src = ev.target.result;
+        img.alt = "Proof preview";
+        img.style.maxWidth = "200px";
+        img.style.maxHeight = "150px";
+        img.style.borderRadius = "4px";
+        proofPreview.innerHTML = "";
+        proofPreview.appendChild(img);
+        proofPreview.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    await tenantSubmitPaymentProof();
+  });
+}
+
+function tenantPopulatePaymentBillSelect(expenses, payments) {
+  const billSelect = document.getElementById("tenantPaymentBill");
+  if (!billSelect) return;
+
+  const unpaidBills = (expenses || []).filter((e) => {
+    if (typeof e.is_paid === "boolean" && e.is_paid) return false;
+    const paidForThis = (payments || []).filter(
+      (p) => p.type === e.type && (String(p.bill_id) === String(e.id) || (p.contract_id === e.contract_id && !p.bill_id))
+    );
+    const totalPaid = paidForThis.reduce((s, p) => s + tenantNormalizeCurrency(p.amount), 0);
+    const remaining = tenantNormalizeCurrency(e.amount) - totalPaid;
+    return remaining > 0.01;
+  });
+
+  window._tenantUnpaidBills = unpaidBills;
+
+  const firstOpt = billSelect.querySelector('option[value=""]');
+  billSelect.innerHTML = "";
+  if (firstOpt) billSelect.appendChild(firstOpt);
+
+  unpaidBills.forEach((b) => {
+    const opt = document.createElement("option");
+    opt.value = `${b.type}|${b.id}`;
+    opt.textContent = `${tenantGetExpenseTypeTranslation(b.type)} - ${tenantFormatCurrency(tenantNormalizeCurrency(b.amount))} (${tenantFormatDate(b.due_date)})`;
+    billSelect.appendChild(opt);
+  });
+}
+
+async function tenantSubmitPaymentProof() {
+  const billSelect = document.getElementById("tenantPaymentBill");
+  const amountInput = document.getElementById("tenantPaymentAmount");
+  const dateInput = document.getElementById("tenantPaymentDate");
+  const methodInput = document.getElementById("tenantPaymentMethod");
+  const proofInput = document.getElementById("tenantPaymentProofImage");
+
+  const billValue = billSelect?.value;
+  const amount = parseFloat(amountInput?.value) || 0;
+  const paymentDate = dateInput?.value;
+  let method = methodInput?.value?.trim();
+  if (!method) {
+    const activeBtn = document.querySelector(".tenant-payment-method-btn.active");
+    method = activeBtn?.dataset.method === "custom" ? methodInput?.value?.trim() : activeBtn?.dataset.method;
+  }
+
+  if (!billValue || !paymentDate || !method) {
+    tenantNotify("error", tenantGetTranslation("errorFieldRequired") || "Please fill all required fields.");
+    return;
+  }
+
+  const file = proofInput?.files?.[0];
+  if (!file || !file.type.startsWith("image/")) {
+    tenantNotify("error", tenantGetTranslation("paymentProofRequired") || "Please upload a payment proof image.");
+    return;
+  }
+
+  const [expenseType, billId] = billValue.split("|");
+  const expense = window._tenantUnpaidBills?.find((e) => String(e.id) === billId && e.type === expenseType);
+  if (!expense) {
+    tenantNotify("error", tenantGetTranslation("errorLoad") || "Invalid bill selected.");
+    return;
+  }
+
+  const user = (await tenantSupabase.auth.getUser())?.data?.user;
+  if (!user) return;
+
+  const tenantProfile = await tenantLoadProfileByEmail(user);
+  if (!tenantProfile) {
+    tenantNotify("error", tenantGetTranslation("tenantNoProfileLinked"));
+    return;
+  }
+
+  const reader = new FileReader();
+  const proofBase64 = await new Promise((resolve, reject) => {
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const submitBtn = document.getElementById("tenantPaymentProofSubmit");
+  const originalText = submitBtn?.textContent;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = tenantGetTranslation("submitting") || "Submitting...";
+  }
+
+  const { data: inserted, error } = await tenantSupabase
+    .from("payment_requests")
+    .insert({
+      tenant_id: tenantProfile.id,
+      contract_id: expense.contract_id || null,
+      bill_id: expense.id,
+      expense_type: expenseType,
+      amount: amount,
+      payment_date: paymentDate,
+      method: method,
+      proof_image: proofBase64,
+      status: "pending",
+    })
+    .select("id")
+    .single();
+
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText || tenantGetTranslation("submitPaymentProof");
+  }
+
+  if (error) {
+    tenantNotify("error", tenantGetTranslation("errorLoad") || "Failed to submit. Please try again.");
+    console.error("tenantSubmitPaymentProof", error);
+    return;
+  }
+
+  if (typeof sendNotification === "function" && inserted?.id) {
+    sendNotification(tenantSupabase, { type: "payment-proof-submitted", id: inserted.id });
+  }
+  tenantNotify("success", tenantGetTranslation("paymentProofSubmitted") || "Payment proof submitted. The landlord will review it.");
+  document.getElementById("tenantPaymentProofForm")?.reset();
+  document.getElementById("tenantPaymentProofPreview")?.classList.add("hidden");
+  document.getElementById("tenantPaymentProofPreview").innerHTML = "";
+  document.querySelectorAll(".tenant-payment-method-btn").forEach((b) => b.classList.remove("active"));
+  if (dateInput) dateInput.value = new Date().toISOString().split("T")[0];
+  await tenantLoadExpensesAndPayments();
+}
+
+async function tenantLoadPaymentRequests(tenantId) {
+  const tbody = document.getElementById("tenantPaymentRequestsBody");
+  if (!tbody || !tenantId) {
+    if (tbody) {
+      tbody.innerHTML = "";
+    }
+    return;
+  }
+
+  const { data: requests, error } = await tenantSupabase
+    .from("payment_requests")
+    .select("id, expense_type, amount, payment_date, status, created_at")
+    .eq("tenant_id", tenantId)
+    .order("created_at", { ascending: false });
+
+  while (tbody.firstChild) {
+    tbody.removeChild(tbody.firstChild);
+  }
+
+  if (error) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.setAttribute("colspan", "4");
+    td.textContent = tenantGetTranslation("tenantExpensesFailedLoad") || "Failed to load.";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  if (!requests || requests.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.setAttribute("colspan", "4");
+    td.textContent = tenantGetTranslation("tenantPaymentProofNone") || "No payment proofs submitted yet.";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  const statusLabels = {
+    pending: tenantGetTranslation("paymentProofStatusPending") || "Pending",
+    accepted: tenantGetTranslation("paymentProofStatusAccepted") || "Accepted",
+    declined: tenantGetTranslation("paymentProofStatusDeclined") || "Declined",
+  };
+
+  requests.forEach((req) => {
+    const tr = document.createElement("tr");
+    const typeCell = document.createElement("td");
+    typeCell.textContent = tenantGetExpenseTypeTranslation(req.expense_type);
+    tr.appendChild(typeCell);
+    const amountCell = document.createElement("td");
+    amountCell.textContent = tenantFormatCurrency(tenantNormalizeCurrency(req.amount));
+    tr.appendChild(amountCell);
+    const dateCell = document.createElement("td");
+    dateCell.textContent = tenantFormatDate(req.payment_date);
+    tr.appendChild(dateCell);
+    const statusCell = document.createElement("td");
+    const statusSpan = document.createElement("span");
+    statusSpan.className =
+      req.status === "accepted"
+        ? "badge bg-success"
+        : req.status === "declined"
+        ? "badge bg-danger"
+        : "badge bg-warning";
+    statusSpan.textContent = statusLabels[req.status] || req.status;
+    statusCell.appendChild(statusSpan);
+    tr.appendChild(statusCell);
+    tbody.appendChild(tr);
+  });
 }
 
 function setupCollapsibleCards() {
@@ -145,6 +424,7 @@ async function tenantLoadExpensesAndPayments() {
       }
     }
     renderTenantSummaryCards(null, null, null, null, 0, 0);
+    tenantLoadPaymentRequests(null);
     return;
 
   }
@@ -217,6 +497,8 @@ async function tenantLoadExpensesAndPayments() {
       }
     }
     tenantUpdateSummary(0, 0);
+    tenantPopulatePaymentBillSelect([], []);
+    tenantLoadPaymentRequests(tenantProfile?.id);
     await renderTenantSummaryCards(user, tenantProfile, contracts, 0, 0);
     return;
   }
@@ -240,7 +522,7 @@ async function tenantLoadExpensesAndPayments() {
 
     const paymentsPromise = tenantSupabase
       .from(tableInfo.payments)
-      .select("id, amount, payment_date, method, contract_id")
+      .select("id, amount, payment_date, method, contract_id, bill_id")
       .in("contract_id", contractIds);
 
     // Execute both queries for this type in parallel
@@ -284,6 +566,12 @@ async function tenantLoadExpensesAndPayments() {
   );
 
   tenantUpdateSummary(totalExpenses, totalPayments);
+
+  // Populate payment proof bill select with unpaid bills
+  tenantPopulatePaymentBillSelect(allExpenses, allPayments);
+
+  // Load and render payment proof submissions (pending, accepted, declined)
+  await tenantLoadPaymentRequests(tenantProfile?.id);
 
   // Render summary cards with all data
   await renderTenantSummaryCards(user, tenantProfile, contracts, totalExpenses, totalPayments);

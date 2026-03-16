@@ -177,6 +177,7 @@
           <button type="button" data-page="contracts" data-i18n="navContracts">Contracts</button>
           <button type="button" data-page="expenses" data-expense-type="all" data-i18n="navExpensesGroup">Expenses</button>
           <button type="button" data-page="payments" data-i18n="navPayments">Payments</button>
+          <button type="button" data-page="payment-proofs" data-i18n="navPaymentProofs">Payment Proofs</button>
           <button type="button" data-page="requests" data-i18n="navRequests">Requests</button>
         </nav>
         </div>
@@ -880,6 +881,7 @@
                 <thead>
                   <tr>
                     <th data-i18n="summaryTenant">Tenant</th>
+                    <th data-i18n="summaryLastExpenseDate">Last Expense</th>
                     <th data-i18n="summaryExpensesCount">Open Expenses</th>
                     <th data-i18n="summaryExpensesAmount">Open Amount</th>
                     <th data-i18n="summaryPaymentsCount">Payments</th>
@@ -1169,6 +1171,39 @@
           </div>
         </section>
 
+        <section id="page-payment-proofs" class="admin-page" data-page="payment-proofs">
+          <article class="card" id="paymentRequestsCard">
+            <header>
+              <h3 data-i18n="paymentRequestsTitle">Payment Proofs (Tenant Submissions)</h3>
+              <p data-i18n="paymentRequestsSubtitle">Review and accept or decline payment proofs submitted by tenants.</p>
+            </header>
+            <div class="payment-proofs-filters">
+              <div>
+                <label for="paymentProofFilterType" data-i18n="filterByUtility">Filter by Utility</label>
+                <select id="paymentProofFilterType">
+                  <option value="all" data-i18n="typeAll">All</option>
+                  <option value="rent" data-i18n="debtRent">Rent</option>
+                  <option value="maintenance" data-i18n="debtMaintenance">Maintenance</option>
+                  <option value="garbage" data-i18n="debtGarbage">Garbage</option>
+                  <option value="thermos" data-i18n="debtThermos">Thermos</option>
+                  <option value="electricity" data-i18n="debtElectricity">Electricity</option>
+                  <option value="water" data-i18n="debtWater">Water</option>
+                  <option value="damage" data-i18n="debtDamage">Damage</option>
+                  <option value="other" data-i18n="debtOther">Other</option>
+                </select>
+              </div>
+            </div>
+            <h4 class="payment-requests-section-title" data-i18n="paymentRequestsPending">Pending</h4>
+            <div id="paymentRequestsBody" class="payment-requests-grid">
+              <!-- Filled by JS -->
+            </div>
+            <h4 class="payment-requests-section-title" data-i18n="paymentRequestsHistory">History (Accepted / Declined)</h4>
+            <div id="paymentRequestsHistoryBody" class="payment-requests-grid">
+              <!-- Filled by JS -->
+            </div>
+          </article>
+        </section>
+
         <section id="page-payments" class="admin-page" data-page="payments">
           <article class="card" id="paymentsCard">
             <header>
@@ -1374,6 +1409,7 @@
     <script src="js/config.js"></script>
     <!-- Load shared translations before any app logic that uses them -->
     <script src="js/languages.js"></script>
+    <script src="js/email.js"></script>
     <script src="js/pdf-export.js"></script>
     <script src="js/pagination.js"></script>
     <script src="js/app.js"></script>

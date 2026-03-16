@@ -804,6 +804,31 @@ body.dark-theme .mark-paid-form label {
   color: #bbf7d0;
 }
 
+body.dark-theme .mark-paid-form input[type="number"],
+body.dark-theme .mark-paid-form input[type="text"],
+body.dark-theme .mark-paid-form .date-input {
+  background-color: #111827;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+body.dark-theme .mark-paid-form input[readonly] {
+  background-color: #1f2937;
+  color: #bbf7d0;
+  cursor: not-allowed;
+}
+
+body.dark-theme .mark-paid-form .button-secondary {
+  background-color: #111827;
+  color: #bbf7d0;
+  border-color: #374151;
+}
+
+body.dark-theme .mark-paid-form .button-secondary:hover {
+  background-color: #1f2937;
+  border-color: #4b5563;
+}
+
 body.dark-theme .change-password-modal-content {
   background-color: #020617;
   color: #bbf7d0;
@@ -885,12 +910,10 @@ body.dark-theme #exportDebtsPdf {
   color: #022c22;
 }
 
-body.dark-theme #markPaidSubmit,
-body.dark-theme .button-primary[data-action="mark-paid"] {
+body.dark-theme #markPaidSubmit {
   background-color: #16a34a;
   border-color: #22c55e;
   color: #ffffff;
-  border-radius: 999px;
 }
 
 body.dark-theme [data-i18n="addApartment"],
@@ -911,8 +934,7 @@ body.dark-theme #exportDebtsPdf:hover {
   border-color: #22c55e;
 }
 
-body.dark-theme #markPaidSubmit:hover,
-body.dark-theme .button-primary[data-action="mark-paid"]:hover {
+body.dark-theme #markPaidSubmit:hover {
   background-color: #22c55e;
   border-color: #22c55e;
   color: #ffffff;
@@ -1035,6 +1057,21 @@ body.dark-theme .definition-list dt {
 
 body.dark-theme .definition-list dd {
   color: #bbf7d0;
+}
+
+/* Tenant/Contract/Financial summary cards - ensure readable text in dark mode */
+body.dark-theme .card dl dt,
+body.dark-theme #tenantInfoList dt,
+body.dark-theme #tenantContractList dt,
+body.dark-theme #tenantFinancialList dt {
+  color: #6ee7b7;
+}
+
+body.dark-theme .card dl dd,
+body.dark-theme #tenantInfoList dd,
+body.dark-theme #tenantContractList dd,
+body.dark-theme #tenantFinancialList dd {
+  color: #e2e8f0;
 }
 
 .profile-actions {
@@ -2462,17 +2499,6 @@ body.dark-theme .summary-card p {
   color: #ffffff;
 }
 
-/* Mark Paid button in light theme - already has white text, but ensure consistency */
-.button-primary[data-action="mark-paid"] {
-  background-color: #16a34a;
-  color: #ffffff;
-  border-radius: 999px;
-}
-
-.button-primary[data-action="mark-paid"]:hover {
-  background-color: #22c55e;
-}
-
 .button-primary:hover {
   background-color: #079578;
   box-shadow: 0 6px 14px rgba(8, 168, 138, 0.3);
@@ -2541,6 +2567,14 @@ body.dark-theme .summary-card p {
   min-height: 2rem;
 }
 
+/* Mark Paid: same height as Edit, smaller text so it fits on one line */
+.btn[data-action="mark-paid"] {
+  font-size: 0.7rem;
+  white-space: nowrap;
+  min-height: 2rem;
+  line-height: 1.2;
+}
+
 .btn-outline-secondary {
   background-color: transparent;
   border: 1px solid #3b82f6;
@@ -2580,16 +2614,6 @@ body.dark-theme .summary-card p {
   transform: translateY(-1px);
 }
 
-.btn-primary[data-action="mark-paid"] {
-  background-color: #16a34a;
-  border-color: #22c55e;
-  border-radius: 999px;
-}
-
-.btn-primary[data-action="mark-paid"]:hover {
-  background-color: #22c55e;
-  border-color: #22c55e;
-}
 
 .btn-outline-primary {
   background-color: transparent;
@@ -2631,17 +2655,6 @@ body.dark-theme .btn-primary {
 body.dark-theme .btn-primary:hover {
   background-color: #16a34a;
   border-color: #16a34a;
-}
-
-body.dark-theme .btn-primary[data-action="mark-paid"] {
-  background-color: #16a34a;
-  border-color: #22c55e;
-  color: #ffffff;
-}
-
-body.dark-theme .btn-primary[data-action="mark-paid"]:hover {
-  background-color: #22c55e;
-  border-color: #22c55e;
 }
 
 body.dark-theme .btn-outline-primary {
@@ -6074,6 +6087,108 @@ body.dark-theme .pagination-skeleton td {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* Payment requests (tenant proof) */
+.payment-requests-section-title {
+  margin: 1.5rem 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+body.dark-theme .payment-requests-section-title {
+  color: #9ca3af;
+}
+
+.payment-requests-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.payment-request-card-history {
+  opacity: 0.9;
+}
+
+.payment-proofs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.payment-proofs-filters > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.payment-proofs-filters label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+}
+
+.payment-proofs-filters select {
+  min-width: 180px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.375rem;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #0f172a);
+}
+
+.payment-requests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.payment-request-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #f8fafc;
+}
+
+.payment-request-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.payment-request-proof {
+  display: flex;
+  justify-content: center;
+}
+
+.payment-proof-thumb {
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 0.5rem;
+  object-fit: contain;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+}
+
+.payment-request-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.payment-proof-preview {
+  margin-top: 0.5rem;
+}
+
+.payment-proof-preview img {
+  display: block;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
 }
 
 /* ============================================

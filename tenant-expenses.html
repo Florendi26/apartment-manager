@@ -152,6 +152,68 @@
 
         <article class="card collapsible-card">
           <header class="collapsible-header cursor-pointer">
+            <h3 data-i18n="tenantSubmitPaymentProof">Submit Payment Proof</h3>
+          </header>
+          <div class="collapsible-content collapsed">
+            <form id="tenantPaymentProofForm" class="form-grid">
+              <div class="field">
+                <label for="tenantPaymentBill" data-i18n="selectBill">Select Bill</label>
+                <select id="tenantPaymentBill" required>
+                  <option value="">—</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="tenantPaymentAmount" data-i18n="amount">Amount</label>
+                <input type="number" id="tenantPaymentAmount" step="0.01" min="0.01" required readonly />
+              </div>
+              <div class="field">
+                <label for="tenantPaymentDate" data-i18n="paymentDate">Payment Date</label>
+                <input type="date" id="tenantPaymentDate" required />
+              </div>
+              <div class="field">
+                <label data-i18n="paymentMethod">Payment Method</label>
+                <div class="payment-method-buttons">
+                  <button type="button" class="payment-method-btn tenant-payment-method-btn" data-method="Cash">Cash</button>
+                  <button type="button" class="payment-method-btn tenant-payment-method-btn" data-method="Bank transfer">Bank transfer</button>
+                  <button type="button" class="payment-method-btn tenant-payment-method-btn" data-method="Online payment">Online payment</button>
+                  <button type="button" class="payment-method-btn tenant-payment-method-btn" data-method="custom">Custom</button>
+                </div>
+                <input type="text" id="tenantPaymentMethod" class="hidden" placeholder="Enter method" />
+              </div>
+              <div class="field">
+                <label for="tenantPaymentProofImage" data-i18n="paymentProofImage">Payment Proof (Photo) *</label>
+                <input type="file" id="tenantPaymentProofImage" accept="image/*" required />
+                <small class="form-hint" data-i18n="paymentProofHint">Upload a photo of your payment receipt or transfer confirmation</small>
+                <div id="tenantPaymentProofPreview" class="payment-proof-preview hidden"></div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" id="tenantPaymentProofSubmit" data-i18n="submitPaymentProof">Submit Payment Proof</button>
+              </div>
+            </form>
+          </div>
+        </article>
+
+        <article class="card collapsible-card">
+          <header class="collapsible-header cursor-pointer">
+            <h3 data-i18n="tenantPaymentProofStatus">Payment Proof Status</h3>
+          </header>
+          <div class="table-wrapper collapsible-content collapsed">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="tenantExpensesType">Type</th>
+                  <th data-i18n="tenantExpensesAmount">Amount</th>
+                  <th data-i18n="tenantExpensesDate">Date</th>
+                  <th data-i18n="tenantExpensesStatus">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tenantPaymentRequestsBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card collapsible-card">
+          <header class="collapsible-header cursor-pointer">
             <h3 data-i18n="tenantExpensesAllExpenses">All Expenses</h3>
           </header>
           <div class="table-wrapper collapsible-content collapsed">
@@ -222,6 +284,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
     <script src="js/config.js"></script>
     <script src="js/languages.js"></script>
+    <script src="js/email.js"></script>
     <script src="js/tenant-common.js"></script>
     <script src="js/pdf-export.js"></script>
     <script src="js/tenant-expenses.js"></script>
