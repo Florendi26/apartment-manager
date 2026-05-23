@@ -68,12 +68,14 @@ function initializeTenantPhotoViewer() {
   
   let currentPhotos = [];
   let currentIndex = 0;
+  let currentApartmentName = "";
   let autoSwipeTimer = null;
   
-  window.openPhotoViewer = function(photos, startIndex = 0) {
+  window.openPhotoViewer = function(photos, startIndex = 0, apartmentName = "") {
     if (!photos || photos.length === 0) return;
     currentPhotos = Array.isArray(photos) ? photos : [photos];
     currentIndex = Math.max(0, Math.min(startIndex, currentPhotos.length - 1));
+    currentApartmentName = apartmentName || "apartment";
     clearAutoSwipeTimer();
     updatePhotoViewer();
     // Remove hidden class and show modal
@@ -165,6 +167,47 @@ function initializeTenantPhotoViewer() {
     });
   }
   
+  async function downloadPhoto(url, filename) {
+    const safeName = (filename || "photo").replace(/[^a-zA-Z0-9-_]/g, "_");
+    try {
+      if (url.startsWith("data:")) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = safeName + (url.includes("image/png") ? ".png" : ".jpg");
+        a.click();
+        return;
+      }
+      const response = await fetch(url, { mode: "cors" });
+      const blob = await response.blob();
+      const ext = (url.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i) || [])[1] || "jpg";
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = safeName + (safeName.includes(".") ? "" : "." + ext);
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      window.open(url, "_blank");
+    }
+  }
+  
+  function downloadCurrentPhoto() {
+    if (currentPhotos.length === 0) return;
+    const url = currentPhotos[currentIndex];
+    const baseName = currentApartmentName + "-" + (currentIndex + 1);
+    downloadPhoto(url, baseName);
+    tenantNotify("success", tenantGetTranslation("photoDownloaded") || "Photo downloaded.");
+  }
+  
+  async function downloadAllPhotos() {
+    if (currentPhotos.length === 0) return;
+    const baseName = currentApartmentName.replace(/[^a-zA-Z0-9-_]/g, "_");
+    for (let i = 0; i < currentPhotos.length; i++) {
+      await downloadPhoto(currentPhotos[i], baseName + "-" + (i + 1));
+      if (i < currentPhotos.length - 1) await new Promise(r => setTimeout(r, 300));
+    }
+    tenantNotify("success", tenantGetTranslation("photosDownloaded") || "All photos downloaded.");
+  }
+  
   // Add zoom functionality on image click
   if (image) {
     image.addEventListener("click", (e) => {
@@ -181,6 +224,24 @@ function initializeTenantPhotoViewer() {
         clearAutoSwipeTimer();
       }
     });
+    
+    // Touch swipe to change photos (mobile)
+    let touchStartX = 0;
+    let touchEndX = 0;
+    image.addEventListener("touchstart", (e) => {
+      const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+      touchStartX = t ? t.screenX : e.screenX;
+    }, { passive: true });
+    image.addEventListener("touchend", (e) => {
+      const t = e.changedTouches && e.changedTouches[0];
+      touchEndX = t ? t.screenX : e.screenX;
+      const diff = touchStartX - touchEndX;
+      const minSwipe = 50;
+      if (Math.abs(diff) >= minSwipe && !image.classList.contains("zoomed")) {
+        if (diff > 0) showNext();
+        else showPrev();
+      }
+    }, { passive: true });
   }
   
   function closeViewer() {
@@ -212,6 +273,11 @@ function initializeTenantPhotoViewer() {
       startAutoSwipeTimer();
     }
   }
+  
+  const downloadBtn = document.getElementById("photoViewerDownload");
+  const downloadAllBtn = document.getElementById("photoViewerDownloadAll");
+  if (downloadBtn) downloadBtn.addEventListener("click", downloadCurrentPhoto);
+  if (downloadAllBtn) downloadAllBtn.addEventListener("click", downloadAllPhotos);
   
   if (closeBtn) closeBtn.addEventListener("click", closeViewer);
   if (prevBtn) prevBtn.addEventListener("click", showPrev);
@@ -727,7 +793,7 @@ function initializeApartmentDetailsModal() {
       img.addEventListener('error', function() { this.src = placeholderImg; });
       img.addEventListener("click", () => {
         if (window.openPhotoViewer) {
-          window.openPhotoViewer(photos, index);
+          window.openPhotoViewer(photos, index, apartment.name || "");
         }
       });
       photosContainer.appendChild(img);

@@ -5,6 +5,24 @@ const SUPABASE_ANON_KEY = window.APP_CONFIG?.SUPABASE_ANON_KEY || "";
 // Use var to allow redeclaration if loaded multiple times (prevents SyntaxError)
 var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Retry helper for Supabase auth lock contention (AbortError / Lock broken)
+function isAuthLockError(err) {
+  return err?.name === "AbortError" || err?.message?.includes?.("Lock broken") || err?.message?.includes?.("steal");
+}
+async function withRetryOnAuthLock(fn, maxRetries = 2) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (attempt < maxRetries && isAuthLockError(e)) {
+        await new Promise(r => setTimeout(r, 400 + attempt * 400));
+      } else {
+        throw e;
+      }
+    }
+  }
+}
+
 // Phone number formatting function: +383-xx-xxx-xxx
 function formatPhoneNumber(value) {
   // Remove all non-digit characters except the leading +
@@ -336,6 +354,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
   
+  // Brief delay to let Supabase auth lock settle after session recovery
+  await new Promise(r => setTimeout(r, 150));
+  
   // Check for view parameter in URL
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("view") === "tenant") {
@@ -599,6 +620,8 @@ function cacheElements() {
     utilityDifference: document.getElementById("utilityDifference"),
     utilityExpensesTableBody: document.getElementById("utilityExpensesTableBody"),
     utilityPaymentsTableBody: document.getElementById("utilityPaymentsTableBody"),
+    utilityExpensesRemainingDebt: document.getElementById("utilityExpensesRemainingDebt"),
+    utilityPaymentsRemainingDebt: document.getElementById("utilityPaymentsRemainingDebt"),
     globalTenantFilter: document.getElementById("globalTenantFilter"),
     clearTenantFilter: document.getElementById("clearTenantFilter"),
     globalContractFilter: document.getElementById("globalContractFilter"),
@@ -1959,7 +1982,18 @@ function syncFeatureButtonsToSelect() {
   });
 }
 
+let loadInitialDataInProgress = false;
 async function loadInitialData() {
+  if (loadInitialDataInProgress) return;
+  loadInitialDataInProgress = true;
+  try {
+    await loadInitialDataCore();
+  } finally {
+    loadInitialDataInProgress = false;
+  }
+}
+
+async function loadInitialDataCore() {
   // Check if statistics animation has already been shown in this session
   const hasSeenAnimation = sessionStorage.getItem('statisticsAnimationShown') === 'true';
   
@@ -2123,10 +2157,12 @@ async function loadApartments() {
 }
 
 async function loadTenants() {
-  const { data, error } = await supabase
-    .from("tenants")
-    .select("id, full_name, email, phone, entry_date")
-    .order("full_name");
+  const { data, error } = await withRetryOnAuthLock(() =>
+    supabase
+      .from("tenants")
+      .select("id, full_name, email, phone, entry_date")
+      .order("full_name")
+  );
 
   if (error) {
     notify("error", translate("errorLoad"));
@@ -2157,6 +2193,7 @@ async function loadContracts() {
     return;
   }
   
+  await withRetryOnAuthLock(async () => {
   // First, get all apartment IDs for this landlord
   const { data: landlordApartments, error: apartmentError } = await supabase
     .from("apartments")
@@ -2216,6 +2253,7 @@ async function loadContracts() {
   if (!state.isInitialLoad) {
     renderAdminSummary();
   }
+  });
 }
 
 /**
@@ -2326,6 +2364,7 @@ async function loadAllBills() {
     return;
   }
   
+  await withRetryOnAuthLock(async () => {
   // First, get all apartment IDs for this landlord
   const { data: landlordApartments, error: apartmentError } = await supabase
     .from("apartments")
@@ -2394,6 +2433,7 @@ async function loadAllBills() {
   results.forEach(({ stateKey, data }) => {
     state[stateKey.bills] = data;
   });
+  });
 }
 
 async function loadPayments() {
@@ -2441,6 +2481,7 @@ async function loadAllPayments() {
     return;
   }
   
+  await withRetryOnAuthLock(async () => {
   // First, get all apartment IDs for this landlord
   const { data: landlordApartments, error: apartmentError } = await supabase
     .from("apartments")
@@ -2506,6 +2547,7 @@ async function loadAllPayments() {
   results.forEach(({ stateKey, data }) => {
     state[stateKey.payments] = data;
   });
+  });
 }
 
 /**
@@ -2527,55 +2569,57 @@ function setupApartmentsPagination() {
         return { items: [], hasMore: false };
       }
 
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
+      return withRetryOnAuthLock(async () => {
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
 
-      // Try to load with all columns first
-      let { data, error, count } = await supabase
-        .from("apartments")
-        .select(
-          "id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, neighborhood, monthly_rent, features, rental_status, rental_rules",
-          { count: 'exact' }
-        )
-        .eq("landlord_id", state.currentUser.id)
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      // Fallback to core columns if needed
-      if (error && (error.code === 'PGRST204' || error.status === 400 || error.message?.includes('column'))) {
-        const coreSelect = await supabase
+        // Try to load with all columns first
+        let { data, error, count } = await supabase
           .from("apartments")
           .select(
-            "id, name, address, electricity_code, heating_code, water_code, waste_code, photos",
+            "id, name, address, electricity_code, heating_code, water_code, waste_code, photos, description, condition, rooms, balconies, bathrooms, area, municipality, neighborhood, monthly_rent, features, rental_status, rental_rules",
             { count: 'exact' }
           )
           .eq("landlord_id", state.currentUser.id)
           .order("created_at", { ascending: false })
           .range(from, to);
-        
-        data = coreSelect.data;
-        error = coreSelect.error;
-        count = coreSelect.count;
-      }
 
-      if (error) {
-        throw error;
-      }
-
-      const items = data || [];
-      const hasMore = count ? (to + 1 < count) : (items.length === limit);
-
-      // Update state.apartments to include all loaded items
-      const currentIds = new Set(state.apartments.map(a => a.id));
-      items.forEach(item => {
-        if (!currentIds.has(item.id)) {
-          state.apartments.push(item);
+        // Fallback to core columns if needed
+        if (error && (error.code === 'PGRST204' || error.status === 400 || error.message?.includes('column'))) {
+          const coreSelect = await supabase
+            .from("apartments")
+            .select(
+              "id, name, address, electricity_code, heating_code, water_code, waste_code, photos",
+              { count: 'exact' }
+            )
+            .eq("landlord_id", state.currentUser.id)
+            .order("created_at", { ascending: false })
+            .range(from, to);
+          
+          data = coreSelect.data;
+          error = coreSelect.error;
+          count = coreSelect.count;
         }
+
+        if (error) {
+          throw error;
+        }
+
+        const items = data || [];
+        const hasMore = count ? (to + 1 < count) : (items.length === limit);
+
+        // Update state.apartments to include all loaded items
+        const currentIds = new Set(state.apartments.map(a => a.id));
+        items.forEach(item => {
+          if (!currentIds.has(item.id)) {
+            state.apartments.push(item);
+          }
+        });
+
+        populateApartmentSelects();
+
+        return { items, hasMore };
       });
-
-      populateApartmentSelects();
-
-      return { items, hasMore };
     },
     renderItem: (apartment) => {
       // Compute active contracts dynamically (contracts may load after apartments)
@@ -2774,7 +2818,9 @@ function setupApartmentsPagination() {
                 aptPhotos = apt.photos.split(',').map(p => p.trim());
               }
             }
-            showPhotoViewer(aptPhotos, 0);
+            if (aptPhotos.length > 0 && window.openPhotoViewer) {
+              window.openPhotoViewer(aptPhotos, 0, apt.name || "");
+            }
           }
         });
       }
@@ -2982,6 +3028,10 @@ function setupDebtsPagination() {
         dueDateCell.appendChild(dueDateInput);
         row.appendChild(dueDateCell);
 
+        const periodCell = document.createElement('td');
+        periodCell.textContent = formatPeriod(debt.due_date);
+        row.appendChild(periodCell);
+
         const statusCell = document.createElement('td');
         if (!isUtilityEdit) {
           const statusTag = document.createElement('span');
@@ -3116,6 +3166,12 @@ function setupDebtsPagination() {
       dueDateCell.textContent = formatDate(debt.due_date);
       row.appendChild(dueDateCell);
       
+      // Period cell
+      const periodCell = document.createElement('td');
+      periodCell.className = 'desktop-cell';
+      periodCell.textContent = formatPeriod(debt.due_date);
+      row.appendChild(periodCell);
+      
       // Status cell
       const statusCell = document.createElement('td');
       statusCell.className = 'desktop-cell';
@@ -3169,7 +3225,9 @@ function setupDebtsPagination() {
         markPaidBtn.className = 'btn btn-outline-secondary btn-sm';
         markPaidBtn.setAttribute('data-action', 'mark-paid');
         markPaidBtn.setAttribute('data-id', debt.id);
-        markPaidBtn.textContent = translate("markPaid");
+        markPaidBtn.textContent = translate("markPaidShort") || translate("markPaid");
+        markPaidBtn.title = translate("markPaid");
+        markPaidBtn.setAttribute("aria-label", translate("markPaid"));
         markPaidBtn.addEventListener("click", () => handleMarkDebtPaid(debt.id));
         actionsGroup.appendChild(markPaidBtn);
       }
@@ -3347,6 +3405,12 @@ function setupPaymentsPagination() {
       dueDateCell.textContent = debt ? formatDate(debt.due_date) : "-";
       row.appendChild(dueDateCell);
       
+      // Period cell
+      const periodCell = document.createElement('td');
+      periodCell.className = 'desktop-cell';
+      periodCell.textContent = debt ? formatPeriod(debt.due_date) : "-";
+      row.appendChild(periodCell);
+      
       // Payment Date cell
       const paymentDateCell = document.createElement('td');
       paymentDateCell.className = 'desktop-cell';
@@ -3399,7 +3463,7 @@ function setupPaymentsPagination() {
       const skeleton = document.createElement('tr');
       skeleton.className = 'pagination-skeleton';
       const td = document.createElement('td');
-      td.setAttribute('colspan', '8');
+      td.setAttribute('colspan', '9');
       td.style.cssText = 'padding: 1rem; text-align: center;';
       const div = document.createElement('div');
       div.style.cssText = 'background: linear-gradient(90deg, transparent, rgba(203,213,225,0.3), transparent); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; height: 40px; border-radius: 4px;';
@@ -3793,6 +3857,7 @@ function renderPaymentRequestsFiltered() {
       `;
       card.querySelector('[data-action="accept-payment-request"]').addEventListener("click", () => handleAcceptPaymentRequest(req.id));
       card.querySelector('[data-action="decline-payment-request"]').addEventListener("click", () => handleDeclinePaymentRequest(req.id));
+      attachPaymentProofThumbViewer(card, req, tenant?.full_name);
       container.appendChild(card);
     });
   }
@@ -3820,10 +3885,29 @@ function renderPaymentRequestsFiltered() {
             <img src="${req.proof_image}" alt="Proof" class="payment-proof-thumb" />
           </div>
         `;
+        attachPaymentProofThumbViewer(card, req, tenant?.full_name);
         historyContainer.appendChild(card);
       });
     }
   }
+}
+
+function attachPaymentProofThumbViewer(card, req, tenantName) {
+  const thumb = card.querySelector(".payment-proof-thumb");
+  if (!thumb || !req.proof_image || typeof window.openPhotoViewer !== "function") return;
+  const label = (translate("paymentProof") || "payment-proof") + "-" + String(tenantName || "tenant").replace(/[^a-zA-Z0-9-_]/g, "_");
+  const open = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.openPhotoViewer([req.proof_image], 0, label);
+  };
+  thumb.addEventListener("click", open);
+  thumb.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") open(e);
+  });
+  thumb.setAttribute("role", "button");
+  thumb.setAttribute("tabindex", "0");
+  thumb.setAttribute("title", translate("viewProof") || "View full size");
 }
 
 async function handleAcceptPaymentRequest(requestId) {
@@ -5273,7 +5357,7 @@ function renderApartmentsTable() {
         }
         
         if (aptPhotos.length > 0 && window.openPhotoViewer) {
-          window.openPhotoViewer(aptPhotos, 0);
+          window.openPhotoViewer(aptPhotos, 0, apt.name || "");
         }
       });
       photoCell.appendChild(img);
@@ -5451,6 +5535,20 @@ function renderContractsTable() {
     endDateCell.textContent = formatDate(contract.end_date);
     tr.appendChild(endDateCell);
     
+    // Period cell (MM/YYYY from start to end)
+    const periodCell = document.createElement('td');
+    periodCell.setAttribute('data-label', 'Period');
+    const startPeriod = formatPeriod(contract.start_date);
+    const endPeriod = formatPeriod(contract.end_date);
+    if (startPeriod === "-" && endPeriod === "-") {
+      periodCell.textContent = "-";
+    } else if (endPeriod === "-" || startPeriod === endPeriod) {
+      periodCell.textContent = startPeriod;
+    } else {
+      periodCell.textContent = `${startPeriod} - ${endPeriod}`;
+    }
+    tr.appendChild(periodCell);
+    
     // Monthly Rent cell
     const rentCell = document.createElement('td');
     rentCell.setAttribute('data-label', 'Monthly Rent');
@@ -5538,11 +5636,26 @@ async function handleContractStatusChange(contractId, shouldActivate) {
       notify("error", translate("contractDeactivateBlocked"));
       return;
     }
+    // Always ask for end date when deactivating
+    showDeactivateContractModal(contractId);
+    return;
+  }
+
+  await performContractDeactivation(contractId, shouldActivate);
+}
+
+async function performContractDeactivation(contractId, shouldActivate, endDate = null) {
+  const contract = state.contracts.find((c) => equalsId(c.id, contractId));
+  if (!contract) return;
+
+  const updateData = { is_active: shouldActivate };
+  if (endDate) {
+    updateData.end_date = endDate;
   }
 
   const { error } = await supabase
     .from("contracts")
-    .update({ is_active: shouldActivate })
+    .update(updateData)
     .eq("id", contractId);
 
   if (error) {
@@ -5958,7 +6071,9 @@ function renderDebtsTable() {
         summaryMarkPaidBtn.className = 'btn btn-outline-secondary btn-sm';
         summaryMarkPaidBtn.setAttribute('data-action', 'mark-paid');
         summaryMarkPaidBtn.setAttribute('data-id', debt.id);
-        summaryMarkPaidBtn.textContent = translate("markPaid");
+        summaryMarkPaidBtn.textContent = translate("markPaidShort") || translate("markPaid");
+        summaryMarkPaidBtn.title = translate("markPaid");
+        summaryMarkPaidBtn.setAttribute("aria-label", translate("markPaid"));
         summaryMarkPaidBtn.addEventListener("click", (e) => { e.stopPropagation(); handleMarkDebtPaid(debt.id); });
         summaryActionsGroup.appendChild(summaryMarkPaidBtn);
       }
@@ -6044,7 +6159,9 @@ function renderDebtsTable() {
         markPaidBtn.className = 'btn btn-outline-secondary btn-sm';
         markPaidBtn.setAttribute('data-action', 'mark-paid');
         markPaidBtn.setAttribute('data-id', debt.id);
-        markPaidBtn.textContent = translate("markPaid");
+        markPaidBtn.textContent = translate("markPaidShort") || translate("markPaid");
+        markPaidBtn.title = translate("markPaid");
+        markPaidBtn.setAttribute("aria-label", translate("markPaid"));
         markPaidBtn.addEventListener("click", () => handleMarkDebtPaid(debt.id));
         actionsGroup.appendChild(markPaidBtn);
       }
@@ -6070,10 +6187,12 @@ function renderUtilitySummary() {
   
   // Show/hide utility summary based on type
   if (!isUtility) {
+    elements.utilitySummarySection.classList.add("hidden");
     elements.utilitySummarySection.style.display = "none";
     return;
   }
   
+  elements.utilitySummarySection.classList.remove("hidden");
   elements.utilitySummarySection.style.display = "block";
   
   // Apply global tenant filter
@@ -6132,6 +6251,23 @@ function renderUtilitySummary() {
       elements.utilityDifference.className = "utility-summary-value negative";
     }
   }
+
+  // Update remaining debt under each utility table
+  const updateRemainingDebt = (el, val) => {
+    if (!el) return;
+    if (Math.abs(val) < 0.01) {
+      el.textContent = formatCurrency(0);
+      el.className = "utility-remaining-debt-value zero";
+    } else if (val > 0) {
+      el.textContent = formatCurrency(val);
+      el.className = "utility-remaining-debt-value positive";
+    } else {
+      el.textContent = `-${formatCurrency(Math.abs(val))}`;
+      el.className = "utility-remaining-debt-value negative";
+    }
+  };
+  updateRemainingDebt(elements.utilityExpensesRemainingDebt, difference);
+  updateRemainingDebt(elements.utilityPaymentsRemainingDebt, difference);
   
   // Render expenses table with columns: #, Tenant, Type, Amount, Due Date, Reference, Actions
   if (elements.utilityExpensesTableBody) {
@@ -6143,7 +6279,7 @@ function renderUtilitySummary() {
     if (utilityExpenses.length === 0) {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
-      td.setAttribute('colspan', '7');
+      td.setAttribute('colspan', '8');
       td.style.cssText = 'text-align:center;color:#6b7280;';
       td.textContent = translate("noData") || "No data";
       tr.appendChild(td);
@@ -6201,6 +6337,11 @@ function renderUtilitySummary() {
           dateInput.required = true;
           dateCell.appendChild(dateInput);
           tr.appendChild(dateCell);
+          
+          // Period cell
+          const periodCell = document.createElement('td');
+          periodCell.textContent = formatPeriod(expense.bill_date || expense.due_date);
+          tr.appendChild(periodCell);
           
           // Reference cell
           const refCell = document.createElement('td');
@@ -6260,6 +6401,11 @@ function renderUtilitySummary() {
           const dateCell = document.createElement('td');
           dateCell.textContent = formatDate(billDate);
           tr.appendChild(dateCell);
+          
+          // Period cell
+          const periodCell = document.createElement('td');
+          periodCell.textContent = formatPeriod(billDate);
+          tr.appendChild(periodCell);
           
           // Reference cell
           const refCell = document.createElement('td');
@@ -6638,6 +6784,11 @@ function renderPaymentsTable() {
       dueDateCell.textContent = debt ? formatDate(debt.due_date) : "-";
       tr.appendChild(dueDateCell);
       
+      // Period cell
+      const periodCell = document.createElement('td');
+      periodCell.textContent = debt ? formatPeriod(debt.due_date) : "-";
+      tr.appendChild(periodCell);
+      
       // Payment date cell with input
       const paymentDateCell = document.createElement('td');
       const paymentDateInput = document.createElement('input');
@@ -6786,6 +6937,12 @@ function renderPaymentsTable() {
       dueDateCell.textContent = debt ? formatDate(debt.due_date) : "-";
       tr.appendChild(dueDateCell);
       
+      // Period cell
+      const periodCell = document.createElement('td');
+      periodCell.className = 'desktop-cell';
+      periodCell.textContent = debt ? formatPeriod(debt.due_date) : "-";
+      tr.appendChild(periodCell);
+      
       // Payment date cell
       const paymentDateCell = document.createElement('td');
       paymentDateCell.className = 'desktop-cell';
@@ -6868,7 +7025,7 @@ function renderOpenExpensesTable() {
   if (openDebts.length === 0) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.setAttribute('colspan', '5');
+    td.setAttribute('colspan', '6');
     td.textContent = sanitize(translate("summaryNoData"));
     tr.appendChild(td);
     elements.openExpensesTableBody.appendChild(tr);
@@ -6899,6 +7056,11 @@ function renderOpenExpensesTable() {
       const dueDateCell = document.createElement('td');
       dueDateCell.textContent = formatDate(debt.due_date);
       tr.appendChild(dueDateCell);
+      
+      // Period cell
+      const periodCell = document.createElement('td');
+      periodCell.textContent = formatPeriod(debt.due_date);
+      tr.appendChild(periodCell);
       
       // Status cell
       const statusCell = document.createElement('td');
@@ -8999,17 +9161,61 @@ function initializePhotoViewer() {
   
   let currentPhotos = [];
   let currentIndex = 0;
+  let currentApartmentName = "";
   let autoSwipeTimer = null;
   
-  window.openPhotoViewer = function(photos, startIndex = 0) {
+  window.openPhotoViewer = function(photos, startIndex = 0, apartmentName = "") {
     if (!photos || photos.length === 0) return;
     currentPhotos = Array.isArray(photos) ? photos : [photos];
     currentIndex = Math.max(0, Math.min(startIndex, currentPhotos.length - 1));
+    currentApartmentName = apartmentName || "apartment";
     clearAutoSwipeTimer();
     updatePhotoViewer();
+    modal.classList.remove("hidden");
     modal.style.display = "flex";
     document.body.style.overflow = "hidden";
   };
+  
+  async function downloadPhoto(url, filename) {
+    const safeName = (filename || "photo").replace(/[^a-zA-Z0-9-_]/g, "_");
+    try {
+      if (url.startsWith("data:")) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = safeName + (url.includes("image/png") ? ".png" : ".jpg");
+        a.click();
+        return;
+      }
+      const response = await fetch(url, { mode: "cors" });
+      const blob = await response.blob();
+      const ext = (url.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i) || [])[1] || "jpg";
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = safeName + (safeName.includes(".") ? "" : "." + ext);
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      window.open(url, "_blank");
+    }
+  }
+  
+  function downloadCurrentPhoto() {
+    if (currentPhotos.length === 0) return;
+    const url = currentPhotos[currentIndex];
+    const baseName = currentApartmentName + "-" + (currentIndex + 1);
+    downloadPhoto(url, baseName);
+    notify("success", translate("photoDownloaded") || "Photo downloaded.");
+  }
+  
+  async function downloadAllPhotos() {
+    if (currentPhotos.length === 0) return;
+    const baseName = currentApartmentName.replace(/[^a-zA-Z0-9-_]/g, "_");
+    for (let i = 0; i < currentPhotos.length; i++) {
+      await downloadPhoto(currentPhotos[i], baseName + "-" + (i + 1));
+      if (i < currentPhotos.length - 1) await new Promise(r => setTimeout(r, 300));
+    }
+    notify("success", translate("photosDownloaded") || "All photos downloaded.");
+  }
   
   function updatePhotoViewer() {
     if (currentPhotos.length === 0) return;
@@ -9111,11 +9317,30 @@ function initializePhotoViewer() {
         clearAutoSwipeTimer();
       }
     });
+    
+    // Touch swipe to change photos (mobile)
+    let touchStartX = 0;
+    let touchEndX = 0;
+    image.addEventListener("touchstart", (e) => {
+      const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+      touchStartX = t ? t.screenX : e.screenX;
+    }, { passive: true });
+    image.addEventListener("touchend", (e) => {
+      const t = e.changedTouches && e.changedTouches[0];
+      touchEndX = t ? t.screenX : e.screenX;
+      const diff = touchStartX - touchEndX;
+      const minSwipe = 50;
+      if (Math.abs(diff) >= minSwipe && !image.classList.contains("zoomed")) {
+        if (diff > 0) showNext();
+        else showPrev();
+      }
+    }, { passive: true });
   }
   
   function closeViewer() {
     clearAutoSwipeTimer();
     image.classList.remove("zoomed");
+    modal.classList.add("hidden");
     modal.style.display = "none";
     document.body.style.overflow = "";
     currentPhotos = [];
@@ -9141,6 +9366,11 @@ function initializePhotoViewer() {
       startAutoSwipeTimer();
     }
   }
+  
+  const downloadBtn = document.getElementById("photoViewerDownload");
+  const downloadAllBtn = document.getElementById("photoViewerDownloadAll");
+  if (downloadBtn) downloadBtn.addEventListener("click", downloadCurrentPhoto);
+  if (downloadAllBtn) downloadAllBtn.addEventListener("click", downloadAllPhotos);
   
   closeBtn.addEventListener("click", closeViewer);
   prevBtn.addEventListener("click", showPrev);
@@ -9686,6 +9916,7 @@ async function onCreateApartment(event) {
 
 let pendingDeleteApartmentId = null;
 let pendingDeleteApartmentName = null;
+let pendingDeactivateContractId = null;
 
 function openDeleteApartmentModal(apartmentId) {
   const apartment = state.apartments.find(a => equalsId(a.id, apartmentId));
@@ -9806,6 +10037,75 @@ function closeDeleteApartmentModal() {
   }
   pendingDeleteApartmentId = null;
   pendingDeleteApartmentName = null;
+}
+
+function showDeactivateContractModal(contractId) {
+  const contract = state.contracts.find((c) => equalsId(c.id, contractId));
+  if (!contract) return;
+
+  pendingDeactivateContractId = contractId;
+
+  const modal = document.getElementById("deactivateContractModal");
+  const endDateInput = document.getElementById("deactivateContractEndDateInput");
+  const confirmBtn = document.getElementById("deactivateContractConfirm");
+  const cancelBtn = document.getElementById("deactivateContractCancel");
+
+  if (!modal || !endDateInput || !confirmBtn || !cancelBtn) return;
+
+  // Set min date to contract start date
+  if (contract.start_date) {
+    endDateInput.min = contract.start_date;
+  }
+  // Pre-fill with existing end date if set, otherwise default to today
+  const today = new Date().toISOString().slice(0, 10);
+  const hasEndDate = contract.end_date && String(contract.end_date).trim() !== "";
+  endDateInput.value = hasEndDate ? String(contract.end_date).slice(0, 10) : today;
+  endDateInput.required = true;
+
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => endDateInput.focus(), 100);
+
+  const handleConfirm = async () => {
+    const endDate = endDateInput.value?.trim();
+    if (!endDate) {
+      notify("error", translate("deactivateContractEndDateRequired") || "Please enter an end date.");
+      return;
+    }
+    closeDeactivateContractModal();
+    await performContractDeactivation(contractId, false, endDate);
+  };
+
+  const handleCancel = () => {
+    closeDeactivateContractModal();
+  };
+
+  const handleBackdrop = (e) => {
+    if (e.target === modal) closeDeactivateContractModal();
+  };
+
+  const handleEscape = (e) => {
+    if (e.key === "Escape") closeDeactivateContractModal();
+  };
+
+  confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+  cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+  const newConfirmBtn = document.getElementById("deactivateContractConfirm");
+  const newCancelBtn = document.getElementById("deactivateContractCancel");
+
+  newConfirmBtn.addEventListener("click", handleConfirm);
+  newCancelBtn.addEventListener("click", handleCancel);
+  modal.addEventListener("click", handleBackdrop);
+  document.addEventListener("keydown", handleEscape);
+}
+
+function closeDeactivateContractModal() {
+  const modal = document.getElementById("deactivateContractModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+  pendingDeactivateContractId = null;
 }
 
 async function performDeleteApartment() {
@@ -11110,6 +11410,19 @@ function formatDate(value) {
   }
 }
 
+function formatPeriod(value) {
+  if (!value) return "-";
+  try {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return "-";
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${year}`;
+  } catch {
+    return "-";
+  }
+}
+
 const capitalize = (v) => v ? v.charAt(0).toUpperCase() + v.slice(1) : "";
 
 async function getNextReferenceNumberValue() {
@@ -11189,7 +11502,8 @@ supabase.auth.onAuthStateChange((event, session) => {
     state.currentUser = session.user;
     showAdminView();
     updateAuthUI();
-    loadInitialData();
+    // Defer to avoid auth lock contention with init (Supabase session recovery)
+    setTimeout(() => loadInitialData(), 300);
   } else if (event === 'SIGNED_OUT') {
     state.currentUser = null;
     showLoginView();
@@ -11556,7 +11870,7 @@ function renderTenantDebts() {
   if (regularDebts.length === 0 && Object.keys(utilityBalances).length === 0) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.setAttribute('colspan', '5');
+    td.setAttribute('colspan', '6');
     td.textContent = translate("noDebtsFound");
     tr.appendChild(td);
     elements.tenantDebtsTableBody.appendChild(tr);
@@ -11579,6 +11893,10 @@ function renderTenantDebts() {
     const dueDateCell = document.createElement('td');
     dueDateCell.textContent = formatDate(debt.due_date);
     tr.appendChild(dueDateCell);
+    
+    const periodCell = document.createElement('td');
+    periodCell.textContent = formatPeriod(debt.due_date);
+    tr.appendChild(periodCell);
     
     const statusCell = document.createElement('td');
     const statusTag = document.createElement('span');
@@ -11611,6 +11929,10 @@ function renderTenantDebts() {
     const dueDateCell = document.createElement('td');
     dueDateCell.textContent = '-';
     tr.appendChild(dueDateCell);
+    
+    const periodCell = document.createElement('td');
+    periodCell.textContent = '-';
+    tr.appendChild(periodCell);
     
     const statusCell = document.createElement('td');
     const statusTag = document.createElement('span');
@@ -11780,6 +12102,7 @@ function exportDebtsToPdf() {
     translate("debtType"),
     translate("amount"),
     translate("dueDate"),
+    translate("period"),
     translate("status"),
     translate("reference") || "Reference",
   ];
@@ -11800,6 +12123,7 @@ function exportDebtsToPdf() {
       getDebtTypeLabel(debt),
       formatCurrency(debt.amount),
       formatDate(debt.due_date),
+      formatPeriod(debt.due_date),
       status.label,
       formatReferenceNumber(debt.reference),
     ];
@@ -11841,6 +12165,7 @@ function exportTenantToPdf(language = "en", format = "normal") {
       translate,
       formatCurrency,
       formatDate,
+      formatPeriod,
       equalsId,
       isUtilityType,
       normalizeCurrency,

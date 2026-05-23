@@ -89,6 +89,10 @@
           </div>
           <div class="photo-viewer-info">
             <span id="photoViewerCounter"></span>
+            <div class="photo-viewer-downloads">
+              <button type="button" class="photo-viewer-download-btn" id="photoViewerDownload" title="Download current photo">&#8595;</button>
+              <button type="button" class="photo-viewer-download-btn" id="photoViewerDownloadAll" title="Download all photos">&#8595; All</button>
+            </div>
           </div>
           <div class="photo-viewer-thumbnails" id="photoViewerThumbnails"></div>
         </div>
@@ -127,6 +131,28 @@
           <div class="delete-confirmation-actions">
             <button type="button" class="button-secondary" id="deleteApartmentCancel" data-i18n="cancel">Cancel</button>
             <button type="button" class="button-danger" id="deleteApartmentConfirm" data-i18n="delete" disabled>Delete</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Contract Deactivate End Date Modal -->
+      <div id="deactivateContractModal" class="delete-confirmation-modal hidden">
+        <div class="delete-confirmation-content">
+          <h3 data-i18n="deactivateContractEndDateTitle">Add End Date</h3>
+          <p class="delete-confirmation-message" data-i18n="deactivateContractEndDateMessage">Please add an end date before deactivating this contract.</p>
+          <div class="form-group">
+            <label for="deactivateContractEndDateInput" data-i18n="endDate">End Date</label>
+            <input
+              type="date"
+              id="deactivateContractEndDateInput"
+              class="form-input"
+              min="2020-01-01"
+              max="2030-12-31"
+            />
+          </div>
+          <div class="delete-confirmation-actions">
+            <button type="button" class="button-secondary" id="deactivateContractCancel" data-i18n="cancel">Cancel</button>
+            <button type="button" class="button-primary" id="deactivateContractConfirm" data-i18n="contractDeactivate">Deactivate</button>
           </div>
         </div>
       </div>
@@ -779,6 +805,7 @@
                     <th data-i18n="selectTenant">Tenant</th>
                     <th data-i18n="startDate">Start</th>
                     <th data-i18n="endDate">End</th>
+                    <th data-i18n="period">Period</th>
                     <th data-i18n="monthlyRent">Rent</th>
                     <th data-i18n="monthlyGarbage">Garbage</th>
                     <th data-i18n="monthlyMaintenance">Maintenance</th>
@@ -801,6 +828,7 @@
                     <th data-i18n="selectTenant">Tenant</th>
                     <th data-i18n="startDate">Start</th>
                     <th data-i18n="endDate">End</th>
+                    <th data-i18n="period">Period</th>
                     <th data-i18n="monthlyRent">Rent</th>
                     <th data-i18n="monthlyGarbage">Garbage</th>
                     <th data-i18n="monthlyMaintenance">Maintenance</th>
@@ -1106,12 +1134,17 @@
                         <th data-i18n="debtType">Type</th>
                         <th data-i18n="amount">Amount</th>
                         <th data-i18n="dueDate">Due Date</th>
+                        <th data-i18n="period">Period</th>
                         <th data-i18n="paymentReference">Reference</th>
                         <th data-i18n="actions">Actions</th>
                       </tr>
                     </thead>
                     <tbody id="utilityExpensesTableBody"></tbody>
                   </table>
+                  <div class="utility-table-remaining-debt">
+                    <span data-i18n="remainingDebt">Remaining debt:</span>
+                    <span class="utility-remaining-debt-value" id="utilityExpensesRemainingDebt">€0.00</span>
+                  </div>
                 </div>
                 <div class="utility-table-wrapper">
                   <h5 data-i18n="paymentsList">Payments</h5>
@@ -1128,6 +1161,10 @@
                     </thead>
                     <tbody id="utilityPaymentsTableBody"></tbody>
                   </table>
+                  <div class="utility-table-remaining-debt">
+                    <span data-i18n="remainingDebt">Remaining debt:</span>
+                    <span class="utility-remaining-debt-value" id="utilityPaymentsRemainingDebt">€0.00</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1140,6 +1177,7 @@
                     <th data-i18n="debtType">Type</th>
                     <th data-i18n="amount">Amount</th>
                     <th data-i18n="dueDate">Due</th>
+                    <th data-i18n="period">Period</th>
                     <th data-i18n="status">Status</th>
                     <th data-i18n="paymentReference">Reference</th>
                     <th data-i18n="notes">Notes</th>
@@ -1157,6 +1195,7 @@
                     <th data-i18n="debtType">Debt Type</th>
                     <th data-i18n="amount">Amount</th>
                     <th data-i18n="dueDate">Due Date</th>
+                    <th data-i18n="period">Period</th>
                     <th data-i18n="paymentDate">Payment Date</th>
                     <th data-i18n="paymentMethod">Method</th>
                     <th data-i18n="paymentReference">Reference</th>
@@ -1217,6 +1256,7 @@
                     <th data-i18n="debtType">Debt Type</th>
                     <th data-i18n="amount">Amount</th>
                     <th data-i18n="dueDate">Due Date</th>
+                    <th data-i18n="period">Period</th>
                     <th data-i18n="paymentDate">Payment Date</th>
                     <th data-i18n="paymentMethod">Method</th>
                     <th data-i18n="paymentReference">Reference</th>
@@ -1235,6 +1275,7 @@
                     <th data-i18n="debtType">Type</th>
                     <th data-i18n="amount">Amount</th>
                     <th data-i18n="dueDate">Due</th>
+                    <th data-i18n="period">Period</th>
                     <th data-i18n="status">Status</th>
                   </tr>
                 </thead>
@@ -1349,6 +1390,7 @@
                   <th data-i18n="debtType">Type</th>
                   <th data-i18n="amount">Amount</th>
                   <th data-i18n="dueDate">Due Date</th>
+                  <th data-i18n="period">Period</th>
                   <th data-i18n="status">Status</th>
                   <th data-i18n="reference">Reference</th>
                 </tr>

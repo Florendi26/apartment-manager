@@ -457,6 +457,13 @@ main {
   overflow-y: visible;
 }
 
+/* Expenses (admin only): full content width — main was capped at 1200px */
+main:has(#adminView.active #page-expenses.active) {
+  max-width: 100%;
+  padding-left: clamp(0.75rem, 2vw, 1.5rem);
+  padding-right: clamp(0.75rem, 2vw, 1.5rem);
+}
+
 #notificationArea {
   margin-bottom: 1rem;
 }
@@ -621,8 +628,10 @@ body.dark-theme table {
   color: #bbf7d0;
 }
 
-body.dark-theme th {
-  background-color: #111827;
+body.dark-theme thead th {
+  background-color: #08a88a;
+  color: #ffffff;
+  border-bottom-color: #08a88a;
 }
 
 body.dark-theme td {
@@ -2038,6 +2047,7 @@ body.dark-theme .expense-sidebar-btn.active {
   border-bottom: 1px solid #e5e7eb;
 }
 
+/* Summary panel uses same unified table layout */
 .summary-panel thead th {
   background-color: #08a88a;
   color: #ffffff;
@@ -2057,10 +2067,10 @@ body.dark-theme .expense-sidebar-btn.active {
   background-color: #ffffff;
 }
 
-/* Lighter teal header for tenant expenses summary */
+/* Tenant expenses summary - same unified layout */
 .tenant-expenses-summary .summary-panel thead th {
-  background-color: rgba(8, 168, 138, 0.15);
-  color: #1f2937;
+  background-color: #08a88a;
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -2075,9 +2085,9 @@ body.dark-theme #tenantTypeSummaryBody tr:nth-child(even) {
 }
 
 body.dark-theme .tenant-expenses-summary .summary-panel thead th {
-  background-color: rgba(8, 168, 138, 0.2);
-  color: #bbf7d0;
-  border-bottom-color: #374151;
+  background-color: #08a88a;
+  color: #ffffff;
+  border-bottom-color: #08a88a;
 }
 
 body.dark-theme .tenant-expenses-summary .summary-panel td {
@@ -2679,6 +2689,118 @@ body.dark-theme .btn-outline-primary:hover {
   max-width: 100%;
 }
 
+/* Expenses / debts card: one row per record; scroll horizontally if needed */
+#debtsPaymentsCard .table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#debtsPaymentsCard .table-wrapper table {
+  table-layout: auto;
+  width: 100%;
+  min-width: 68rem;
+}
+#debtsPaymentsCard .table-wrapper thead th,
+#debtsPaymentsCard .table-wrapper tbody td {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  vertical-align: middle;
+}
+/* Notes column: single line with ellipsis when long */
+#debtsPaymentsCard .table-wrapper thead th:nth-last-child(2),
+#debtsPaymentsCard .table-wrapper tbody td:nth-last-child(2) {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#debtsPaymentsCard .table-wrapper tbody td:nth-last-child(2) .inline-edit-input {
+  min-width: 7rem;
+  max-width: 100%;
+}
+#debtsPaymentsCard .table-wrapper th:last-child,
+#debtsPaymentsCard .table-wrapper td:last-child {
+  width: auto;
+  min-width: fit-content;
+  white-space: nowrap;
+}
+#debtsPaymentsCard .table-wrapper .btn-group,
+#debtsPaymentsCard .table-wrapper .actions-group {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.25rem;
+  vertical-align: middle;
+}
+#debtsPaymentsCard .table-wrapper .btn-group .btn,
+#debtsPaymentsCard .table-wrapper .actions-group button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* Compact "Mark paid" — keep Edit/Delete default size */
+#debtsPaymentsCard .table-wrapper .btn[data-action="mark-paid"],
+#debtsPaymentsCard .utility-table-wrapper .btn[data-action="mark-paid"] {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.45rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+#debtsPaymentsCard .utility-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#debtsPaymentsCard .utility-table-wrapper table {
+  table-layout: auto;
+  width: 100%;
+  min-width: 42rem;
+}
+#debtsPaymentsCard .utility-table-wrapper thead th,
+#debtsPaymentsCard .utility-table-wrapper tbody td {
+  white-space: nowrap;
+  word-break: normal;
+  vertical-align: middle;
+}
+#debtsPaymentsCard .utility-table-wrapper th:last-child,
+#debtsPaymentsCard .utility-table-wrapper td:last-child {
+  width: auto;
+  min-width: fit-content;
+}
+#debtsPaymentsCard .utility-table-wrapper .btn-group,
+#debtsPaymentsCard .utility-table-wrapper .actions-group {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+}
+#debtsPaymentsCard .utility-table-wrapper .btn-group .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media screen and (max-width: 768px) {
+  #debtsPaymentsCard .table-wrapper {
+    overflow-x: visible;
+  }
+  #debtsPaymentsCard .table-wrapper table {
+    min-width: 0;
+    width: 100%;
+  }
+  #debtsPaymentsCard .table-wrapper thead th,
+  #debtsPaymentsCard .table-wrapper tbody td {
+    white-space: normal;
+    word-break: break-word;
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  #debtsPaymentsCard .utility-table-wrapper table {
+    min-width: 0;
+  }
+  #debtsPaymentsCard .utility-table-wrapper thead th,
+  #debtsPaymentsCard .utility-table-wrapper tbody td {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
 table {
   width: 100%;
   max-width: 100%;
@@ -2725,8 +2847,14 @@ img {
   display: block;
 }
 
-thead {
-  background-color: rgba(8, 168, 138, 0.1);
+/* Unified table layout - same for all data tables */
+thead th {
+  background-color: #08a88a;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0.7rem;
+  text-align: left;
+  border-bottom: 1px solid #08a88a;
 }
 
 th,
@@ -2994,6 +3122,9 @@ tbody tr.view-active:hover {
   width: 100%;
   max-width: 90vw;
   max-height: 75vh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .photo-viewer-content img {
@@ -3016,7 +3147,7 @@ tbody tr.view-active:hover {
   position: absolute;
   top: -40px;
   right: 0;
-  background: none;
+  background: rgba(0, 0, 0, 0.5);
   border: none;
   color: white;
   font-size: 3rem;
@@ -3026,6 +3157,7 @@ tbody tr.view-active:hover {
   width: 40px;
   height: 40px;
   transition: transform 0.2s;
+  z-index: 10001;
 }
 
 .photo-viewer-close:hover {
@@ -3045,6 +3177,7 @@ tbody tr.view-active:hover {
   border-radius: 0.5rem;
   transition: background-color 0.2s;
   display: none;
+  z-index: 10001;
 }
 
 .photo-viewer-nav:hover {
@@ -3060,6 +3193,11 @@ tbody tr.view-active:hover {
 }
 
 .photo-viewer-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
   color: white;
   font-size: 1rem;
   background-color: rgba(0, 0, 0, 0.7);
@@ -3068,15 +3206,39 @@ tbody tr.view-active:hover {
   text-align: center;
 }
 
+.photo-viewer-downloads {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.photo-viewer-download-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.photo-viewer-download-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
 .photo-viewer-thumbnails {
   display: flex;
   gap: 0.5rem;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   max-width: 90vw;
   padding: 0.5rem;
   overflow-x: auto;
+  overflow-y: hidden;
   max-height: 120px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .photo-thumbnail-item {
@@ -3108,16 +3270,35 @@ tbody tr.view-active:hover {
 
 @media (max-width: 768px) {
   .photo-viewer-prev {
-    left: 10px;
+    position: fixed;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.75rem 1rem;
+    font-size: 2rem;
+    min-width: 44px;
+    min-height: 44px;
   }
   
   .photo-viewer-next {
-    right: 10px;
+    position: fixed;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.75rem 1rem;
+    font-size: 2rem;
+    min-width: 44px;
+    min-height: 44px;
   }
   
   .photo-viewer-close {
-    top: 10px;
-    right: 10px;
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 2rem;
   }
 }
 
@@ -3445,6 +3626,24 @@ body.dark-theme .utility-summary-difference .utility-summary-value.zero {
   color: #bbf7d0;
 }
 
+body.dark-theme .utility-table-remaining-debt {
+  border-top-color: #374151;
+  color: #a7f3d0;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-theme .utility-table-remaining-debt .utility-remaining-debt-value.positive {
+  color: #fca5a5;
+}
+
+body.dark-theme .utility-table-remaining-debt .utility-remaining-debt-value.negative {
+  color: #86efac;
+}
+
+body.dark-theme .utility-table-remaining-debt .utility-remaining-debt-value.zero {
+  color: #bbf7d0;
+}
+
 .utility-tables-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3459,6 +3658,7 @@ body.dark-theme .utility-summary-difference .utility-summary-value.zero {
 
 .utility-table-wrapper table {
   width: 100%;
+  /* Uses same unified thead th styling from base table rules */
 }
 
 .utility-table-wrapper .actions-group {
@@ -3469,6 +3669,35 @@ body.dark-theme .utility-summary-difference .utility-summary-value.zero {
 .utility-table-wrapper .actions-group button {
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
+}
+
+.utility-table-remaining-debt {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-top: 2px solid var(--border-color, #e5e7eb);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 0 0 0.375rem 0.375rem;
+}
+
+.utility-table-remaining-debt .utility-remaining-debt-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-left: 0.5rem;
+}
+
+.utility-table-remaining-debt .utility-remaining-debt-value.positive {
+  color: var(--danger, #dc2626);
+}
+
+.utility-table-remaining-debt .utility-remaining-debt-value.negative {
+  color: var(--success, #16a34a);
+}
+
+.utility-table-remaining-debt .utility-remaining-debt-value.zero {
+  color: var(--text-primary);
 }
 
 @media (max-width: 768px) {

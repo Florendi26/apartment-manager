@@ -994,6 +994,19 @@ async function exportTenantExpensesToPdf(language = "en", format = "normal") {
     return tenantFormatDate(value);
   }
 
+  function formatPeriod(value) {
+    if (!value) return "-";
+    try {
+      const date = new Date(value);
+      if (isNaN(date.getTime())) return "-";
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${year}`;
+    } catch {
+      return "-";
+    }
+  }
+
   function equalsId(a, b) {
     return String(a) === String(b);
   }
@@ -1063,6 +1076,7 @@ async function exportTenantExpensesToPdf(language = "en", format = "normal") {
     translate,
     formatCurrency,
     formatDate,
+    formatPeriod,
     equalsId,
     isUtilityType,
     normalizeCurrency,

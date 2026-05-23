@@ -19,6 +19,7 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
     translate,
     formatCurrency,
     formatDate,
+    formatPeriod,
     equalsId,
     isUtilityType,
     normalizeCurrency,
@@ -419,6 +420,7 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
         type: translate(`debt${capitalize(debt.type)}`) || debt.type,
         amount: normalizeCurrency(debt.amount),
         dueDate: debt.due_date,
+        period: formatPeriod(debt.due_date),
         status: status.label,
         reference: debt.reference || "-"
       });
@@ -497,6 +499,7 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
         item.type,
         formatCurrency(item.amount),
         item.dueDate ? formatDate(item.dueDate) : "-",
+        item.period || "-",
         item.status,
         formatReferenceNumber(item.reference)
       ]);
@@ -512,6 +515,7 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
           translate("debtType") || "Type",
           translate("amount") || "Amount",
           translate("dueDate") || "Due Date",
+          translate("period") || "Period",
           translate("status") || "Status",
           translate("reference") || "Reference"
         ]],
@@ -536,8 +540,9 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
           1: { halign: 'left' },   // Type
           2: { halign: 'right' },  // Amount
           3: { halign: 'left' },   // Due Date
-          4: { halign: 'left' },   // Status
-          5: { halign: 'left' }    // Reference
+          4: { halign: 'left' },   // Period
+          5: { halign: 'left' },   // Status
+          6: { halign: 'left' }    // Reference
         }
       });
       
@@ -617,6 +622,7 @@ window._exportTenantToPdfInternal = function(dependencies, language = "en", form
         cursorY,
         translate,
         formatDate,
+        formatPeriod,
         formatCurrency,
         formatReferenceNumber,
         normalizeCurrency,
@@ -648,6 +654,7 @@ function renderExpenseTypeTables(
   startY,
   translate,
   formatDate,
+  formatPeriod,
   formatCurrency,
   formatReferenceNumber,
   normalizeCurrency,
@@ -662,13 +669,14 @@ function renderExpenseTypeTables(
   const separatorWidth = 30; // Separator width to match visual appearance (index 4)
   const sectionWidth = (tableWidth - separatorWidth) / 2; // Equal width for both sections
   
-  // Calculate column widths for expenses section
-  const expensesTotalColWidth = 8 + 20 + 18 + 38;
+  // Calculate column widths for expenses section (#, Due Date, Period, Amount, Reference)
+  const expensesTotalColWidth = 8 + 18 + 14 + 18 + 38;
   const expensesScaleFactor = sectionWidth / expensesTotalColWidth;
   const expCol0Width = 8 * expensesScaleFactor;
-  const expCol1Width = 20 * expensesScaleFactor;
-  const expCol2Width = 18 * expensesScaleFactor;
-  const expCol3Width = sectionWidth - (expCol0Width + expCol1Width + expCol2Width);
+  const expCol1Width = 18 * expensesScaleFactor;
+  const expCol2Width = 14 * expensesScaleFactor;
+  const expCol3Width = 18 * expensesScaleFactor;
+  const expCol4Width = sectionWidth - (expCol0Width + expCol1Width + expCol2Width + expCol3Width);
   
   // Calculate column widths for payments section
   const paymentsTotalColWidth = 8 + 20 + 18 + 38;
@@ -682,6 +690,7 @@ function renderExpenseTypeTables(
   const expensesData = typeDebts.map((debt, i) => [
     i + 1,
     formatDate(debt.due_date),
+    formatPeriod(debt.due_date),
     formatCurrency(debt.amount),
     formatReferenceNumber(debt.reference)
   ]);
@@ -699,34 +708,36 @@ function renderExpenseTypeTables(
   const debtAmount = totalExpenses - totalPayments;
   
   // Create merged table structure: Expenses columns + Separator + Payments columns
-  // Total columns: 4 (expenses) + 1 (separator) + 4 (payments) = 9 columns
+  // Total columns: 5 (expenses) + 1 (separator) + 4 (payments) = 10 columns
   const maxRows = Math.max(expensesData.length, paymentsData.length, 1);
   
   // Build combined table body
   const combinedBody = [];
   for (let i = 0; i < maxRows; i++) {
-    const expRow = expensesData[i] || ["", "", "", ""];
+    const expRow = expensesData[i] || ["", "", "", "", ""];
     const payRow = paymentsData[i] || ["", "", "", ""];
     // Combine: expenses columns + separator + payments columns
     combinedBody.push([...expRow, "", ...payRow]);
   }
   
   // Add totals row at the bottom
-  // Merge cells 0-3 for "Total Expenses: €X.XX", separator (4) empty, merge cells 5-8 for "Total Payments: €X.XX"
   const totalExpensesText = `${translate("totalExpenses") || "Total Expenses"} ${formatCurrency(totalExpenses)}`;
   const totalPaymentsText = `${translate("totalPayments") || "Total Payments"} ${formatCurrency(totalPayments)}`;
-  combinedBody.push([totalExpensesText, "", "", "", "", totalPaymentsText, "", "", ""]);
+  combinedBody.push([totalExpensesText, "", "", "", "", "", totalPaymentsText, "", "", ""]);
   
-  // Add difference row - show remaining debt (Total Expenses - Total Payments) in payments section (columns 5-8)
-  const differenceText = `${translate("remainingDebt") || "Remaining debt"} ${formatCurrency(debtAmount)}`;
-  combinedBody.push(["", "", "", "", "", differenceText, "", "", ""]);
+  // Add remaining debt row
+  const remainingDebtText = Math.abs(debtAmount) < 0.01
+    ? `${translate("remainingDebt") || "Remaining debt:"} ${formatCurrency(0)}`
+    : debtAmount > 0
+      ? `${translate("remainingDebt") || "Remaining debt:"} ${formatCurrency(debtAmount)}`
+      : `${translate("remainingDebt") || "Remaining debt:"} -${formatCurrency(Math.abs(debtAmount))}`;
+  combinedBody.push([{ content: remainingDebtText, colSpan: 10, styles: { halign: 'center', fontStyle: 'bold' } }]);
   
   // Create combined headers as simple array for jsPDF autoTable
-  // This ensures headers are always visible, even with few data rows
-  // Used for all types including electricity and maintenance
   const combinedHeaders = [
     "#",
     translate("dueDate") || "Due Date",
+    translate("period") || "Period",
     translate("amount") || "Amount",
     translate("reference") || "Reference",
     "", // Separator column
@@ -736,12 +747,28 @@ function renderExpenseTypeTables(
     translate("paymentMethod") || "Method"
   ];
   
-  // Table styles - more compact to fit more rows and reduce empty space
-  const tableStyles = { fontSize: 6, cellPadding: 0.8, overflow: 'ellipsize', lineWidth: 0.1, lineColor: [0, 0, 0], pageBreak: 'auto' };
-  const headStyles = { fillColor: [8, 168, 138], textColor: [255, 255, 255], fontSize: 6, lineWidth: 0.1, lineColor: [0, 0, 0], cellPadding: 1 };
+  // Table styles - use linebreak for footer text (Total Expenses, Total Payments, Remaining debt)
+  const tableStyles = { fontSize: 6, cellPadding: 0.8, overflow: 'linebreak', lineWidth: 0.1, lineColor: [0, 0, 0], pageBreak: 'auto' };
+  const headStyles = { fillColor: [8, 168, 138], textColor: [255, 255, 255], fontSize: 6, fontStyle: 'bold', halign: 'center', lineWidth: 0.1, lineColor: [0, 0, 0], cellPadding: 1 };
   
-  // Split into pages
-  const combinedPages = chunkArray(combinedBody, maxRowsPerPage);
+  // Split into pages - keep totals row on last page (same format for rent, garbage, water, etc.)
+  const dataRows = combinedBody.slice(0, maxRows);
+  const footerRows = combinedBody.slice(maxRows); // totals row (1 row)
+  const combinedPages = combinedBody.length <= maxRowsPerPage
+    ? [combinedBody]
+    : (() => {
+        const dataChunkSize = Math.max(1, maxRowsPerPage - 1); // leave room for totals row
+        const chunks = [];
+        for (let i = 0; i < dataRows.length; i += dataChunkSize) {
+          const chunk = dataRows.slice(i, i + dataChunkSize);
+          if (i + dataChunkSize >= dataRows.length) {
+            chunks.push([...chunk, ...footerRows]); // last page gets totals
+          } else {
+            chunks.push(chunk);
+          }
+        }
+        return chunks.length > 0 ? chunks : [footerRows];
+      })();
   // tableWidth is already calculated above
   
   let currentStartY = startY;
@@ -749,9 +776,9 @@ function renderExpenseTypeTables(
   for (let pageIndex = 0; pageIndex < combinedPages.length; pageIndex++) {
     const pageData = combinedPages[pageIndex];
     
-    // Check if this page has minimum 3 data rows (excluding totals row and difference row)
-    // pageData includes: data rows + totals row + difference row
-    const dataRowsOnPage = pageData.length > 0 ? Math.max(0, pageData.length - 2) : 0; // Subtract 2 for totals row and difference row
+    // Check if this page has minimum 3 data rows (excluding totals row)
+    // pageData includes: data rows + totals row
+    const dataRowsOnPage = pageData.length > 0 ? Math.max(0, pageData.length - 1) : 0; // Subtract 1 for totals row
     const minRowsRequired = 3;
     
     if (pageIndex > 0) {
@@ -792,79 +819,54 @@ function renderExpenseTypeTables(
       }
     }
       // Title row only on first page - include utility/expense type name
-      // Column headers must appear on ALL pages as the second row (or first row on subsequent pages)
-      // Exception: Electricity and Maintenance don't show column headers row
-      const hideColumnHeaders = type === "electricity" || type === "maintenance";
+      // Column headers appear on ALL pages - same format for all types (rent, garbage, water, electricity, maintenance, thermos)
       let tableHead;
       if (pageIndex === 0) {
-        // First page: title row + column headers row (unless electricity/maintenance)
-        if (hideColumnHeaders) {
-          // Only title row for electricity and maintenance
-          tableHead = [
-            [
-              { content: `${typeLabel} - ${translate("expensesList") || "Expenses"}`, colSpan: 4, styles: { halign: 'center' } },
-              { content: "", colSpan: 1, styles: { fillColor: [255, 255, 255], lineWidth: 0 } }, // Separator
-              { content: `${typeLabel} - ${translate("paymentsList") || "Payments"}`, colSpan: 4, styles: { halign: 'center' } }
-            ]
-          ];
-        } else {
-          // Title row + column headers row for other types
-          tableHead = [
-            [
-              { content: `${typeLabel} - ${translate("expensesList") || "Expenses"}`, colSpan: 4, styles: { halign: 'center' } },
-              { content: "", colSpan: 1, styles: { fillColor: [255, 255, 255], lineWidth: 0 } }, // Separator
-              { content: `${typeLabel} - ${translate("paymentsList") || "Payments"}`, colSpan: 4, styles: { halign: 'center' } }
-            ],
-            combinedHeaders // Second row: column headers
-          ];
-        }
+        // First page: title row + column headers row
+        tableHead = [
+          [
+            { content: `${typeLabel} - ${translate("expensesList") || "Expenses"}`, colSpan: 5, styles: { halign: 'center' } },
+            { content: "", colSpan: 1, styles: { fillColor: [255, 255, 255], lineWidth: 0 } }, // Separator
+            { content: `${typeLabel} - ${translate("paymentsList") || "Payments"}`, colSpan: 4, styles: { halign: 'center' } }
+          ],
+          combinedHeaders // Second row: column headers
+        ];
       } else {
-        // Subsequent pages: column headers row only (unless electricity/maintenance)
-        if (hideColumnHeaders) {
-          // Show title row again on subsequent pages for electricity and maintenance
-          tableHead = [
-            [
-              { content: `${typeLabel} - ${translate("expensesList") || "Expenses"}`, colSpan: 4, styles: { halign: 'center' } },
-              { content: "", colSpan: 1, styles: { fillColor: [255, 255, 255], lineWidth: 0 } }, // Separator
-              { content: `${typeLabel} - ${translate("paymentsList") || "Payments"}`, colSpan: 4, styles: { halign: 'center' } }
-            ]
-          ];
-        } else {
-          // Column headers on all subsequent pages for other types
-          tableHead = [combinedHeaders];
-        }
+        // Subsequent pages: column headers row only
+        tableHead = [combinedHeaders];
       }
       
-      // Ensure combinedHeaders is always defined and is an array of 9 cells
-      if (!combinedHeaders || !Array.isArray(combinedHeaders) || combinedHeaders.length !== 9) {
+      // Ensure combinedHeaders is always defined and is an array of 10 cells
+      if (!combinedHeaders || !Array.isArray(combinedHeaders) || combinedHeaders.length !== 10) {
         console.error("combinedHeaders is invalid:", combinedHeaders);
       }
     
     doc.autoTable({
       startY: currentStartY,
       head: tableHead,
-      body: pageData.length > 0 ? pageData : [["", "", "", "", "", "", "", "", ""]],
+      body: pageData.length > 0 ? pageData : [["", "", "", "", "", "", "", "", "", ""]],
       styles: tableStyles,
       headStyles: headStyles,
       showHead: 'everyPage', // Always show headers on every page
       columnStyles: {
-        // Expenses columns (0-3)
+        // Expenses columns (0-4)
         0: { cellWidth: expCol0Width },
         1: { cellWidth: expCol1Width },
         2: { cellWidth: expCol2Width },
         3: { cellWidth: expCol3Width },
-        // Separator column (4) - THIS IS THE SEPARATOR COLUMN INDEX
-        4: { 
+        4: { cellWidth: expCol4Width },
+        // Separator column (5)
+        5: { 
           cellWidth: separatorWidth, 
           fillColor: [255, 255, 255],
           lineWidth: { left: 0.1, right: 0.1, top: 0.1, bottom: 0.1 },
           textColor: [255, 255, 255]
         },
-        // Payments columns (5-8)
-        5: { cellWidth: payCol0Width },
-        6: { cellWidth: payCol1Width },
-        7: { cellWidth: payCol2Width },
-        8: { cellWidth: payCol3Width }
+        // Payments columns (6-9)
+        6: { cellWidth: payCol0Width },
+        7: { cellWidth: payCol1Width },
+        8: { cellWidth: payCol2Width },
+        9: { cellWidth: payCol3Width }
       },
       didParseCell: function(data) {
         // Column headers row styling (second header row is -1, or first row on subsequent pages)
@@ -879,7 +881,7 @@ function renderExpenseTypeTables(
           
           // Column headers should use headStyles (already applied via headStyles config)
           // Explicitly ensure headers are visible with proper styling
-          if (data.column.index === 4) {
+          if (data.column.index === 5) {
             // Separator column in headers row
             data.cell.text = [""];
             data.cell.styles.fillColor = [255, 255, 255];
@@ -896,30 +898,30 @@ function renderExpenseTypeTables(
             
             // Ensure header cells have proper styling and text is visible
             // ALWAYS force these styles to ensure headers are visible
-            data.cell.styles.fillColor = [8, 168, 138]; // Teal background
+            data.cell.styles.fillColor = [8, 168, 138]; // Dark green/teal background
             data.cell.styles.textColor = [255, 255, 255]; // White text
             data.cell.styles.fontSize = 6; // Ensure font size
-            data.cell.styles.fontStyle = 'normal'; // Normal font weight for headers
-            data.cell.styles.halign = 'left'; // Left align headers
+            data.cell.styles.fontStyle = 'bold'; // Bold column headers
+            data.cell.styles.halign = 'center'; // Center align headers
           }
         }
         // Title row styling (first header row is -2)
         if (pageIndex === 0 && data.row.index === -2) {
           if (data.column.index === 0) {
             // Expenses title
-            if (!data.cell.colSpan) data.cell.colSpan = 4;
+            if (!data.cell.colSpan) data.cell.colSpan = 5;
             data.cell.styles.halign = 'center';
             data.cell.styles.fontSize = 9;
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.fillColor = [8, 168, 138];
             data.cell.styles.textColor = [255, 255, 255];
             data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 1, right: 1 };
-          } else if (data.column.index === 4) {
+          } else if (data.column.index === 5) {
             // Separator in title row
             data.cell.text = [""];
             data.cell.styles.lineWidth = 0;
             data.cell.styles.fillColor = [255, 255, 255];
-          } else if (data.column.index === 5) {
+          } else if (data.column.index === 6) {
             // Payments title
             if (!data.cell.colSpan) data.cell.colSpan = 4;
             data.cell.styles.halign = 'center';
@@ -928,87 +930,85 @@ function renderExpenseTypeTables(
             data.cell.styles.fillColor = [8, 168, 138];
             data.cell.styles.textColor = [255, 255, 255];
             data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 1, right: 1 };
-          } else if (data.column.index > 0 && data.column.index < 4) {
+          } else if (data.column.index > 0 && data.column.index < 5) {
             // Hidden cells in expenses title
             data.cell.text = [""];
             data.cell.styles.lineWidth = 0;
             data.cell.styles.fillColor = [8, 168, 138];
-          } else if (data.column.index > 5 && data.column.index < 9) {
+          } else if (data.column.index > 6 && data.column.index < 10) {
             // Hidden cells in payments title
             data.cell.text = [""];
             data.cell.styles.lineWidth = 0;
             data.cell.styles.fillColor = [8, 168, 138];
           }
         }
-        // Separator column styling for data rows
-        if (data.column.index === 4 && data.row.index >= 0 && data.row.index < maxRows) {
+        // Totals row and remaining debt row only appear on the last page
+        const isLastPage = pageIndex === combinedPages.length - 1;
+        const isTotalsRow = isLastPage && data.row.index === pageData.length - 2;
+        const isRemainingDebtRow = isLastPage && data.row.index === pageData.length - 1;
+        // Separator column styling for data rows (exclude totals and remaining debt rows)
+        if (data.column.index === 5 && data.row.index >= 0 && !isTotalsRow && !isRemainingDebtRow) {
           data.cell.text = [""];
           data.cell.styles.fillColor = [255, 255, 255];
           data.cell.styles.lineWidth = { left: 0.1, right: 0.1, top:0, bottom: 0};
         }
-        // Totals row styling (row index maxRows)
-        if (data.row.index === maxRows) {
+        // Totals row styling (last row - same format for rent, garbage, water, etc.)
+        if (isTotalsRow) {
           if (data.column.index === 0) {
-            // Merge cells 0-3 for "Total Expenses"
-            data.cell.colSpan = 4;
+            // Merge cells 0-4 for "Total Expenses" - prevent truncation
+            data.cell.colSpan = 5;
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.fillColor = [240, 240, 240];
             data.cell.styles.halign = 'left';
             data.cell.styles.lineWidth = { left: 0.1, right: 0, top: 0.1, bottom: 0.1 };
-          } else if (data.column.index > 0 && data.column.index < 4) {
-            // Hide merged cells 1-3
+            data.cell.styles.overflow = 'linebreak';
+            data.cell.styles.cellPadding = 1.5;
+            data.cell.styles.fontSize = 7;
+          } else if (data.column.index > 0 && data.column.index < 5) {
+            // Hide merged cells 1-4
             data.cell.text = [""];
             data.cell.styles.lineWidth = 0;
             data.cell.styles.fillColor = [240, 240, 240];
-          } else if (data.column.index === 4) {
+          } else if (data.column.index === 5) {
             // Separator column - same styling as other rows
             data.cell.text = [""];
             data.cell.styles.fillColor = [255, 255, 255];
             data.cell.styles.lineWidth = { left: 0.1, right: 0.1, top: 0, bottom: 0 };
-          } else if (data.column.index === 5) {
-            // Merge cells 5-8 for "Total Payments"
+          } else if (data.column.index === 6) {
+            // Merge cells 6-9 for "Total Payments" - prevent truncation
             data.cell.colSpan = 4;
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.fillColor = [240, 240, 240];
             data.cell.styles.halign = 'left';
-          } else if (data.column.index > 5 && data.column.index < 9) {
-            // Hide merged cells 6-8
+            data.cell.styles.overflow = 'linebreak';
+            data.cell.styles.cellPadding = 1.5;
+            data.cell.styles.fontSize = 7;
+          } else if (data.column.index > 6 && data.column.index < 10) {
+            // Hide merged cells 7-9
             data.cell.text = [""];
             data.cell.styles.lineWidth = 0;
             data.cell.styles.fillColor = [240, 240, 240];
           }
         }
-        // Difference row styling (row index maxRows + 1)
-        if (data.row.index === maxRows + 1) {
-          if (data.column.index >= 0 && data.column.index < 4) {
-            // Empty cells for expenses section (0-3)
-            data.cell.text = [""];
-            data.cell.styles.fillColor = [255, 255, 255];
-            data.cell.styles.lineWidth = 0;
-          } else if (data.column.index === 4) {
-            // Separator column - no left border on bottom row
-            data.cell.text = [""];
-            data.cell.styles.fillColor = [255, 255, 255];
-            data.cell.styles.lineWidth = { left: 0, right: 0.1, top: 0, bottom: 0 };
-          } else if (data.column.index === 5) {
-            // Merge cells 5-8 for "Difference: €X.XX"
-            data.cell.colSpan = 4;
-            data.cell.styles.fontStyle = 'bold';
-            data.cell.styles.fillColor = [240, 240, 240];
-            data.cell.styles.halign = 'left';
-          } else if (data.column.index > 5 && data.column.index < 9) {
-            // Hide merged cells 6-8
-            data.cell.text = [""];
-            data.cell.styles.lineWidth = 0;
-            data.cell.styles.fillColor = [240, 240, 240];
-          }
+        // Remaining debt row styling (last row)
+        if (isRemainingDebtRow && data.column.index === 0) {
+          data.cell.colSpan = 10;
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fillColor = [255, 248, 220];
+          data.cell.styles.halign = 'center';
+          data.cell.styles.lineWidth = { left: 0.1, right: 0.1, top: 0.1, bottom: 0.1 };
+          data.cell.styles.fontSize = 7;
+        } else if (isRemainingDebtRow && data.column.index > 0) {
+          data.cell.text = [""];
+          data.cell.styles.lineWidth = 0;
+          data.cell.styles.fillColor = [255, 248, 220];
         }
       },
       willDrawCell: function(data) {
         // Ensure header text is set right before drawing - this is a final check
         if (data.row.index === -1) {
           // This is the header row - ensure text is always set
-          if (data.column.index !== 4) { // Not separator
+          if (data.column.index !== 5) { // Not separator
             const headerText = combinedHeaders[data.column.index];
             if (headerText !== undefined && headerText !== null && headerText !== "") {
               // Force set the text right before drawing
