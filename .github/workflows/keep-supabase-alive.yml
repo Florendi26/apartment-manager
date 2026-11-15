@@ -1,15 +1,24 @@
-# Keeps Supabase database active by pinging it daily
-# Supabase free tier pauses projects after ~7 days of inactivity
-# This workflow runs a lightweight query to prevent pausing
+# Pings Supabase a few times a day so a free project is not paused.
+# Supabase pauses free projects that get too little database activity over 7 days.
+# Using the app once a month is not enough.
+#
+# GitHub also turns scheduled workflows off after 60 days with no repository
+# activity. Each run re-enables this workflow, and if nobody has committed for
+# 25 days it adds one empty commit. That only works while the workflow is
+# still enabled. If GitHub has already disabled it, an admin must enable it
+# once from the Actions tab.
 
 name: Keep Supabase Alive
 
 on:
   schedule:
-    # Runs daily at 10:00 AM UTC
-    - cron: '0 10 * * *'
+    # 06:00, 14:00, and 22:00 UTC
+    - cron: '0 6,14,22 * * *'
   workflow_dispatch:
-    # Allows manual trigger from GitHub Actions tab
+
+permissions:
+  actions: write
+  contents: write
 
 jobs:
   ping:
@@ -17,16 +26,51 @@ jobs:
     steps:
       - name: Ping Supabase database
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X GET \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Content-Type: application/json" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/apartments?select=id&limit=1")
-          
-          if [ "$response" = "200" ] || [ "$response" = "206" ]; then
-            echo "✅ Supabase ping successful (HTTP $response)"
-          else
-            echo "❌ Supabase ping failed (HTTP $response)"
+          ping() {
+            curl -s -o /dev/null -w "%{http_code}" \
+              -X GET \
+              -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+              -H "Accept: application/json" \
+              "${{ secrets.SUPABASE_URL }}/rest/v1/apartments?select=id&limit=1"
+          }
+
+          ok=0
+          for i in 1 2 3; do
+            response=$(ping)
+            echo "Ping $i: HTTP $response"
+            if [ "$response" = "200" ] || [ "$response" = "206" ]; then
+              ok=$((ok + 1))
+            fi
+            sleep 2
+          done
+
+          if [ "$ok" -eq 0 ]; then
+            echo "Supabase ping failed"
             exit 1
           fi
+          echo "Supabase ping successful ($ok/3)"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Keep the schedule enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method PUT \
+            "repos/${{ github.repository }}/actions/workflows/keep-supabase-alive.yml/enable"
+          echo "Re-armed Keep Supabase Alive"
+
+          last=$(git log -1 --format=%ct)
+          now=$(date +%s)
+          age_days=$(( (now - last) / 86400 ))
+          echo "Last commit age: ${age_days} days"
+          if [ "$age_days" -lt 25 ]; then
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: keep scheduled workflows active"
+          git push
