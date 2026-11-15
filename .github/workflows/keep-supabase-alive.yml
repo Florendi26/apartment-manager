@@ -1,24 +1,21 @@
-# Pings Supabase a few times a day so a free project is not paused.
-# Supabase pauses free projects that get too little database activity over 7 days.
-# Using the app once a month is not enough.
+# Pings Supabase once a day so a free project is not paused.
+# Sends you a WhatsApp or email on every ping.
+# When fewer than 5 days remain before GitHub turns this schedule off,
+# the same message tells you to enable the workflow and run it again.
 #
-# GitHub also turns scheduled workflows off after 60 days with no repository
-# activity. Each run re-enables this workflow, and if nobody has committed for
-# 25 days it adds one empty commit. That only works while the workflow is
-# still enabled. If GitHub has already disabled it, an admin must enable it
-# once from the Actions tab.
+# GitHub disables a scheduled workflow after 60 days with no repository
+# activity. The clock starts from the last time this workflow file changed
+# or the workflow was enabled.
 
 name: Keep Supabase Alive
 
 on:
   schedule:
-    # 06:00, 14:00, and 22:00 UTC
-    - cron: '0 6,14,22 * * *'
+    - cron: '0 10 * * *'
   workflow_dispatch:
 
 permissions:
-  actions: write
-  contents: write
+  actions: read
 
 jobs:
   ping:
@@ -51,26 +48,51 @@ jobs:
           fi
           echo "Supabase ping successful ($ok/3)"
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Keep the schedule enabled
+      - name: Message you about the ping
         env:
           GH_TOKEN: ${{ github.token }}
+          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+          CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
-          gh api --method PUT \
-            "repos/${{ github.repository }}/actions/workflows/keep-supabase-alive.yml/enable"
-          echo "Re-armed Keep Supabase Alive"
-
-          last=$(git log -1 --format=%ct)
+          updated=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/keep-supabase-alive.yml" --jq .updated_at)
+          updated_epoch=$(date -d "$updated" +%s)
           now=$(date +%s)
-          age_days=$(( (now - last) / 86400 ))
-          echo "Last commit age: ${age_days} days"
-          if [ "$age_days" -lt 25 ]; then
-            exit 0
+          age_days=$(( (now - updated_epoch) / 86400 ))
+          days_left=$((60 - age_days))
+          echo "Schedule age: ${age_days} days. Days left before GitHub turns it off: ${days_left}."
+
+          when=$(date -u +"%Y-%m-%d %H:%M UTC")
+          text="Supabase ping succeeded at ${when}."
+          if [ "$days_left" -le 5 ]; then
+            text="${text} The keepalive schedule ends in ${days_left} days. Open GitHub, Actions, Keep Supabase Alive, click Enable workflow, then Run workflow."
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit --allow-empty -m "chore: keep scheduled workflows active"
-          git push
+          sent=0
+
+          if [ -n "$WHATSAPP_PHONE" ] && [ -n "$CALLMEBOT_APIKEY" ]; then
+            curl -fsS -G "https://api.callmebot.com/whatsapp.php" \
+              --data-urlencode "phone=${WHATSAPP_PHONE}" \
+              --data-urlencode "text=${text}" \
+              --data-urlencode "apikey=${CALLMEBOT_APIKEY}"
+            echo
+            echo "WhatsApp message sent."
+            sent=1
+          fi
+
+          if [ -n "$NOTIFY_EMAIL" ] && [ -n "$RESEND_API_KEY" ]; then
+            payload=$(NOTIFY_EMAIL="$NOTIFY_EMAIL" TEXT="$text" python3 -c 'import json,os; print(json.dumps({"from":"Supabase keepalive <onboarding@resend.dev>","to":[os.environ["NOTIFY_EMAIL"]],"subject":"Supabase keepalive","text":os.environ["TEXT"]}))')
+            curl -fsS -X POST "https://api.resend.com/emails" \
+              -H "Authorization: Bearer ${RESEND_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d "$payload"
+            echo
+            echo "Email sent."
+            sent=1
+          fi
+
+          if [ "$sent" -eq 0 ]; then
+            echo "::warning::No message sent. Add WHATSAPP_PHONE and CALLMEBOT_APIKEY, or NOTIFY_EMAIL and RESEND_API_KEY."
+            exit 1
+          fi
