@@ -197,10 +197,17 @@ function notify(type, message) {
   if (!notificationArea) return;
 
   const notification = document.createElement("div");
-  notification.className = `notification notification-${type}`;
-  notification.textContent = message;
-  notification.setAttribute("role", "alert");
-
+  notification.className = `notification ${type}`;
+  notification.setAttribute("role", type === "error" ? "alert" : "status");
+  const text = document.createElement("span");
+  text.textContent = message;
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "notification-close";
+  close.setAttribute("aria-label", "Dismiss");
+  close.textContent = "×";
+  close.addEventListener("click", () => notification.remove());
+  notification.append(text, close);
   notificationArea.appendChild(notification);
 
   setTimeout(() => {
@@ -232,7 +239,7 @@ async function handleLogin(event) {
 
   const loginError = document.getElementById("loginError");
   if (loginError) {
-    loginError.style.display = "none";
+    loginError.classList.add("hidden");
     loginError.textContent = "";
   }
 
@@ -257,7 +264,7 @@ async function handleLogin(event) {
     console.error("Login error:", error);
     if (loginError) {
       loginError.textContent = translate("loginError") || error.message;
-      loginError.style.display = "block";
+      loginError.classList.remove("hidden");
     }
   }
 }
@@ -282,7 +289,7 @@ async function handleSignup(event) {
 
   const signupError = document.getElementById("signupError");
   if (signupError) {
-    signupError.style.display = "none";
+    signupError.classList.add("hidden");
     signupError.textContent = "";
   }
 
@@ -290,7 +297,7 @@ async function handleSignup(event) {
   if (password !== confirmPassword) {
     if (signupError) {
       signupError.textContent = translate("passwordMismatch");
-      signupError.style.display = "block";
+      signupError.classList.remove("hidden");
     }
     return;
   }
@@ -331,7 +338,7 @@ async function handleSignup(event) {
     console.error("Signup error:", error);
     if (signupError) {
       signupError.textContent = translate("signupError") || error.message;
-      signupError.style.display = "block";
+      signupError.classList.remove("hidden");
     }
   }
 }

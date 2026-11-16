@@ -1,5 +1,13 @@
 // Admin contract preview and print. Loaded before app.js. Shares the same globals.
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 let adminContractPreviewCountdown = null;
 let adminContractPreviewData = null;
 
@@ -208,15 +216,15 @@ async function showAdminContractPreview(request, apartment, tenant, action) {
               <table class="contract-info-table">
                 <tr>
                   <td class="label">Emri i plotë:</td>
-                  <td class="value">${landlordProfile?.full_name || state.currentUser?.email?.split('@')[0] || '[Pronari]'}</td>
+                  <td class="value">${escapeHtml(landlordProfile?.full_name || state.currentUser?.email?.split('@')[0] || '[Pronari]')}</td>
                 </tr>
                 <tr>
                   <td class="label">Email:</td>
-                  <td class="value">${landlordProfile?.email || state.currentUser?.email || '[Email]'}</td>
+                  <td class="value">${escapeHtml(landlordProfile?.email || state.currentUser?.email || '[Email]')}</td>
                 </tr>
                 <tr>
                   <td class="label">Telefoni:</td>
-                  <td class="value">${landlordProfile?.phone || '[Do të plotësohet]'}</td>
+                  <td class="value">${escapeHtml(landlordProfile?.phone || '[Do të plotësohet]')}</td>
                 </tr>
               </table>
             </div>
@@ -225,15 +233,15 @@ async function showAdminContractPreview(request, apartment, tenant, action) {
               <table class="contract-info-table">
                 <tr>
                   <td class="label">Emri i plotë:</td>
-                  <td class="value">${tenant?.full_name || '[Qiramarrësi]'}</td>
+                  <td class="value">${escapeHtml(tenant?.full_name || '[Qiramarrësi]')}</td>
                 </tr>
                 <tr>
                   <td class="label">Email:</td>
-                  <td class="value">${tenant?.email || '[Email]'}</td>
+                  <td class="value">${escapeHtml(tenant?.email || '[Email]')}</td>
                 </tr>
                 <tr>
                   <td class="label">Telefoni:</td>
-                  <td class="value">${tenant?.phone || '[Do të plotësohet]'}</td>
+                  <td class="value">${escapeHtml(tenant?.phone || '[Do të plotësohet]')}</td>
                 </tr>
               </table>
             </div>
@@ -247,19 +255,19 @@ async function showAdminContractPreview(request, apartment, tenant, action) {
             <table class="contract-property-table">
               <tr>
                 <td class="label">Emri i pronës:</td>
-                <td class="value"><strong>${apartmentData.name || 'N/A'}</strong></td>
+                <td class="value"><strong>${escapeHtml(apartmentData.name || 'N/A')}</strong></td>
                 <td class="label">Lloji:</td>
                 <td class="value">Banesë</td>
               </tr>
               <tr>
                 <td class="label">Adresa:</td>
-                <td class="value" colspan="3">${apartmentData.address || 'N/A'}</td>
+                <td class="value" colspan="3">${escapeHtml(apartmentData.address || 'N/A')}</td>
               </tr>
               <tr>
                 <td class="label">Komuna:</td>
-                <td class="value">${apartmentData.municipality || '-'}</td>
+                <td class="value">${escapeHtml(apartmentData.municipality || '-')}</td>
                 <td class="label">Lagjia:</td>
-                <td class="value">${apartmentData.neighborhood || '-'}</td>
+                <td class="value">${escapeHtml(apartmentData.neighborhood || '-')}</td>
               </tr>
               <tr>
                 <td class="label">Sipërfaqja:</td>
@@ -269,15 +277,15 @@ async function showAdminContractPreview(request, apartment, tenant, action) {
               </tr>
               <tr>
                 <td class="label">Gjendja:</td>
-                <td class="value">${apartmentData.condition || '-'}</td>
+                <td class="value">${escapeHtml(apartmentData.condition || '-')}</td>
                 <td class="label">Kati:</td>
-                <td class="value">${apartmentData.floor || '-'}</td>
+                <td class="value">${escapeHtml(apartmentData.floor || '-')}</td>
               </tr>
             </table>
             ${features.length > 0 ? `
               <div class="contract-features">
                 <span class="label">Veçoritë: </span>
-                <span class="value">${features.join(', ')}</span>
+                <span class="value">${features.map((feature) => escapeHtml(feature)).join(', ')}</span>
               </div>
             ` : ''}
           </div>
@@ -380,13 +388,13 @@ async function showAdminContractPreview(request, apartment, tenant, action) {
           <div class="contract-signature-box">
             <div class="signature-title">QIRADHËNËSI</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${landlordProfile?.full_name || state.currentUser?.email?.split('@')[0] || '[Emri i pronarit]'}</div>
+            <div class="signature-name">${escapeHtml(landlordProfile?.full_name || state.currentUser?.email?.split('@')[0] || '[Emri i pronarit]')}</div>
             <div class="signature-date">Data: _____________</div>
           </div>
           <div class="contract-signature-box">
             <div class="signature-title">QIRAMARRËSI</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${tenant?.full_name || '[Emri i qiramarrësit]'}</div>
+            <div class="signature-name">${escapeHtml(tenant?.full_name || '[Emri i qiramarrësit]')}</div>
             <div class="signature-date">Data: _____________</div>
           </div>
         </div>
@@ -675,7 +683,7 @@ function printAdminContract() {
   
   const contractClone = contractDocument.cloneNode(true);
   
-  const apartmentName = adminContractPreviewData?.apartment?.name || 'Banesë';
+  const apartmentName = escapeHtml(adminContractPreviewData?.apartment?.name || 'Banesë');
   
   printWindow.document.write(`
     <!DOCTYPE html>

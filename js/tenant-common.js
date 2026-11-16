@@ -38,9 +38,17 @@ function tenantNotify(type, message) {
   const area = document.getElementById("tenantNotificationArea");
   if (!area) return;
   const div = document.createElement("div");
-  div.className = `notification notification-${type}`;
-  div.textContent = message;
-  div.setAttribute("role", "alert");
+  div.className = `notification ${type}`;
+  div.setAttribute("role", type === "error" ? "alert" : "status");
+  const text = document.createElement("span");
+  text.textContent = message;
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "notification-close";
+  close.setAttribute("aria-label", "Dismiss");
+  close.textContent = "×";
+  close.addEventListener("click", () => div.remove());
+  div.append(text, close);
   area.appendChild(div);
   setTimeout(() => div.remove(), 5000);
 }

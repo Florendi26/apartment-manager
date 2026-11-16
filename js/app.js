@@ -335,6 +335,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
   attachEventListeners();
   translateUI();
+  setupPageUsability();
   
   // Setup mobile menu toggle
   setupMobileMenuToggle();
@@ -1528,8 +1529,10 @@ function updateAdminNavActive(page, expenseCategory = state.expensesCategory) {
       // For payments and other pages, check if page matches
       if (buttonPage === page) {
         button.classList.add("active");
+        button.setAttribute("aria-current", "page");
       } else {
         button.classList.remove("active");
+        button.removeAttribute("aria-current");
       }
     });
   
@@ -1834,6 +1837,11 @@ function translateUI() {
       }
     });
   document.title = dictionary.appTitle;
+  const tableSearch = document.getElementById("tableSearch");
+  if (tableSearch && dictionary.searchThisPage) {
+    tableSearch.placeholder = dictionary.searchThisPage;
+    tableSearch.setAttribute("aria-label", dictionary.searchThisPage);
+  }
   
   // Update features select options
   const featuresSelect = document.getElementById("apartmentFeatures");
@@ -2193,10 +2201,10 @@ async function loadContracts() {
   
   await withRetryOnAuthLock(async () => {
   // First, get all apartment IDs for this landlord
-  const { data: landlordApartments, error: apartmentError } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("landlord_id", state.currentUser.id);
+  const apartmentQuery = window.DbScope
+    ? window.DbScope.landlordApartmentIds(supabase, state.currentUser.id)
+    : supabase.from("apartments").select("id").eq("landlord_id", state.currentUser.id);
+  const { data: landlordApartments, error: apartmentError } = await apartmentQuery;
   
   if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
     // No apartments for this landlord, clear contracts
@@ -2343,6 +2351,24 @@ async function loadDebts() {
   }
 }
 
+async function getLandlordContractIds() {
+  if (!state.currentUser) return { data: [], error: null };
+  if (window.DbScope) {
+    return window.DbScope.landlordContractIds(supabase, state.currentUser.id);
+  }
+  const apartments = await supabase
+    .from("apartments")
+    .select("id")
+    .eq("landlord_id", state.currentUser.id);
+  if (apartments.error || !apartments.data?.length) {
+    return { data: [], error: apartments.error || null };
+  }
+  return supabase
+    .from("contracts")
+    .select("id")
+    .in("apartment_id", apartments.data.map((row) => row.id));
+}
+
 async function loadAllBills() {
   if (!state.currentUser) {
     // Clear all bills if no user
@@ -2355,29 +2381,7 @@ async function loadAllBills() {
   }
   
   await withRetryOnAuthLock(async () => {
-  // First, get all apartment IDs for this landlord
-  const { data: landlordApartments, error: apartmentError } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("landlord_id", state.currentUser.id);
-  
-  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
-    // No apartments for this landlord, clear all bills
-    const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
-    for (const type of types) {
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      state[stateKey.bills] = [];
-    }
-    return;
-  }
-  
-  const apartmentIds = landlordApartments.map(a => a.id);
-  
-  // Then get all contract IDs for those apartments
-  const { data: landlordContracts, error: contractError } = await supabase
-    .from("contracts")
-    .select("id")
-    .in("apartment_id", apartmentIds);
+  const { data: landlordContracts, error: contractError } = await getLandlordContractIds();
   
   if (contractError || !landlordContracts || landlordContracts.length === 0) {
     // No contracts for this landlord, clear all bills
@@ -2472,29 +2476,7 @@ async function loadAllPayments() {
   }
   
   await withRetryOnAuthLock(async () => {
-  // First, get all apartment IDs for this landlord
-  const { data: landlordApartments, error: apartmentError } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("landlord_id", state.currentUser.id);
-  
-  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
-    // No apartments for this landlord, clear all payments
-    const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
-    for (const type of types) {
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      state[stateKey.payments] = [];
-    }
-    return;
-  }
-  
-  const apartmentIds = landlordApartments.map(a => a.id);
-  
-  // Then get all contract IDs for those apartments
-  const { data: landlordContracts, error: contractError } = await supabase
-    .from("contracts")
-    .select("id")
-    .in("apartment_id", apartmentIds);
+  const { data: landlordContracts, error: contractError } = await getLandlordContractIds();
   
   if (contractError || !landlordContracts || landlordContracts.length === 0) {
     // No contracts for this landlord, clear all payments
@@ -2545,10 +2527,10 @@ async function loadRequests() {
   if (!state.currentUser || !elements.requestsTableBody) return;
 
   // Get all apartment IDs for this landlord
-  const { data: landlordApartments, error: apartmentError } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("landlord_id", state.currentUser.id);
+  const apartmentQuery = window.DbScope
+    ? window.DbScope.landlordApartmentIds(supabase, state.currentUser.id)
+    : supabase.from("apartments").select("id").eq("landlord_id", state.currentUser.id);
+  const { data: landlordApartments, error: apartmentError } = await apartmentQuery;
 
   if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
     if (elements.requestsTableBody) {
@@ -2797,22 +2779,7 @@ async function loadPaymentRequests() {
     return;
   }
 
-  const { data: landlordApartments, error: aptErr } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("landlord_id", state.currentUser.id);
-
-  if (aptErr || !landlordApartments || landlordApartments.length === 0) {
-    container.innerHTML = '<p class="text-muted">' + (translate("paymentRequestsNone") || "No payment requests.") + '</p>';
-    if (historyContainer) historyContainer.innerHTML = "";
-    return;
-  }
-
-  const apartmentIds = landlordApartments.map((a) => a.id);
-  const { data: landlordContracts, error: contractErr } = await supabase
-    .from("contracts")
-    .select("id")
-    .in("apartment_id", apartmentIds);
+  const { data: landlordContracts, error: contractErr } = await getLandlordContractIds();
 
   if (contractErr || !landlordContracts || landlordContracts.length === 0) {
     container.innerHTML = '<p class="text-muted">' + (translate("paymentRequestsNone") || "No payment requests.") + '</p>';
@@ -2883,11 +2850,11 @@ function renderPaymentRequestsFiltered() {
       card.innerHTML = `
         <div class="payment-request-info">
           <strong>${sanitize(tenant?.full_name || translate("unknown"))}</strong>
-          <span>${typeLabel} – ${formatCurrency(req.amount)}</span>
+          <span>${sanitize(typeLabel)} – ${formatCurrency(req.amount)}</span>
           <span>${formatDate(req.payment_date)} | ${sanitize(req.method || "-")}</span>
         </div>
         <div class="payment-request-proof">
-          <img src="${req.proof_image}" alt="Proof" class="payment-proof-thumb" />
+          ${safeMediaUrl(req.proof_image) ? `<img src="${safeMediaUrl(req.proof_image)}" alt="Proof" class="payment-proof-thumb" />` : ""}
         </div>
         <div class="payment-request-actions">
           <button type="button" class="btn btn-primary btn-sm" data-action="accept-payment-request" data-id="${req.id}">${translate("accept") || "Accept"}</button>
@@ -2916,12 +2883,12 @@ function renderPaymentRequestsFiltered() {
         card.innerHTML = `
           <div class="payment-request-info">
             <strong>${sanitize(tenant?.full_name || translate("unknown"))}</strong>
-            <span>${typeLabel} – ${formatCurrency(req.amount)}</span>
+            <span>${sanitize(typeLabel)} – ${formatCurrency(req.amount)}</span>
             <span>${formatDate(req.payment_date)} | ${sanitize(req.method || "-")}</span>
             <span class="${statusClass}">${statusLabel}</span>
           </div>
           <div class="payment-request-proof">
-            <img src="${req.proof_image}" alt="Proof" class="payment-proof-thumb" />
+            ${safeMediaUrl(req.proof_image) ? `<img src="${safeMediaUrl(req.proof_image)}" alt="Proof" class="payment-proof-thumb" />` : ""}
           </div>
         `;
         attachPaymentProofThumbViewer(card, req, tenant?.full_name);
@@ -2933,12 +2900,13 @@ function renderPaymentRequestsFiltered() {
 
 function attachPaymentProofThumbViewer(card, req, tenantName) {
   const thumb = card.querySelector(".payment-proof-thumb");
-  if (!thumb || !req.proof_image || typeof window.openPhotoViewer !== "function") return;
+  const proofUrl = safeMediaUrl(req.proof_image);
+  if (!thumb || !proofUrl || typeof window.openPhotoViewer !== "function") return;
   const label = (translate("paymentProof") || "payment-proof") + "-" + String(tenantName || "tenant").replace(/[^a-zA-Z0-9-_]/g, "_");
   const open = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    window.openPhotoViewer([req.proof_image], 0, label);
+    window.openPhotoViewer([proofUrl], 0, label);
   };
   thumb.addEventListener("click", open);
   thumb.addEventListener("keydown", (e) => {
@@ -6075,7 +6043,13 @@ function sortDebtsByDueDateAsc(a, b) {
 }
 
 const equalsId = (a, b) => (a != null && b != null) && String(a) === String(b);
-const sanitize = (v) => v == null ? "" : String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const sanitize = (v) => v == null ? "" : String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const safeMediaUrl = (value) => {
+  if (typeof value !== "string") return "";
+  const url = value.trim();
+  if (!/^(https?:|data:image\/)/i.test(url)) return "";
+  return url.replace(/"/g, "%22");
+};
 
 function formatNumber(value) {
   const number =
@@ -6502,9 +6476,61 @@ function notify(type, message, animationType = null) {
   if (!elements.notificationArea) return;
   const node = document.createElement("div");
   node.className = `notification ${type}`;
-  node.textContent = message;
+  node.setAttribute("role", type === "error" ? "alert" : "status");
+  const text = document.createElement("span");
+  text.textContent = message;
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "notification-close";
+  close.setAttribute("aria-label", translate("dismissNotice") || "Dismiss");
+  close.textContent = "×";
+  close.addEventListener("click", () => node.remove());
+  node.append(text, close);
+  while (elements.notificationArea.children.length >= 3) {
+    elements.notificationArea.firstChild.remove();
+  }
   elements.notificationArea.appendChild(node);
   setTimeout(() => node.remove(), 5000);
+}
+
+function setupPageUsability() {
+  const tableSearch = document.getElementById("tableSearch");
+  const adminView = document.getElementById("adminView");
+  const applyTableSearch = () => {
+    if (!tableSearch || !adminView) return;
+    const query = tableSearch.value.trim().toLowerCase();
+    const page = adminView.querySelector(".admin-page.active");
+    if (!page) return;
+    page.querySelectorAll("tbody tr").forEach((row) => {
+      row.hidden = Boolean(query) && !row.textContent.toLowerCase().includes(query);
+    });
+  };
+  if (tableSearch) tableSearch.addEventListener("input", applyTableSearch);
+  if (adminView && window.MutationObserver) {
+    new MutationObserver(applyTableSearch).observe(adminView, { childList: true, subtree: true });
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    const open = document.querySelector(
+      ".delete-confirmation-modal:not(.hidden), .mark-paid-modal:not(.hidden), .photo-viewer-modal:not(.hidden)"
+    );
+    if (!open) return;
+    const closer = open.querySelector(
+      "#deleteApartmentCancel, #deactivateContractCancel, #markPaidCancel, #photoViewerClose, #photoReviewClose"
+    );
+    if (closer) closer.click();
+  });
+
+  ["deleteApartmentModal", "deactivateContractModal", "markPaidModal"].forEach((id) => {
+    const dialog = document.getElementById(id);
+    if (!dialog || !window.MutationObserver) return;
+    new MutationObserver(() => {
+      if (dialog.classList.contains("hidden")) return;
+      const field = dialog.querySelector("input:not([readonly]), button");
+      if (field) field.focus();
+    }).observe(dialog, { attributes: true, attributeFilter: ["class"] });
+  });
 }
 
 async function loadTenantView() {

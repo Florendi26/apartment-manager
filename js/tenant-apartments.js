@@ -1,4 +1,26 @@
 const TENANT_APARTMENTS_PAGE_SIZE = 15;
+const TENANT_APARTMENT_COLUMNS = "id, name, address, municipality, neighborhood, area, rooms, balconies, bathrooms, monthly_rent, condition, floor, description, photos, features, rental_rules, rental_status, landlord_id";
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+async function fetchTenantApartmentById(apartmentId) {
+  let result = await tenantSupabase
+    .from("apartments")
+    .select(TENANT_APARTMENT_COLUMNS)
+    .eq("id", apartmentId)
+    .single();
+  const message = result.error?.message || "";
+  if (result.error && (result.error.code === "PGRST204" || message.includes("column"))) {
+    result = await tenantSupabase.from("apartments").select("*").eq("id", apartmentId).single();
+  }
+  return result;
+}
 let tenantApartmentsAll = [];
 let tenantApartmentsRenderedCount = 0;
 let tenantApartmentsScrollAttached = false;
@@ -530,11 +552,7 @@ function setupTenantApartmentCardHandlers() {
       
       if (apartmentId) {
         // Fetch full apartment details
-        const { data: apartment, error } = await tenantSupabase
-          .from("apartments")
-          .select("*")
-          .eq("id", apartmentId)
-          .single();
+        const { data: apartment, error } = await fetchTenantApartmentById(apartmentId);
         
         if (error) {
           console.error("Error fetching apartment details:", error);
@@ -602,11 +620,7 @@ function setupTenantApartmentCardHandlers() {
       
       if (requestType === "contract") {
         // For contract requests, show the preview modal
-        const { data: apartment, error } = await tenantSupabase
-          .from("apartments")
-          .select("*")
-          .eq("id", apartmentId)
-          .single();
+        const { data: apartment, error } = await fetchTenantApartmentById(apartmentId);
         
         if (error || !apartment) {
           tenantNotify("error", tenantGetTranslation("tenantFailedLoadApartmentDetails") || "Failed to load apartment details.");
@@ -1182,15 +1196,15 @@ async function showContractPreview(apartment) {
               <table class="contract-info-table">
                 <tr>
                   <td class="label">Emri i plotë:</td>
-                  <td class="value">${currentLandlordInfo.full_name || '[Do të plotësohet]'}</td>
+                  <td class="value">${escapeHtml(currentLandlordInfo.full_name || '[Do të plotësohet]')}</td>
                 </tr>
                 <tr>
                   <td class="label">Email:</td>
-                  <td class="value">${currentLandlordInfo.email || '[Do të plotësohet]'}</td>
+                  <td class="value">${escapeHtml(currentLandlordInfo.email || '[Do të plotësohet]')}</td>
                 </tr>
                 <tr>
                   <td class="label">Telefoni:</td>
-                  <td class="value">${currentLandlordInfo.phone || '[Do të plotësohet]'}</td>
+                  <td class="value">${escapeHtml(currentLandlordInfo.phone || '[Do të plotësohet]')}</td>
                 </tr>
               </table>
             </div>
@@ -1199,15 +1213,15 @@ async function showContractPreview(apartment) {
               <table class="contract-info-table">
                 <tr>
                   <td class="label">Emri i plotë:</td>
-                  <td class="value">${currentTenantProfile.full_name || '[Emri juaj]'}</td>
+                  <td class="value">${escapeHtml(currentTenantProfile.full_name || '[Emri juaj]')}</td>
                 </tr>
                 <tr>
                   <td class="label">Email:</td>
-                  <td class="value">${currentTenantProfile.email || user.email}</td>
+                  <td class="value">${escapeHtml(currentTenantProfile.email || user.email)}</td>
                 </tr>
                 <tr>
                   <td class="label">Telefoni:</td>
-                  <td class="value">${currentTenantProfile.phone || '[Do të plotësohet]'}</td>
+                  <td class="value">${escapeHtml(currentTenantProfile.phone || '[Do të plotësohet]')}</td>
                 </tr>
               </table>
             </div>
@@ -1221,19 +1235,19 @@ async function showContractPreview(apartment) {
             <table class="contract-property-table">
               <tr>
                 <td class="label">Emri i pronës:</td>
-                <td class="value"><strong>${apartment.name || 'N/A'}</strong></td>
+                <td class="value"><strong>${escapeHtml(apartment.name || 'N/A')}</strong></td>
                 <td class="label">Lloji:</td>
                 <td class="value">Banesë</td>
               </tr>
               <tr>
                 <td class="label">Adresa:</td>
-                <td class="value" colspan="3">${apartment.address || 'N/A'}</td>
+                <td class="value" colspan="3">${escapeHtml(apartment.address || 'N/A')}</td>
               </tr>
               <tr>
                 <td class="label">Komuna:</td>
-                <td class="value">${apartment.municipality || '-'}</td>
+                <td class="value">${escapeHtml(apartment.municipality || '-')}</td>
                 <td class="label">Lagjia:</td>
-                <td class="value">${apartment.neighborhood || '-'}</td>
+                <td class="value">${escapeHtml(apartment.neighborhood || '-')}</td>
               </tr>
               <tr>
                 <td class="label">Sipërfaqja:</td>
@@ -1243,15 +1257,15 @@ async function showContractPreview(apartment) {
               </tr>
               <tr>
                 <td class="label">Gjendja:</td>
-                <td class="value">${apartment.condition || '-'}</td>
+                <td class="value">${escapeHtml(apartment.condition || '-')}</td>
                 <td class="label">Kati:</td>
-                <td class="value">${apartment.floor || '-'}</td>
+                <td class="value">${escapeHtml(apartment.floor || '-')}</td>
               </tr>
             </table>
             ${features.length > 0 ? `
               <div class="contract-features">
                 <span class="label">Veçoritë: </span>
-                <span class="value">${features.join(', ')}</span>
+                <span class="value">${features.map((feature) => escapeHtml(feature)).join(', ')}</span>
               </div>
             ` : ''}
           </div>
@@ -1354,13 +1368,13 @@ async function showContractPreview(apartment) {
           <div class="contract-signature-box">
             <div class="signature-title">QIRADHËNËSI</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${currentLandlordInfo.full_name || '[Emri i pronarit]'}</div>
+            <div class="signature-name">${escapeHtml(currentLandlordInfo.full_name || '[Emri i pronarit]')}</div>
             <div class="signature-date">Data: _____________</div>
           </div>
           <div class="contract-signature-box">
             <div class="signature-title">QIRAMARRËSI</div>
             <div class="signature-line"></div>
-            <div class="signature-name">${currentTenantProfile.full_name || '[Emri juaj]'}</div>
+            <div class="signature-name">${escapeHtml(currentTenantProfile.full_name || '[Emri juaj]')}</div>
             <div class="signature-date">Data: _____________</div>
           </div>
         </div>

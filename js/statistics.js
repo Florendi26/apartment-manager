@@ -162,349 +162,102 @@ async function handleLogout() {
   }
 }
 
-async function loadApartments() {
-  if (showOverallStats) {
-    // Load all apartments for overall statistics
-    const { data, error } = await supabase
-      .from("apartments")
-      .select("id")
-      .order("created_at", { ascending: false });
-    
-    if (error) {
-      console.error("loadApartments", error);
-      return;
-    }
-    state.apartments = data || [];
-    return;
-  }
-  
-  // Get current user
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    state.apartments = [];
-    return;
-  }
-  
-  const { data, error } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("landlord_id", user.id) // Filter by current user
-    .order("created_at", { ascending: false });
+const EXPENSE_TYPES = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
 
-  if (error) {
-    console.error("loadApartments", error);
-    return;
-  }
-
-  state.apartments = data || [];
+function resetExpenseState() {
+  EXPENSE_TYPES.forEach((type) => {
+    const keys = EXPENSE_STATE_KEYS[type];
+    state[keys.bills] = [];
+    state[keys.payments] = [];
+  });
+  state.debts = [];
+  state.payments = [];
+  state.apartments = [];
+  state.tenants = [];
+  state.contracts = [];
 }
 
-async function loadTenants() {
-  const { data, error } = await supabase
-    .from("tenants")
-    .select("id, email")
-    .order("full_name");
-
+async function countRows(table) {
+  const { count, error } = await supabase
+    .from(table)
+    .select("id", { count: "exact", head: true });
   if (error) {
-    console.error("loadTenants", error);
-    return;
+    console.error("countRows", table, error);
+    return null;
   }
-
-  state.tenants = data || [];
+  return count || 0;
 }
 
-async function loadContracts() {
+async function resolveStatisticsScope() {
   if (showOverallStats) {
-    // Load all contracts for overall statistics
-    const { data, error } = await supabase
-      .from("contracts")
-      .select("id")
-      .order("created_at", { ascending: false });
-    
-    if (error) {
-      console.error("loadContracts", error);
-      return;
-    }
-    state.contracts = data || [];
-    return;
-  }
-  
-  // Get current user
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    state.contracts = [];
-    return;
-  }
-  
-  // First, get all apartment IDs for this landlord
-  const { data: landlordApartments, error: apartmentError } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("landlord_id", user.id);
-  
-  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
-    // No apartments for this landlord, clear contracts
-    state.contracts = [];
-    return;
-  }
-  
-  const apartmentIds = landlordApartments.map(a => a.id);
-  
-  // Filter contracts by apartment IDs
-  const { data, error } = await supabase
-    .from("contracts")
-    .select("id")
-    .in("apartment_id", apartmentIds)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("loadContracts", error);
-    return;
+    return { overall: true, contractIds: null, apartmentCount: null, contractCount: null };
   }
 
-  state.contracts = data || [];
-}
+  const user = await checkAuth();
+  if (!user) {
+    return { overall: false, contractIds: [], apartmentCount: 0, contractCount: 0 };
+  }
 
-async function loadDebts() {
-  const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
-  
-  if (showOverallStats) {
-    // Load all bills for overall statistics
-    for (const type of types) {
-      const tableInfo = EXPENSE_TABLES[type];
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      
-      const selectColumns = tableInfo.hasStatus ? "id, amount, is_paid" : "id, amount";
-      
-      const { data, error } = await supabase
-        .from(tableInfo.bills)
-        .select(selectColumns)
-        .order("bill_date", { ascending: false });
-      
-      if (error) {
-        console.log(`${type} bills not available:`, error.message);
-        state[stateKey.bills] = [];
-      } else {
-        state[stateKey.bills] = data || [];
-      }
-    }
-    
-    // Combine all bills into state.debts
-    state.debts = [
-      ...state.rentBills.map(b => ({ ...b, type: "rent" })),
-      ...state.garbageBills.map(b => ({ ...b, type: "garbage" })),
-      ...state.maintenanceBills.map(b => ({ ...b, type: "maintenance" })),
-      ...state.electricityBills.map(b => ({ ...b, type: "electricity", is_paid: false })),
-      ...state.waterBills.map(b => ({ ...b, type: "water", is_paid: false })),
-      ...state.heatingBills.map(b => ({ ...b, type: "thermos", is_paid: false })),
-    ];
-    return;
+  const apartments = window.DbScope
+    ? await window.DbScope.landlordApartmentIds(supabase, user.id)
+    : await supabase.from("apartments").select("id").eq("landlord_id", user.id);
+
+  if (apartments.error) {
+    console.error("resolveStatisticsScope apartments", apartments.error);
+    return { overall: false, failed: true };
   }
-  
-  // Get current user
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    for (const type of types) {
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      state[stateKey.bills] = [];
-    }
-    state.debts = [];
-    return;
+
+  const apartmentIds = (apartments.data || []).map((row) => row.id);
+  if (apartmentIds.length === 0) {
+    return { overall: false, contractIds: [], apartmentCount: 0, contractCount: 0 };
   }
-  
-  // First, get all apartment IDs for this landlord
-  const { data: landlordApartments, error: apartmentError } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("landlord_id", user.id);
-  
-  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
-    // No apartments for this landlord, clear all bills
-    for (const type of types) {
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      state[stateKey.bills] = [];
-    }
-    state.debts = [];
-    return;
-  }
-  
-  const apartmentIds = landlordApartments.map(a => a.id);
-  
-  // Then get all contract IDs for those apartments
-  const { data: landlordContracts, error: contractError } = await supabase
+
+  const contracts = await supabase
     .from("contracts")
     .select("id")
     .in("apartment_id", apartmentIds);
-  
-  if (contractError || !landlordContracts || landlordContracts.length === 0) {
-    // No contracts for this landlord, clear all bills
-    for (const type of types) {
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      state[stateKey.bills] = [];
-    }
-    state.debts = [];
-    return;
+
+  if (contracts.error) {
+    console.error("resolveStatisticsScope contracts", contracts.error);
+    return { overall: false, failed: true };
   }
-  
-  const contractIds = landlordContracts.map(c => c.id);
-  
-  // Load from all split bill tables
-  for (const type of types) {
-    const tableInfo = EXPENSE_TABLES[type];
-    const stateKey = EXPENSE_STATE_KEYS[type];
-    
-    // Select different columns based on whether table has is_paid column
-    const selectColumns = tableInfo.hasStatus ? "id, amount, is_paid" : "id, amount";
-    
-    const { data, error } = await supabase
-      .from(tableInfo.bills)
-      .select(selectColumns)
-      .in("contract_id", contractIds)
-      .order("bill_date", { ascending: false });
-    
-    if (error) {
-      console.log(`${type} bills not available:`, error.message);
-      state[stateKey.bills] = [];
-    } else {
-      state[stateKey.bills] = data || [];
-    }
-  }
-  
-  // Combine all bills into state.debts for backward compatibility
-  state.debts = [
-    ...state.rentBills.map(b => ({ ...b, type: "rent" })),
-    ...state.garbageBills.map(b => ({ ...b, type: "garbage" })),
-    ...state.maintenanceBills.map(b => ({ ...b, type: "maintenance" })),
-    ...state.electricityBills.map(b => ({ ...b, type: "electricity", is_paid: false })),
-    ...state.waterBills.map(b => ({ ...b, type: "water", is_paid: false })),
-    ...state.heatingBills.map(b => ({ ...b, type: "thermos", is_paid: false })),
-  ];
+
+  const contractIds = (contracts.data || []).map((row) => row.id);
+  return {
+    overall: false,
+    contractIds,
+    apartmentCount: apartmentIds.length,
+    contractCount: contractIds.length,
+  };
 }
 
-async function loadPayments() {
-  const types = ["rent", "garbage", "maintenance", "electricity", "water", "thermos"];
-  
-  if (showOverallStats) {
-    // Load all payments for overall statistics
-    for (const type of types) {
-      const tableInfo = EXPENSE_TABLES[type];
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      
-      const { data, error } = await supabase
-        .from(tableInfo.payments)
-        .select("id, bill_id, amount")
-        .order("payment_date", { ascending: false });
-      
-      if (error) {
-        console.log(`${type} payments not available:`, error.message);
-        state[stateKey.payments] = [];
-      } else {
-        state[stateKey.payments] = data || [];
-      }
-    }
-    
-    // Combine all payments into state.payments
-    state.payments = [
-      ...state.rentPayments.map(p => ({ ...p, type: "rent" })),
-      ...state.garbagePayments.map(p => ({ ...p, type: "garbage" })),
-      ...state.maintenancePayments.map(p => ({ ...p, type: "maintenance" })),
-      ...state.electricityPayments.map(p => ({ ...p, type: "electricity" })),
-      ...state.waterPayments.map(p => ({ ...p, type: "water" })),
-      ...state.heatingPayments.map(p => ({ ...p, type: "thermos" })),
-    ];
-    return;
+async function loadAmountRows(table, contractIds) {
+  let query = supabase.from(table).select("amount");
+  if (contractIds) query = query.in("contract_id", contractIds);
+  const { data, error } = await query;
+  if (error) {
+    console.log(table + " not available:", error.message);
+    return [];
   }
-  
-  // Get current user
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    for (const type of types) {
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      state[stateKey.payments] = [];
-    }
-    state.payments = [];
-    return;
-  }
-  
-  // First, get all apartment IDs for this landlord
-  const { data: landlordApartments, error: apartmentError } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("landlord_id", user.id);
-  
-  if (apartmentError || !landlordApartments || landlordApartments.length === 0) {
-    // No apartments for this landlord, clear all payments
-    for (const type of types) {
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      state[stateKey.payments] = [];
-    }
-    state.payments = [];
-    return;
-  }
-  
-  const apartmentIds = landlordApartments.map(a => a.id);
-  
-  // Then get all contract IDs for those apartments
-  const { data: landlordContracts, error: contractError } = await supabase
-    .from("contracts")
-    .select("id")
-    .in("apartment_id", apartmentIds);
-  
-  if (contractError || !landlordContracts || landlordContracts.length === 0) {
-    // No contracts for this landlord, clear all payments
-    for (const type of types) {
-      const stateKey = EXPENSE_STATE_KEYS[type];
-      state[stateKey.payments] = [];
-    }
-    state.payments = [];
-    return;
-  }
-  
-  const contractIds = landlordContracts.map(c => c.id);
-  
-  // Load from all split payment tables
-  for (const type of types) {
-    const tableInfo = EXPENSE_TABLES[type];
-    const stateKey = EXPENSE_STATE_KEYS[type];
-    
-    const { data, error } = await supabase
-      .from(tableInfo.payments)
-      .select("id, bill_id, amount")
-      .in("contract_id", contractIds)
-      .order("payment_date", { ascending: false });
-    
-    if (error) {
-      console.log(`${type} payments not available:`, error.message);
-      state[stateKey.payments] = [];
-    } else {
-      state[stateKey.payments] = data || [];
-    }
-  }
-  
-  // Combine all payments into state.payments for backward compatibility
-  state.payments = [
-    ...state.rentPayments.map(p => ({ ...p, type: "rent" })),
-    ...state.garbagePayments.map(p => ({ ...p, type: "garbage" })),
-    ...state.maintenancePayments.map(p => ({ ...p, type: "maintenance" })),
-    ...state.electricityPayments.map(p => ({ ...p, type: "electricity" })),
-    ...state.waterPayments.map(p => ({ ...p, type: "water" })),
-    ...state.heatingPayments.map(p => ({ ...p, type: "thermos" })),
-  ];
+  return data || [];
 }
 
-async function loadUtilityBills() {
-  // Now handled by loadDebts
-}
-
-async function loadUtilityPayments() {
-  // Now handled by loadPayments
+function publishExpenseTotals() {
+  state.debts = EXPENSE_TYPES.flatMap((type) => {
+    const rows = state[EXPENSE_STATE_KEYS[type].bills] || [];
+    const utility = type === "electricity" || type === "water" || type === "thermos";
+    return rows.map((row) => (utility ? { amount: row.amount, type, is_paid: false } : { amount: row.amount, type }));
+  });
+  state.payments = EXPENSE_TYPES.flatMap((type) =>
+    (state[EXPENSE_STATE_KEYS[type].payments] || []).map((row) => ({ amount: row.amount, type }))
+  );
 }
 
 function renderStatistics() {
   // Count statistics
-  const tenantsCount = state.tenants.length;
-  const apartmentsCount = state.apartments.length;
-  const contractsCount = state.contracts.length;
+  const tenantsCount = state.tenantCount ?? state.tenants.length;
+  const apartmentsCount = state.apartmentCount ?? state.apartments.length;
+  const contractsCount = state.contractCount ?? state.contracts.length;
   const expensesCount = state.debts.length;
   const paymentsCount = state.payments.length;
 
@@ -635,17 +388,43 @@ function renderStatistics() {
 }
 
 async function loadInitialData() {
-  await Promise.all([
-    loadApartments(),
-    loadTenants(),
-    loadContracts(),
-    loadDebts(),
-    loadPayments(),
-    loadUtilityBills(),
-    loadUtilityPayments(),
+  const scope = await resolveStatisticsScope();
+  if (scope.failed) {
+    renderStatistics();
+    return;
+  }
+  const skipFinancials = !scope.overall && scope.contractIds.length === 0;
+  if (skipFinancials) resetExpenseState();
+  const financialLoads = skipFinancials
+    ? []
+    : EXPENSE_TYPES.flatMap((type) => {
+        const tables = EXPENSE_TABLES[type];
+        const keys = EXPENSE_STATE_KEYS[type];
+        const contractIds = scope.overall ? null : scope.contractIds;
+        return [
+          loadAmountRows(tables.bills, contractIds).then((rows) => {
+            state[keys.bills] = rows;
+          }),
+          loadAmountRows(tables.payments, contractIds).then((rows) => {
+            state[keys.payments] = rows;
+          }),
+        ];
+      });
+
+  const [tenantCount, apartmentCount, contractCount] = await Promise.all([
+    countRows("tenants"),
+    scope.apartmentCount == null ? countRows("apartments") : Promise.resolve(scope.apartmentCount),
+    scope.contractCount == null ? countRows("contracts") : Promise.resolve(scope.contractCount),
+    ...financialLoads,
   ]);
+
+  if (tenantCount != null) state.tenantCount = tenantCount;
+  if (apartmentCount != null) state.apartmentCount = apartmentCount;
+  if (contractCount != null) state.contractCount = contractCount;
+  publishExpenseTotals();
   renderStatistics();
 }
+
 
 // Mobile menu toggle function for statistics.html
 // Define this BEFORE init() so it's available when init runs
