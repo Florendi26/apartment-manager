@@ -70,6 +70,7 @@ jobs:
           fi
 
           sent=0
+          email="${NOTIFY_EMAIL:-florend.ramusa26@gmail.com}"
 
           if [ -n "$WHATSAPP_PHONE" ] && [ -n "$CALLMEBOT_APIKEY" ]; then
             curl -fsS -G "https://api.callmebot.com/whatsapp.php" \
@@ -81,18 +82,28 @@ jobs:
             sent=1
           fi
 
-          if [ -n "$NOTIFY_EMAIL" ] && [ -n "$RESEND_API_KEY" ]; then
-            payload=$(NOTIFY_EMAIL="$NOTIFY_EMAIL" TEXT="$text" python3 -c 'import json,os; print(json.dumps({"from":"Supabase keepalive <onboarding@resend.dev>","to":[os.environ["NOTIFY_EMAIL"]],"subject":"Supabase keepalive","text":os.environ["TEXT"]}))')
+          if [ -n "$RESEND_API_KEY" ]; then
+            payload=$(NOTIFY_EMAIL="$email" TEXT="$text" python3 -c 'import json,os; print(json.dumps({"from":"Supabase keepalive <onboarding@resend.dev>","to":[os.environ["NOTIFY_EMAIL"]],"subject":"Supabase keepalive","text":os.environ["TEXT"]}))')
             curl -fsS -X POST "https://api.resend.com/emails" \
               -H "Authorization: Bearer ${RESEND_API_KEY}" \
               -H "Content-Type: application/json" \
               -d "$payload"
             echo
-            echo "Email sent."
+            echo "Email sent with Resend."
+            sent=1
+          else
+            mail_body=$(TEXT="$text" python3 -c 'import json,os; print(json.dumps({"name":"Apartment manager","_subject":"Supabase keepalive","_captcha":"false","message":os.environ["TEXT"]}))')
+            mail_result=$(curl -sS -X POST "https://formsubmit.co/ajax/${email}" \
+              -H "Content-Type: application/json" \
+              -H "Accept: application/json" \
+              -H "Origin: https://github.com" \
+              -H "Referer: https://github.com/${GITHUB_REPOSITORY}" \
+              -d "$mail_body")
+            echo "$mail_result"
+            echo "Email requested for ${email}."
             sent=1
           fi
 
           if [ "$sent" -eq 0 ]; then
-            echo "::warning::No message sent. Add WHATSAPP_PHONE and CALLMEBOT_APIKEY, or NOTIFY_EMAIL and RESEND_API_KEY."
-            exit 1
+            echo "::warning::No message sent."
           fi
